@@ -159,6 +159,7 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .sx .more{padding:4px 8px;margin:-4px -6px -4px 0;color:var(--mut);font-size:20px;line-height:1;border-radius:8px}
 .sx.miss{box-shadow:inset 3px 0 0 #F5A524}.tag2{font-style:normal;font-size:10px;font-weight:700;color:var(--mut);background:var(--bg);padding:2px 6px;border-radius:6px;margin-left:4px;vertical-align:2px}
 .addb{display:block;width:100%;text-align:left;font-size:12px;color:var(--mut);padding:8px 10px 2px}
+.dlb{font-family:-apple-system,system-ui;font-size:11px;font-weight:700;background:rgba(78,168,255,.18);color:#4EA8FF;padding:3px 8px;border-radius:99px;vertical-align:4px}
 .sel{flex:1;background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:9px;font:inherit;font-size:14px}.sx .ok{color:#3DDC84;font-weight:800}
 .sdet{padding:8px 10px 4px 56px}.srow{display:flex;gap:10px;padding:4px 0;font-size:13px;border-bottom:1px dashed var(--line)}.srow:last-child{border:0}
 .srow span{color:var(--mut);width:86px;flex:0 0 auto}.srow b{font-weight:600}
@@ -553,7 +554,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.7 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.8 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -664,6 +665,7 @@ document.addEventListener("click",ev=>{
     case"smove":{const [wn,uid]=v.split("|");const e=WKED[wn]=WKED[wn]||{};const day=+$("#mvD").value,slot=$("#mvS").value;const a=(e.added||[]).find(x=>x.uid===uid);if(a){a.day=day;a.slot=slot}else{(e.moved=e.moved||{})[uid]={day,slot}}saveWked();closeSheet();render();toast("Séance déplacée");break}
     case"sdel":{const [wn,uid]=v.split("|");const e=WKED[wn]=WKED[wn]||{};if((e.added||[]).some(x=>x.uid===uid))e.added=e.added.filter(x=>x.uid!==uid);else{(e.removed=e.removed||[]).push(uid);if(e.moved)delete e.moved[uid]}saveWked();closeSheet();UI.openSes=null;render();toast("Séance supprimée");break}
     case"sreset":{const [wn,uid]=v.split("|");const e=WKED[wn]||{};if(e.moved)delete e.moved[uid];saveWked();closeSheet();render();break}
+    case"dltoggle":{const w=PLAN.weeks.find(x=>x.n===+v);const nv=!isDL(w);if(nv===!!w.deload)delete DLO[w.n];else DLO[w.n]=nv;lsSet("ironmax.deload",DLO);if(lsGet(LSK.raw,null))recompute();render();toast(nv?"Semaine passée en décharge":"Semaine normale");break}
     case"wkreset":delete WKED[v];saveWked();render();toast("Semaine remise comme prévu");break;
     case"ob":UI.ob=v;render();break;
     case"schedreset":delete SCHED[UI.ob];lsSet("ironmax.sched",SCHED);render();toast("Organisation conseillée rétablie");break;
@@ -910,7 +912,7 @@ function recompute(){
     fatigue:{v:fnow,series:fser,atl:Math.round(L.atl),ctl:Math.round(L.ctl),form:Math.round(L.ctl-L.atl),sleep:avgW("sleepSecs")?hm(avgW("sleepSecs")/60):"—",sleepScore:avgW("sleepScore")?Math.round(avgW("sleepScore")):"—",hrv:avgW("hrv")?Math.round(avgW("hrv")):"—",hrvBase:hrvKeys.length?Math.round(hrvKeys.slice(-28).reduce((a,k)=>a+well[k].hrv,0)/Math.min(28,hrvKeys.length)):"—",ans:null,ansLow3:false,highDays,rhr:avgW("restingHR")?Math.round(avgW("restingHR")):"—"},
     cap:{v:capV,vsTraj,parts:parts.map(p=>({n:p.n,v:Math.round(p.v*100)})),est:{total:hm(tot),swim:hm(swimMin),t:"0h10",bike:hm(bikeMin),run:hm(runMin)},target:"11h30",real,plan:planLine,marks:(DATA&&DATA.cap&&DATA.cap.marks)||[]},
     physio:{ftp:INP.ftp,ftpEst:eftp?Math.round(eftp)+" (eFTP)":"—",wkg:+(INP.ftp/INP.weight).toFixed(1),vma:INP.vma,vo2:Math.round(INP.vma*3.5),nextTest:nextTest()},
-    week:wkNow?{plannedH:wkNow.h,doneH:+doneWeek.toFixed(1),keyMissed:[],elapsed:(Date.now()-new Date(wkNow.start+"T00:00:00"))/(7*864e5)}:null,
+    week:wkNow?{plannedH:+weekSessions(wkNow).filter(s=>!s.p.cancel).reduce((a,s)=>a+(s.min||0)/60,0).toFixed(1),doneH:+doneWeek.toFixed(1),keyMissed:[],elapsed:(Date.now()-new Date(wkNow.start+"T00:00:00"))/(7*864e5)}:null,
     dup:{ratioMedian:null},acts:acts.slice(-60),eftp};
   LIVE.adjust=adjustments(acts,eftp);
   lsSet(LSK.live,LIVE);
@@ -1012,12 +1014,29 @@ const LIB={velo:[["z2b","tempo","Z2 facile",60,{w:.65}],["ss","ss","Sweet spot 3
   course:[["z2run","z2run","Footing Z2 45'",45,{}],["seuil","seuil","Seuil 3×10'",55,{sets:"3×10'",v:.86,rec:"2'"}],["lrun","longrun","Sortie longue 1h20",80,{v:.66}]],
   nat:[["n1","nat","Natation technique",40,{var:"1",m:2000}],["n2","nat","Natation fractionné modéré",50,{var:"2",m:2500}],["n3","nat","Natation endurance continue",50,{var:"3",m:2500}],["n4","nat","Natation soutenue",45,{var:"4",m:2400}]],
   muscu:[["mA","muscuA","Muscu A",60,{}],["mB","muscuB","Muscu B",60,{}]]};
+let DLO=lsGet("ironmax.deload",{});
+const isDL=w=>Object.prototype.hasOwnProperty.call(DLO,w.n)?!!DLO[w.n]:!!w.deload;
+function halfSets(str){if(!str)return str;let m=/^(\d+)×(\d+)'(.*)$/.exec(str);if(m){const n=+m[1];return n>=2?Math.max(1,Math.round(n/2))+"×"+m[2]+"'"+m[3]:"1×"+Math.round(+m[2]/2)+"'"+m[3]}m=/^(\d+)'$/.exec(str);return m?Math.round(+m[1]/2)+"'":str}
+function deloadify(s,k){
+  const p=Object.assign({},s.p);if(p.test||p.cancel||p.race)return s;let min=s.min,l=s.l;
+  if(k==="muscuA"||k==="muscuB"){p.light=1;min=Math.min(min,45)}
+  else if(k==="nat"){p.light=1;p.m=Math.round((p.m||2000)*.7/100)*100;min=Math.round(min*.7)}
+  else if(k==="ow"){p.m=Math.round((p.m||2000)*.7/100)*100;min=Math.round(min*.7)}
+  else if(["ss","thr","ef","im","vo2"].includes(k)){if(p.sets)p.sets=halfSets(p.sets);if(p.alt)p.alt=Object.assign({},p.alt,{p:Object.assign({},p.alt.p,{sets:halfSets(p.alt.p.sets)})});min=Math.round(min*.65)}
+  else if(k==="tempo"){if(p.tempo)p.tempo=halfSets(p.tempo);min=Math.round(min*.7)}
+  else if(["long","brick","sim"].includes(k)){min=Math.round(min*.6);p.blocks=null;p.brick=null;l="Sortie longue allégée"}
+  else if(k==="seuil"||k==="marathon"){if(p.sets)p.sets=halfSets(p.sets);min=Math.round(min*.7)}
+  else if(k==="longrun"){min=Math.round(min*.65);p.blk=null}
+  else if(k==="z2run"){min=Math.round(min*.7)}
+  return Object.assign({},s,{p,min,l,dl:1});
+}
 function weekSessions(w){
   const b=blockOf(w),tpl={};b.tpl.forEach(t=>tpl[t.id]=t);
   const vo2On=INP.ftp<265&&INH.some(h=>h.k==="ftp"&&h.d>=(PLAN.ftpTestDate||"9999"));
   const ed=WKED[w.n]||{},rm=ed.removed||[],mv=ed.moved||{};
   const dateOf=day=>{const d=new Date(w.start+"T00:00:00");d.setDate(d.getDate()+day);return dkey(d)};
-  const base=w.s.filter(s0=>!rm.includes(s0.id)).map(s0=>{const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];let pl=place(b.n,t);if(mv[s.id])pl=mv[s.id];return Object.assign({},s,{uid:s.id,k:s.kk||t.k,d:t.d,title:s.l||t.l,day:pl.day,slot:pl.slot,date:dateOf(pl.day),moved:!!mv[s.id]})});
+  const dl=isDL(w),src=dl?(w.sd||w.s):w.s,auto=dl&&!w.sd;
+  const base=src.filter(s0=>!rm.includes(s0.id)).map(s00=>{const s0=auto?deloadify(s00,(tpl[s00.id]||{}).k):s00;const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];let pl=place(b.n,t);if(mv[s.id])pl=mv[s.id];return Object.assign({},s,{uid:s.id,k:s.kk||t.k,d:t.d,title:s.l||(t.l+(s.dl&&/muscu/.test(t.k)?" (légère)":"")),day:pl.day,slot:pl.slot,date:dateOf(pl.day),moved:!!mv[s.id]})});
   const add=(ed.added||[]).map(a=>Object.assign({},a,{date:dateOf(a.day),added:true}));
   return base.concat(add).sort((a,c)=>a.day-c.day||SLOTS.indexOf(a.slot)-SLOTS.indexOf(c.slot));
 }
@@ -1048,24 +1067,25 @@ function vProgramme(){
     days+=`<div class="day${isT?" today":""}${past?" past":""}"${isT?' id="todayRow"':""}><div class="dh"><b>${DAYS[d]} ${dd.getDate()}</b>${isT?'<span class="st up">Aujourd\'hui</span>':""}</div>`;
     if(!list.length)days+=`<div class="rest">Repos</div>`;
     list.forEach(s=>{const done=doneOn(s.date,s.d);const open=UI.openSes===w.n+"-"+s.uid;
-      const miss=!done.length&&LIVE&&s.date<t;
-      days+=`<div class="sx${open?" open":""}${miss?" miss":""}" data-act="ses" data-v="${w.n}-${s.uid}"><span class="slot">${SLOT_N[s.slot]}</span><span class="ic">${D_IC[s.d]}</span><span class="ti"><b>${esc(s.title)}${s.added?' <i class="tag2">ajoutée</i>':s.moved?' <i class="tag2">déplacée</i>':""}</b><small>${s.min?hm(s.min):""}${mainTarget(s.k,s.p)?" · "+esc(mainTarget(s.k,s.p)):""}${miss?" · non faite":""}</small></span>${done.length?'<span class="ok">✓</span>':""}<span class="more" data-act="smore" data-v="${w.n}|${s.uid}">⋯</span></div>`;
+      const miss=!done.length&&LIVE&&s.date<t&&!s.p.cancel;
+      days+=`<div class="sx${open?" open":""}${miss?" miss":""}" data-act="ses" data-v="${w.n}-${s.uid}"><span class="slot">${SLOT_N[s.slot]}</span><span class="ic">${D_IC[s.d]}</span><span class="ti"${s.p.cancel?' style="opacity:.5;text-decoration:line-through"':""}><b>${esc(s.title)}${s.added?' <i class="tag2">ajoutée</i>':s.moved?' <i class="tag2">déplacée</i>':""}</b><small>${s.min?hm(s.min):""}${mainTarget(s.k,s.p)?" · "+esc(mainTarget(s.k,s.p)):""}${miss?" · non faite":""}</small></span>${done.length?'<span class="ok">✓</span>':""}<span class="more" data-act="smore" data-v="${w.n}|${s.uid}">⋯</span></div>`;
       if(open)days+=`<div class="sdet">${steps(s.k,s.p,s.min,w.phase).map(r=>`<div class="srow"><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join("")}</div>`;
       done.forEach(x=>days+=`<div class="cm"><b>${esc(x.title||"Séance faite")}</b>${x.metrics?'<div class="muted" style="font-size:12px">'+esc(x.metrics)+'</div>':""}<div>${esc(x.comment||"")}</div></div>`);
     });
     days+=`<button class="addb" data-act="sadd" data-v="${w.n}|${d}">＋ Ajouter une séance</button></div>`;
   }
   const i=PLAN.weeks.indexOf(w);
-  const cnt={};ses.forEach(s=>cnt[s.d]=(cnt[s.d]||0)+1);
+  const cnt={},hh={velo:0,course:0,nat:0,muscu:0};ses.filter(s=>!s.p.cancel).forEach(s=>{cnt[s.d]=(cnt[s.d]||0)+1;hh[s.d]=(hh[s.d]||0)+(s.min||0)/60});
   const t0=new Date(PLAN.blocks[0].from).getTime(),t1=new Date(PLAN.race).getTime(),pos=d=>((new Date(d).getTime()-t0)/(t1-t0)*100);
   const fr=PLAN.blocks.map(x=>`<div style="position:absolute;left:${pos(x.from)}%;width:${pos(x.to)-pos(x.from)}%;top:0;bottom:0;background:${PH_C[x.n]};opacity:.85"></div>`).join("");
   const allw=PLAN.blocks.map(x=>`<div class="bk"><span style="color:${PH_C[x.n]}">${x.n}</span><div class="wchips">${PLAN.weeks.filter(q=>q.phase===x.n).map(q=>`<button class="wc${q.n===w.n?" on":""}${q===cur?" cur":""}${q.deload?" dl":""}" data-act="pw" data-v="${q.n}">S${q.n}</button>`).join("")}</div></div>`).join("");
   return `<div class="dc" style="border-top:3px solid ${PH_C[w.phase]}">
-    <div class="wnav"><button data-act="pw" data-v="${i>0?PLAN.weeks[i-1].n:w.n}">‹</button><div><b>Semaine ${w.n}</b><small>${fdate(w.start)} → ${fdate(dkey(end))} · ${w.phase}</small></div><button data-act="pw" data-v="${i<PLAN.weeks.length-1?PLAN.weeks[i+1].n:w.n}">›</button></div>
+    <div class="wnav"><button data-act="pw" data-v="${i>0?PLAN.weeks[i-1].n:w.n}">‹</button><div><b>Semaine ${w.n}${isDL(w)?' <span class="dlb">Décharge</span>':""}</b><small>${fdate(w.start)} → ${fdate(dkey(end))} · ${w.phase}</small></div><button data-act="pw" data-v="${i<PLAN.weeks.length-1?PLAN.weeks[i+1].n:w.n}">›</button></div>
     ${w!==cur?`<button class="btn" style="width:100%;margin-top:8px" data-act="pw" data-v="${cur.n}">Revenir à cette semaine</button>`:""}
     ${WKED[w.n]&&((WKED[w.n].added||[]).length||(WKED[w.n].removed||[]).length||Object.keys(WKED[w.n].moved||{}).length)?`<button class="btn" style="width:100%;margin-top:8px" data-act="wkreset" data-v="${w.n}">Annuler mes modifications de la semaine</button>`:""}
-    ${w.note||w.test?`<div class="wnote">${w.test?'<b>'+esc(w.test)+'</b> · ':""}${esc(w.note||"")}</div>`:""}
-    <div class="dsplit" style="margin-top:10px"><span><b>${String(w.h).replace(".",",")} h</b></span>${["velo","course","nat","muscu"].filter(k=>cnt[k]).map(k=>`<span>${D_IC[k]} ${cnt[k]} · ${String(w.disc[k]).replace(".",",")} h</span>`).join("")}</div></div>
+    ${(w.note&&!(w.deload&&!isDL(w)&&/^Décharge$/.test(w.note)))||w.test?`<div class="wnote">${w.test?'<b>'+esc(w.test)+'</b> · ':""}${esc((w.deload&&!isDL(w))?w.note.replace(/Décharge · |Décharge/,"").trim():w.note||"")}</div>`:""}
+    <div class="dsplit" style="margin-top:10px"><span><b>${frn((Object.values(hh).reduce((a,b)=>a+b,0)).toFixed(1))} h</b></span>${["velo","course","nat","muscu"].filter(k=>cnt[k]).map(k=>`<span>${D_IC[k]} ${cnt[k]} · ${frn(hh[k].toFixed(1))} h</span>`).join("")}</div>
+    <div class="set" style="padding:10px 0 0;border:0"><div><b style="font-size:14px">Semaine de décharge</b><div class="muted" style="font-size:12px">${w.deload?"Prévue au plan":"Non prévue au plan"} · volume réduit d'environ 35 %, toutes les séances gardées</div></div><button class="tg${isDL(w)?" on":""}" data-act="dltoggle" data-v="${w.n}"></button></div></div>
   <div class="dc" style="padding:6px 14px">${days}</div>
   <div class="dc"><div class="dl">Jusqu'à l'Ironman<small>${PLAN.weeks.length} semaines · J-${daysTo(PLAN.race)} · cibles sur FTP ${INP.ftp} W, VMA ${String(INP.vma).replace(".",",")} km/h</small></div>
     <div style="position:relative;height:12px;border-radius:9px;overflow:hidden;margin:12px 0 10px;background:var(--card2)">${fr}<div style="position:absolute;left:${pos(t)}%;top:-2px;bottom:-2px;width:3px;background:#fff"></div></div>${allw}

@@ -16,11 +16,14 @@ VO2=lambda sets:{"cond":"ftpTestBelow","k":"vo2","l":"VO2max (FTP < 265 W au tes
 NAT=lambda var,m,light=0: S("nat",{1:40,2:50,3:50,4:45}[var] if not light else 35,None,var=var,m=m,light=light)
 W={}
 # --- Base 1 : reprise du programme validé (dashboard Polar Track) ---
-W[7]=[NAT(1,1500,1),S("tempo",60,"Z2 facile",w=pw(165)),S("seuil",35,"Test VMA 6'",test="VMA"),S("ef",60,None,sets="3×6'",w=pw(200),rec="4'"),S("long",195,None,z2=pw(170),blocks="1×40'",w=pw(230)),S("lrun",80,None,v=.66),S("mA",50,"Muscu A légère",light=1)]
+SD={}
+SD[7]=[NAT(1,1500,1),S("ss",0,"Annulé (vélo chez le garagiste)",cancel=1),S("mA",50,"Muscu A légère",light=1),S("tempo",60,"Z2 facile",w=pw(165)),S("seuil",35,"Test VMA 6'",test="VMA"),S("mB",50,"Muscu B légère",light=1),S("ef",60,None,sets="3×6'",w=pw(200),rec="4'"),S("long",195,None,z2=pw(170),blocks="1×40'",w=pw(230)),S("lrun",80,None,v=.66)]
 W[8]=[NAT(2,2400),S("ss",80,None,sets="3×18'",w=pw(232),rec="5'"),S("mA",60),S("tempo",75,None,tempo="30'",w=pw(210)),S("seuil",60,None,sets="4×8'",v=.80,rec="2'"),S("mB",60),S("ef",70,None,sets="3×12'",w=pw(205),rec="4'",rpm="66–68"),S("long",200,None,z2=pw(170),blocks="2×25'",w=pw(228)),S("lrun",80,None,v=.66)]
 W[9]=[NAT(3,2500),S("ss",85,None,sets="4×15'",w=pw(233),rec="5'"),S("mA",60),S("tempo",75,None,tempo="30'",w=pw(212)),S("seuil",60,None,sets="3×12'",v=.81,rec="2'30"),S("mB",60),S("ef",75,None,sets="3×15'",w=pw(207),rec="4'",rpm="66–68"),S("long",210,None,z2=pw(172),blocks="2×30'",w=pw(230)),S("lrun",90,None,v=.66)]
 W[10]=[NAT(4,2800),S("ss",90,None,sets="3×20'",w=pw(235),rec="5'"),S("mA",60),S("tempo",80,None,tempo="35'",w=pw(212)),S("seuil",60,None,sets="2×18'",v=.82,rec="3'"),S("mB",60),S("ef",75,None,sets="2×25'",w=pw(208),rec="5'",rpm="66–68"),S("long",225,None,z2=pw(172),blocks="25' puis 60' en fin de sortie",w=pw(230),w2=pw(207)),S("lrun",95,None,v=.66,blk="15' tempo en fin de sortie")]
-W[11]=[NAT(1,1800,1),S("ss",60,None,sets="2×15'",w=pw(232),rec="5'"),S("mA",45,"Muscu A légère",light=1),S("tempo",60,"Z2 facile",w=pw(165)),S("seuil",45,None,sets="2×8'",v=.80,rec="2'"),S("ef",50,None,sets="2×12'",w=pw(205),rec="4'"),S("long",70,"Test FTP 20' (sam. 12 déc.)",test="FTP"),S("lrun",60,"Footing 1h",v=.64)]
+SD[11]=[NAT(1,1800,1),S("ss",60,None,sets="2×15'",w=pw(232),rec="5'"),S("mA",45,"Muscu A légère",light=1),S("tempo",60,"Z2 facile",w=pw(165)),S("seuil",45,None,sets="2×8'",v=.80,rec="2'"),S("mB",45,"Muscu B légère",light=1),S("ef",50,None,sets="2×12'",w=pw(205),rec="4'"),S("long",70,"Test FTP 20' (sam. 12 déc.)",test="FTP"),S("lrun",60,"Footing 1h",v=.64)]
+W[7]=[x if x["id"]!="seuil" else S("seuil",35,"Test VMA 6'",test="VMA") for x in W[8]]
+W[11]=[x if x["id"]!="long" else S("long",70,"Test FTP 20' (sam. 12 déc.)",test="FTP") for x in W[10]]
 # --- Base 2 : monter la FTP (seuil varié), tempo et endurance de force en progression ---
 B2=[ # thr(sets,w,rec,vo2) tempo ef(sets,w) long(min,blocks,w) seuil(sets,v,rec) lrun(min,blk) nat
  dict(thr=("2×15'",.95,"5'","4×4'"),tempo="40'",ef=("3×15'",.81),long=(210,"2×30'",.82),seuil=("2×15'",.84,"3'"),lrun=(90,None),nat=(1,2600)),
@@ -31,11 +34,11 @@ B2=[ # thr(sets,w,rec,vo2) tempo ef(sets,w) long(min,blocks,w) seuil(sets,v,rec)
  dict(thr=("3×15'",.97,"5'","5×5'"),tempo="55'",ef=("3×20'",.83),long=(270,"2×50'",.80),seuil=("2×20'",.84,"3'"),lrun=(105,None),nat=(3,3200)),
  dict(thr=("2×25'",.95,"5'","5×5'"),tempo="60'",ef=("2×30'",.84),long=(270,"90' continu",.80),seuil=("3×12'",.87,"2'30"),lrun=(110,"20' tempo en fin de sortie"),nat=(1,2800)),
 ]
+def base2_retest():
+    # S21 : semaine de décharge avec retests (toutes les séances de la semaine-type, allégées)
+    return [NAT(1,2000,1),S("thr",60,"Retest FTP 20'",test="FTP"),S("mA",45,"Muscu A légère",light=1),S("tempo",60,"Z2 facile",w=.65),S("seuil",35,"Retest VMA 6'",test="VMA"),S("mB",45,"Muscu B légère",light=1),S("ef",45,None,sets="2×10'",w=.80,rec="4'"),S("long",150,None,z2=.68),S("lrun",60,None,v=.65)]
 def base2(j,dl,n):
-    if dl:
-        r=[NAT(1,2000,1),S("thr",60,None,sets="2×10'",w=.95,rec="5'"),S("mA",45,"Muscu A légère",light=1),S("tempo",60,"Z2 facile",w=.65),S("seuil",45,None,sets="2×8'",v=.84,rec="2'"),S("mB",45,"Muscu B légère",light=1),S("long",150,None,z2=.68),S("lrun",60,None,v=.65)]
-        if n==21: r=[x for x in r if x["id"]!="thr"]+[S("thr",60,"Retest FTP 20'",test="FTP")]; r=[x if x["id"]!="seuil" else S("seuil",35,"Retest VMA 6'",test="VMA") for x in r]
-        return r
+    if dl: return base2(min(j,6),False,n)
     c=B2[j];t=c["thr"]
     return [NAT(*c["nat"]),S("thr",75 if t[1]<1 else 70,None,sets=t[0],w=t[1],rec=t[2],alt=VO2(t[3])),S("mA",60),S("tempo",80 if "×" not in c["tempo"] else 85,None,tempo=c["tempo"],w=.82),S("seuil",60,None,sets=c["seuil"][0],v=c["seuil"][1],rec=c["seuil"][2]),S("mB",60),S("ef",75,None,sets=c["ef"][0],w=c["ef"][1],rec="4'",rpm="65–70"),S("long",c["long"][0],None,z2=.70,blocks=c["long"][1],w=c["long"][2]),S("lrun",c["lrun"][0],None,v=.66,blk=c["lrun"][1])]
 # --- Build : sweet spot en 2 vagues, allure IM qui s'allonge, enchaînements ---
@@ -49,7 +52,8 @@ BU=[ # ss(sets,w,ou) im(sets,w,min) long(min,blocks,brick) seuil(sets,v) mp(sets
  dict(ss=("3×15'",.93,None),im=("2×40'",.80,115),long=(300,"2×60'","30'"),seuil=("4×8'",.88),mp=("3×15'",60),lrun=(120,None),nat=(1,2800),nat2=(3,3200)),
 ]
 def build(j,dl,n):
-    if dl: return [NAT(1,2200,1),S("ss",60,None,sets="2×15'",w=.88,rec="5'"),S("mA",40,"Muscu A légère",light=1),S("im",60,None,sets="2×15'",w=.78,rec="5'"),S("seuil",45,None,sets="2×8'",v=.86,rec="2'"),S("long",180,None,z2=.70),S("lrun",70,None,v=.66)]
+    if dl: return build(min(j,6),False,n)
+    if False: return [NAT(1,2200,1),S("ss",60,None,sets="2×15'",w=.88,rec="5'"),S("mA",40,"Muscu A légère",light=1),S("im",60,None,sets="2×15'",w=.78,rec="5'"),S("seuil",45,None,sets="2×8'",v=.86,rec="2'"),S("long",180,None,z2=.70),S("lrun",70,None,v=.66)]
     c=BU[j];ss=c["ss"]
     ssd=S("ss",90,None,sets=ss[0],w=ss[1],rec="5'") if not ss[2] else S("ss",90,None,sets=ss[0],ou=list(ss[2]),rec="5'")
     return [NAT(*c["nat"]),ssd,S("mA",45),S("im",c["im"][2],None,sets=c["im"][0],w=c["im"][1],rec="5'"),S("seuil",60,None,sets=c["seuil"][0],v=c["seuil"][1],rec="2'"),S("mB",45),NAT(*c["nat2"]) | {"id":"nat2"},S("mp",c["mp"][1],None,sets=c["mp"][0],v=.66,rec="3'"),S("long",c["long"][0],None,z2=.72,blocks=c["long"][1],w=.78,brick=c["long"][2]),S("lrun",c["lrun"][0],None,v=.66,blk=c["lrun"][1])]
@@ -63,7 +67,8 @@ SP=[ # ss(sets) im(sets,w,min) sim(min,blocks,brick) seuil lrun(min,blk) ow
  dict(ss="2×10'",im=("2×20'",.80,80),sim=(240,"3h allure IM","30'"),seuil="2×8'",lrun=(110,"30' allure IM"),ow=3000),
 ]
 def spec(j,dl,n):
-    if dl: return [NAT(1,2200,1),S("ss",60,None,sets="2×12'",w=.88,rec="5'"),S("im",75,None,sets="2×20'",w=.78,rec="5'"),S("seuil",45,None,sets="2×8'",v=.86,rec="2'"),S("long",150,None,z2=.70),S("lrun",75,None,v=.66)]
+    if dl: return spec(0,False,n)
+    if False: return [NAT(1,2200,1),S("ss",60,None,sets="2×12'",w=.88,rec="5'"),S("im",75,None,sets="2×20'",w=.78,rec="5'"),S("seuil",45,None,sets="2×8'",v=.86,rec="2'"),S("long",150,None,z2=.70),S("lrun",75,None,v=.66)]
     c=SP[j]
     return [NAT(4,3000),S("ss",70,None,sets=c["ss"],w=.91,rec="5'"),S("mA",45),S("im",c["im"][2],None,sets=c["im"][0],w=c["im"][1],rec="5'"),S("seuil",55,None,sets=c["seuil"],v=.86,rec="2'30"),S("mB",45),S("ow",60,None,m=c["ow"]),S("z2run",45,None,v=.66),S("long",c["sim"][0],"Simulation : vélo + course",z2=.72,blocks=c["sim"][1],w=.77,brick=c["sim"][2]),S("lrun",c["lrun"][0],None,v=.66,blk=c["lrun"][1])]
 def taper(j,n):
@@ -87,9 +92,19 @@ for i in range(33):
         ss={"Base 2":base2,"Build":build,"Spécifique":spec}.get(ph,lambda j,dl,n:taper(j,n))(j,dl,n) if ph!="Affûtage" else taper(j,n)
     note={7:"Décharge · test VMA",11:"Décharge · test FTP",12:"Si FTP < 265 W au test : VO2max le lundi",21:"Décharge · retests FTP + VMA",32:"Semaine allégée · EVG",39:"Semaine de course"}.get(n,"Décharge" if dl else "")
     test={11:"Test FTP 20'",21:"Retest FTP + VMA",39:"IRONMAN"}.get(n)
-    tpl={t[0]:t for t in TPL[ph]};disc={"velo":0,"course":0,"nat":0,"muscu":0}
+    sd=SD.get(n)
+    if n==21: sd=base2_retest()
+    tpl={t[0]:t for t in TPL[ph]}
+    want=set(tpl)-({"mA"} if n==39 else set())
+    for lst,lab in ((ss,"s"),(sd,"sd")):
+        if lst is None: continue
+        ids=[x["id"] for x in lst]
+        assert set(ids)==want and len(ids)==len(set(ids)),(n,lab,sorted(want-set(ids)),sorted(set(ids)-want))
+    disc={"velo":0,"course":0,"nat":0,"muscu":0}
     for s in ss: disc[tpl[s["id"]][2]]+=s["min"]/60
-    weeks.append({"n":n,"start":str(st),"phase":ph,"deload":dl,"note":note,"test":test,"h":round(sum(disc.values()),1),"disc":{k:round(v,1) for k,v in disc.items()},"s":ss})
+    w={"n":n,"start":str(st),"phase":ph,"deload":dl,"note":note,"test":test,"h":round(sum(disc.values()),1),"disc":{k:round(v,1) for k,v in disc.items()},"s":ss}
+    if sd: w["sd"]=sd
+    weeks.append(w)
 blocks=[{"n":"Base 1","from":"2026-09-28","to":"2026-12-13","f":"FTP et endurance vélo · natation en entretien"},{"n":"Base 2","from":"2026-12-14","to":"2027-02-21","f":"Monter la FTP · volume sur les 3 sports"},{"n":"Build","from":"2027-02-22","to":"2027-04-25","f":"Allure IM · enchaînements · tenir 210 W"},{"n":"Spécifique","from":"2027-04-26","to":"2027-06-06","f":"Simulations · nutrition · eau libre"},{"n":"Affûtage","from":"2027-06-07","to":"2027-06-27","f":"Fraîcheur, rappels d'intensité"}]
 for b in blocks: b["tpl"]=[{"id":t[0],"k":t[1],"d":t[2],"l":t[3],"day":t[4],"slot":t[5]} for t in TPL[b["n"]]]
 plan={"version":3,"race":"2027-06-27","ftpTestDate":"2026-12-12","blocks":blocks,"weeks":weeks,
