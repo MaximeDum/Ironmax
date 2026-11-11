@@ -163,6 +163,7 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .sel{flex:1;background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:9px;font:inherit;font-size:14px}.sx .ok{color:#3DDC84;font-weight:800}
 .sdet{padding:8px 10px 4px 56px}.srow{display:flex;gap:10px;padding:4px 0;font-size:13px;border-bottom:1px dashed var(--line)}.srow:last-child{border:0}
 .srow span{color:var(--mut);width:86px;flex:0 0 auto}.srow b{font-weight:600}
+.rt{width:100%;margin-top:6px;border-collapse:collapse;font-size:12px}.rt th{text-align:left;color:var(--mut);font-weight:600;padding:2px 4px}.rt td{padding:2px 4px;border-top:1px solid var(--line)}.cm.w{border-left-color:#F5A524;background:rgba(245,165,36,.07)}
 .cm{margin:6px 0 0 56px;padding:8px 10px;border-left:3px solid #3DDC84;background:rgba(61,220,132,.07);border-radius:0 10px 10px 0;font-size:13px}
 .bk{margin-top:8px}.bk>span{font-family:var(--disp);font-weight:800;font-size:13px}.wchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
 .wc{font-size:11.5px;padding:5px 8px;border-radius:8px;background:var(--card2);color:var(--mut)}.wc.dl{opacity:.6}.wc.cur{box-shadow:inset 0 0 0 1.5px var(--txt);color:var(--txt);opacity:1}.wc.on{background:var(--acc);color:#fff;opacity:1}
@@ -229,6 +230,7 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 <div class="player" id="player"></div>
 <div class="toast" id="toast"></div>
 
+<script src="analyze.js"></script>
 <script>
 (function(){
 "use strict";
@@ -554,7 +556,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.8 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.9 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -766,8 +768,8 @@ function vDash(){
   const bars=D.note.disc.map(d=>`<div class="bar"><div class="h"><span>${d.n}</span><b>${frn(d.v)}<small class="muted" style="font-size:12px">/20</small></b></div><div class="trk"><i style="width:${d.v*5}%;background:${DC[d.k]}"></i></div><div class="f">Plan ${frn(d.plan)} · efficacité ${frn(d.eff)} · trajectoire ${frn(d.traj)}<br>${esc(d.txt)}</div></div>`).join("");
   const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px">${p.v} %</b></div><div class="trk"><i style="width:${p.v}%;background:var(--acc)"></i></div></div>`).join("");
   const vp=(D.vsPlan||[]).map(r=>`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
-  const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).slice(0,5).map(a=>({date:a.date,sport:a.sp,title:a.name,comment:autoComment(a)})):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,5);
-  const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment&&x.metrics!==undefined?`<div class="lc">${esc(x.comment)}</div>`:`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.comment||"")}</div>`}</div>`).join("")}</div>`:"";
+  const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).slice(0,5).map(a=>{const an=ANA[a.id];return {date:a.date,sport:a.sp,title:a.name,metrics:autoComment(a),comment:an?an.comment:"",verdict:an&&an.verdict}}):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,5);
+  const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.verdict==="warn"?"À surveiller":x.verdict==="up"?"Marge":"Maîtrisée"}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc">${esc(x.comment)}</div>`:""}</div>`).join("")}</div>`:"";
   return `${top}${msgs}${adj}${lastH}
   <div class="dc"><div class="dl">Note d'entraînement<small>${esc(D.block.name)} · depuis le ${fdate(D.block.start)}</small></div><div class="big">${frn(D.note.global)}<small>/ 20</small></div>${bars}</div>
   <div class="dc"><div class="dl">Fatigue accumulée<small>indice 0–100 · charge + sommeil et HRV</small></div><div class="big">${f.v}<small>/ 100 · ${fz}</small></div>
@@ -806,13 +808,48 @@ async function apiGet(path){
   if(!r.ok)throw new Error("Intervals.icu a répondu "+r.status);
   return r.json();
 }
+let ANA=lsGet("ironmax.ana",{});
+function plannedFor(date,sport){
+  if(!PLAN||!PLAN.blocks[0].tpl)return null;
+  const w=PLAN.weeks.find(x=>{const e=new Date(x.start+"T00:00:00");e.setDate(e.getDate()+7);return x.start<=date&&dkey(e)>date});if(!w)return null;
+  const c=weekSessions(w).filter(s=>s.date===date&&s.d===sport&&!s.p.cancel);if(!c.length)return null;
+  const score=s=>(s.p.sets||s.p.tempo||s.p.blocks?2:0)+(s.p.test?3:0);c.sort((a,b)=>score(b)-score(a));return c[0];
+}
+function planTarget(s){
+  if(!s||s.p.test)return null;const p=s.p,k=s.k,bike=s.d==="velo";
+  let ps=IronAnalyze.parseSets(p.sets,p.rec);if(!ps&&p.tempo)ps=IronAnalyze.parseSets(p.tempo,"0'");
+  if(!ps&&p.blocks)ps=IronAnalyze.parseSets(p.blocks,"5'");
+  let target=null;
+  if(bike){target=p.ou?Math.round((Wt(p.ou[0],k)+Wt(p.ou[1],k))/2):p.w?Wt(p.w,["long","brick","sim"].includes(k)?"long":k):null}
+  else if(s.d==="course"){const v=p.v?(p.v+(k==="seuil"?(ADJ.seuil||0):0)):null;target=v?v*INP.vma/3.6:null}
+  if(ps&&target)return Object.assign({sport:s.d,target},ps);
+  if(bike||s.d==="course")return {sport:s.d,n:0,target:0};
+  return null;
+}
+async function analyzeRecent(acts){
+  const since=dkey(new Date(Date.now()-21*864e5));
+  for(const a of acts){
+    if(a.date<since||ANA[a.id]||!(a.sp==="velo"||a.sp==="course")||(a.moving_time||0)<1200)continue;
+    const ps=plannedFor(a.date,a.sp),plan=planTarget(ps);if(!plan)continue;
+    try{
+      const raw=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.id)+"/streams.json?types=time,watts,heartrate,velocity_smooth");
+      const st={};(Array.isArray(raw)?raw:Object.keys(raw).map(k=>({type:k,data:raw[k]}))).forEach(x=>st[x.type]=x.data);
+      if(!st.heartrate)continue;
+      const res=IronAnalyze.analyze(plan,{time:st.time,hr:st.heartrate,watts:a.sp==="velo"?st.watts:null,speed:a.sp==="course"?st.velocity_smooth:null},{fcmax:INP.fcmax,fcrest:INP.fcrest});
+      ANA[a.id]={title:ps.title,comment:res.comment,verdict:res.verdict,reps:res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr)]),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date};
+    }catch(e){}
+  }
+  const keys=Object.keys(ANA).sort((x,y)=>(ANA[x].date<ANA[y].date?1:-1));keys.slice(80).forEach(k=>delete ANA[k]);lsSet("ironmax.ana",ANA);
+}
+async function apiGetAbs(url){const r=await fetch(url,{headers:{Authorization:"Basic "+btoa("API_KEY:"+CFG.key)}});if(!r.ok)throw new Error(r.status);return r.json()}
 async function refreshData(){
   if(!CFG.athlete||!CFG.key){UI.tab="reglages";render();toast("Renseigne d'abord ta connexion Intervals.icu");return}
   if(REFRESH.busy)return;REFRESH={busy:true,err:""};render();
   try{
     const d=new Date();const old=new Date(d);old.setDate(old.getDate()-150);const ow=new Date(d);ow.setDate(ow.getDate()-70);
     const [acts,well]=await Promise.all([apiGet("/activities?oldest="+dkey(old)+"&newest="+dkey(d)+"&fields="+FIELDS),apiGet("/wellness?oldest="+dkey(ow)+"&newest="+dkey(d))]);
-    lsSet(LSK.raw,{acts,well,at:Date.now()});recompute();toast("Données actualisées");
+    lsSet(LSK.raw,{acts,well,at:Date.now()});recompute();
+    await analyzeRecent((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOf(a.type||"")})));recompute();toast("Données actualisées");
   }catch(e){REFRESH.err=(e&&e.message&&!/Failed to fetch|Load failed|NetworkError/.test(e.message))?e.message:"Connexion impossible (réseau ou accès refusé)"}
   REFRESH.busy=false;render();
 }
@@ -924,14 +961,15 @@ function adjustments(acts,eftp){
   const out=[],R=INP.fcmax-INP.fcrest,hrPct=a=>(a.average_heartrate-INP.fcrest)/R;
   const recent=acts.filter(a=>a.date>=dkey(new Date(Date.now()-28*864e5))&&a.average_heartrate).sort((a,b)=>a.date<b.date?1:-1);
   const W=a=>a.icu_weighted_avg_watts||a.average_watts;
-  const q=recent.filter(a=>a.sp==="velo"&&W(a)&&W(a)/INP.ftp>=.82&&a.moving_time>=2700).slice(0,3);
+  const anaHR=a=>{const an=ANA[a.id];return an&&an.reps&&an.reps.length?Object.assign({},a,{average_heartrate:an.reps.reduce((s,r)=>s+r[2],0)/an.reps.length,decoupling:an.sum&&an.sum.drift!=null?an.sum.drift:a.decoupling}):a};
+  const q=recent.filter(a=>a.sp==="velo"&&((ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length&&ANA[a.id].sum.pct>=95)||(W(a)&&W(a)/INP.ftp>=.82&&a.moving_time>=2700))).slice(0,3).map(anaHR);
   if(q.length>=2){const easy=q.filter(a=>hrPct(a)<=.6&&(a.decoupling==null||a.decoupling<=3)).length,hard=q.filter(a=>hrPct(a)>=.78||(a.decoupling!=null&&a.decoupling>=8)).length;
     if(easy>=2)out.push({id:"ss+",k:"ss",d:+5,u:"W",t:"Sweet spot / tempo trop faciles",x:`${easy} séances sur ${q.length} à FC basse (< ${Math.round(INP.fcrest+.6*R)} bpm) sans dérive`,p:"+5 W sur sweet spot, tempo et endurance de force"});
     else if(hard>=2)out.push({id:"ss-",k:"ss",d:-5,u:"W",t:"Sweet spot / tempo trop durs",x:`${hard} séances sur ${q.length} à FC haute ou dérive ≥ 8 %`,p:"−5 W sur sweet spot, tempo et endurance de force"})}
   const z=recent.filter(a=>a.sp==="velo"&&W(a)&&W(a)/INP.ftp<.75&&a.moving_time>=3600&&a.decoupling!=null).slice(0,3);
   if(z.length>=2){if(z.filter(a=>a.decoupling<3).length>=2)out.push({id:"z2+",k:"long",d:+5,u:"W",t:"Endurance vélo très stable",x:"Dérive cardiaque < 3 % sur les dernières sorties longues",p:"+5 W sur les blocs de sortie longue"});
     else if(z.filter(a=>a.decoupling>8).length>=2)out.push({id:"z2-",k:"long",d:-5,u:"W",t:"Dérive cardiaque en endurance",x:"Dérive > 8 % sur 2 sorties : chaleur, hydratation ou fatigue",p:"−5 W sur les blocs de sortie longue"})}
-  const r=recent.filter(a=>a.sp==="course"&&a.distance>3000&&(a.distance/a.moving_time*3.6)>=.76*INP.vma).slice(0,3);
+  const r=recent.filter(a=>a.sp==="course"&&((ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length)||(a.distance>3000&&(a.distance/a.moving_time*3.6)>=.76*INP.vma))).slice(0,3).map(anaHR);
   if(r.length>=2){const easy=r.filter(a=>hrPct(a)<=.74).length,hard=r.filter(a=>hrPct(a)>=.87).length;
     if(easy>=2)out.push({id:"seuil+",k:"seuil",d:+.01,u:"%VMA",t:"Allures seuil faciles",x:`FC moyenne ≤ ${Math.round(INP.fcrest+.74*R)} bpm sur ${easy} séances`,p:"Seuil +1 % de VMA (≈ −4 s/km)"});
     else if(hard>=2)out.push({id:"seuil-",k:"seuil",d:-.01,u:"%VMA",t:"Allures seuil dures",x:`FC moyenne ≥ ${Math.round(INP.fcrest+.87*R)} bpm sur ${hard} séances`,p:"Seuil −1 % de VMA (≈ +4 s/km)"})}
@@ -1043,7 +1081,7 @@ function weekSessions(w){
 function doneOn(date,sport){
   const out=[];
   ((DATA&&DATA.sessions)||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push(s)});
-  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>out.push({date,sport,title:a.name,comment:autoComment(a)}));
+  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{const an=ANA[a.id];out.push({date,sport,title:a.name,metrics:autoComment(a),comment:an?an.comment:"",verdict:an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs})});
   return out;
 }
 function autoComment(a){
@@ -1070,7 +1108,8 @@ function vProgramme(){
       const miss=!done.length&&LIVE&&s.date<t&&!s.p.cancel;
       days+=`<div class="sx${open?" open":""}${miss?" miss":""}" data-act="ses" data-v="${w.n}-${s.uid}"><span class="slot">${SLOT_N[s.slot]}</span><span class="ic">${D_IC[s.d]}</span><span class="ti"${s.p.cancel?' style="opacity:.5;text-decoration:line-through"':""}><b>${esc(s.title)}${s.added?' <i class="tag2">ajoutée</i>':s.moved?' <i class="tag2">déplacée</i>':""}</b><small>${s.min?hm(s.min):""}${mainTarget(s.k,s.p)?" · "+esc(mainTarget(s.k,s.p)):""}${miss?" · non faite":""}</small></span>${done.length?'<span class="ok">✓</span>':""}<span class="more" data-act="smore" data-v="${w.n}|${s.uid}">⋯</span></div>`;
       if(open)days+=`<div class="sdet">${steps(s.k,s.p,s.min,w.phase).map(r=>`<div class="srow"><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join("")}</div>`;
-      done.forEach(x=>days+=`<div class="cm"><b>${esc(x.title||"Séance faite")}</b>${x.metrics?'<div class="muted" style="font-size:12px">'+esc(x.metrics)+'</div>':""}<div>${esc(x.comment||"")}</div></div>`);
+      done.forEach(x=>{const bike=s.d==="velo";const reps=(x.reps||[]).map((r,i)=>`<tr><td>R${i+1}</td><td>${toMMSS(r[0])}</td><td>${bike?Math.round(r[1])+" W":paceKm(r[1]*3.6)}</td><td>${r[2]} bpm</td><td>${x.recs&&x.recs[i]?"−"+x.recs[i][1]+" bpm/1'":""}</td></tr>`).join("");
+        days+=`<div class="cm${x.verdict==="warn"?" w":""}"><b>${esc(x.title||"Séance faite")}</b>${x.metrics?'<div class="muted" style="font-size:12px">'+esc(x.metrics)+'</div>':""}${x.comment?`<div style="margin-top:4px">${esc(x.comment)}</div>`:""}${reps?`<table class="rt"><tr><th></th><th>Durée</th><th>${bike?"Puiss.":"Allure"}</th><th>FC moy.</th><th>Récup</th></tr>${reps}</table>`:""}</div>`});
     });
     days+=`<button class="addb" data-act="sadd" data-v="${w.n}|${d}">＋ Ajouter une séance</button></div>`;
   }
