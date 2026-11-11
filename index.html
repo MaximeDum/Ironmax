@@ -556,7 +556,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.11 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.12 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -712,7 +712,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 const DC={natation:"#4EA8FF",velo:"#F5A524",course:"#E4002B"};
 let DATA=null,DERR=false;
 function daysTo(d){return Math.max(0,Math.ceil((new Date(d+"T00:00:00")-new Date())/864e5))}
-function loadData(){fetch("data.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{DATA=j;DERR=false;if(UI.tab==="dash")render()}).catch(()=>{DERR=true;if(UI.tab==="dash")render()})}
+function loadData(){fetch("data.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{DATA=j;DERR=false;maybeRecompute();if(UI.tab==="dash")render()}).catch(()=>{DERR=true;if(UI.tab==="dash")render()})}
 const frn=v=>String(v).replace(".",",");
 const fdate=d=>new Date(d+"T00:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
 function rules(D){
@@ -798,7 +798,7 @@ const mmss=s=>{const p=String(s).trim().split(":");return p.length===2?(+p[0])*6
 const toMMSS=sec=>Math.floor(sec/60)+":"+pad(Math.round(sec%60));
 const paceKm=kmh=>toMMSS(3600/kmh);
 const hm=min=>{min=Math.round(min);return Math.floor(min/60)+"h"+pad(min%60)};
-function loadPlan(){fetch("plan.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{PLAN=j;if(LIVE===null&&lsGet(LSK.raw,null))recompute();render()}).catch(()=>{})}
+function loadPlan(){fetch("plan.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{PLAN=j;maybeRecompute();render()}).catch(()=>{})}
 
 /* ============ INTERVALS.ICU ============ */
 const FIELDS="id,start_date_local,type,name,description,source,device_name,elapsed_time,moving_time,distance,icu_weighted_avg_watts,average_watts,average_heartrate,max_heartrate,icu_training_load,decoupling,trainer,icu_rpe,icu_eftp";
@@ -855,12 +855,13 @@ async function refreshData(){
     const d=new Date();const old=new Date(d);old.setDate(old.getDate()-150);const ow=new Date(d);ow.setDate(ow.getDate()-70);
     const [acts,well]=await Promise.all([apiGet("/activities?oldest="+dkey(old)+"&newest="+dkey(d)+"&fields="+FIELDS),apiGet("/wellness?oldest="+dkey(ow)+"&newest="+dkey(d))]);
     lsSet(LSK.raw,{acts,well,at:Date.now()});recompute();
-    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOf(a.type||"")}))));recompute();toast("Données actualisées");
+    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))));recompute();toast("Données actualisées");
   }catch(e){REFRESH.err=(e&&e.message&&!/Failed to fetch|Load failed|NetworkError/.test(e.message))?e.message:"Connexion impossible (réseau ou accès refusé)"}
   REFRESH.busy=false;render();
 }
 
 /* ============ CALCULS (cf. doc de méthode) ============ */
+const sportOfA=a=>/mobilit/i.test(a.name||"")?"mob":sportOf(a.type||"");
 const sportOf=t=>/Ride|Cycl|Bike/i.test(t)?"velo":/Run/i.test(t)?"course":/Swim/i.test(t)?"nat":/Weight|Strength|Workout|Crossfit/i.test(t)?"muscu":/Yoga|Pilates|Stretch|Mobility/i.test(t)?"mob":"autre";
 function actLoad(a){
   const h=(a.moving_time||0)/3600,sp=sportOf(a.type||"");if(!h)return 0;
@@ -892,15 +893,19 @@ function dedupe(acts){
   }
   return acts.filter(a=>!drop.has(a.id));
 }
+const EV=2;
+function maybeRecompute(){if(DATA&&PLAN&&lsGet(LSK.raw,null)&&(!LIVE||LIVE.ev!==EV)){recompute();render()}}
 function recompute(){
   const raw=lsGet(LSK.raw,null);if(!raw)return;
-  const acts=dedupe((raw.acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOf(a.type||"")}))).map(a=>Object.assign(a,{load:actLoad(a)}));
+  const B=(DATA&&DATA.base)||null;
+  const acts=dedupe((raw.acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))).map(a=>Object.assign(a,{load:actLoad(a)}));
   const well={};(raw.well||[]).forEach(w=>{if(w&&w.id)well[w.id]=w});
   const today=dkey(new Date());
   // CTL/ATL quotidiens
-  const first=new Date();first.setDate(first.getDate()-150);
-  const byDay={};acts.forEach(a=>byDay[a.date]=(byDay[a.date]||0)+a.load);
-  const wk=Object.keys(well).sort();let ctl=wk.length&&well[wk[0]].ctl!=null?well[wk[0]].ctl:40,atl=wk.length&&well[wk[0]].atl!=null?well[wk[0]].atl:ctl;
+  const actsN=B?acts.filter(a=>a.date>B.asof):acts;   // séances ajoutées au socle
+  const first=new Date();first.setDate(first.getDate()-150);if(B){const f=new Date(B.asof+"T00:00:00");f.setDate(f.getDate()+1);first.setTime(f.getTime())}
+  const byDay={};actsN.forEach(a=>byDay[a.date]=(byDay[a.date]||0)+a.load);
+  const wk=Object.keys(well).sort();let ctl=B?B.ctl:(wk.length&&well[wk[0]].ctl!=null?well[wk[0]].ctl:40),atl=B?B.atl:(wk.length&&well[wk[0]].atl!=null?well[wk[0]].atl:ctl);
   const days=[];for(let d=new Date(first);dkey(d)<=today;d.setDate(d.getDate()+1)){const k=dkey(d),l=byDay[k]||0;ctl+=(l-ctl)/42;atl+=(l-atl)/7;days.push({d:k,l,ctl,atl})}
   // fatigue
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -919,17 +924,20 @@ function recompute(){
   }
   const rawF=days.map(x=>{const lp=clamp((x.atl/Math.max(1,x.ctl)-.8)/.7*100,0,100);const rp=recovAt(x.d);return rp==null?lp:.65*lp+.35*rp});
   const fat=days.map((x,i)=>({d:x.d,v:Math.round((rawF[Math.max(0,i-2)]+rawF[Math.max(0,i-1)]+rawF[i])/3)}));
-  const fser=fat.slice(-50);const fnow=fser[fser.length-1].v;
+  const snapF=(B&&DATA.fatigue&&DATA.fatigue.series)||[];
+  const fser=snapF.filter(p=>!B||p.d<=B.asof).concat(fat).slice(-50);const fnow=fser.length?fser[fser.length-1].v:0;
   let highDays=0;for(let i=fser.length-1;i>=0&&fser[i].v>=40;i--)highDays++;
   const lastW=wk.filter(k=>k<=today).slice(-7).map(k=>well[k]);
   const avgW=f=>{const v=lastW.map(w=>w[f]).filter(v=>v);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
-  const L=days[days.length-1];
+  const L=days.length?days[days.length-1]:{ctl,atl};
   // bloc courant & note
   const blk=(PLAN&&PLAN.blocks.find(b=>b.from<=today&&b.to>=today))||{n:"Base 1",from:"2026-09-28"};
-  const win=acts.filter(a=>a.date>=blk.from);
-  const doneH={velo:0,course:0,nat:0,muscu:0};win.forEach(a=>{if(doneH[a.sp]!=null)doneH[a.sp]+=a.moving_time/3600});
-  const planH={velo:0,course:0,nat:0,muscu:0};
-  if(PLAN){if(PLAN.past[blk.n]&&blk.from<PLAN.weeks[0].start)Object.keys(planH).forEach(k=>planH[k]+=PLAN.past[blk.n].plannedH[k]);
+  const useB=B&&blk.from<=B.asof;
+  const win=(useB?actsN:acts).filter(a=>a.date>=blk.from);
+  const doneH=useB?Object.assign({},B.doneH):{velo:0,course:0,nat:0,muscu:0};win.forEach(a=>{if(doneH[a.sp]!=null)doneH[a.sp]+=a.moving_time/3600});
+  const planH=useB?Object.assign({},B.plannedH):{velo:0,course:0,nat:0,muscu:0};
+  if(PLAN&&useB){PLAN.weeks.forEach(w=>{try{weekSessions(w).forEach(s=>{if(s.date>B.asof&&s.date<=today&&!s.p.cancel&&planH[s.d]!=null)planH[s.d]+=(s.min||0)/60})}catch(e){}})}
+  else if(PLAN){if(PLAN.past[blk.n]&&blk.from<PLAN.weeks[0].start)Object.keys(planH).forEach(k=>planH[k]+=PLAN.past[blk.n].plannedH[k]);
     PLAN.weeks.forEach(w=>{if(w.start<blk.from||w.start>today)return;let ws=null;try{ws=PLAN.blocks[0].tpl?weekSessions(w):null}catch(e){}
       if(ws){ws.forEach(s=>{if(s.date<=today&&planH[s.d]!=null)planH[s.d]+=(s.min||0)/60})}else{const frac=Math.min(1,(new Date(today+"T23:59:59")-new Date(w.start+"T00:00:00"))/(7*864e5));Object.keys(planH).forEach(k=>planH[k]+=w.disc[k]*frac)}})}
   const weeksIn=Math.max(1,(new Date(today)-new Date(blk.from))/(7*864e5));
@@ -939,11 +947,12 @@ function recompute(){
   const z2s=win.filter(a=>a.sp==="nat"&&a.average_heartrate&&a.distance>1000).sort((a,b)=>a.date<b.date?-1:1);
   const gains={velo:ef(z2b,a=>(a.icu_weighted_avg_watts||a.average_watts)/a.average_heartrate),course:ef(z2r,a=>a.distance/a.moving_time/a.average_heartrate),nat:ef(z2s,a=>a.distance/a.moving_time/a.average_heartrate)};
   const expG={velo:4,course:3,nat:.5};
-  const effScore=k=>{const g=gains[k];if(g==null)return 15;const e=expG[k]*weeksIn/5;if(e<=0)return 15;const r=g/e;return clamp(r>=1?15+(r-1)*4:10+5*r,8,17)};
+  if(useB)Object.keys(gains).forEach(k=>{if(gains[k]==null)gains[k]=B.gains[k]});
+  const effScore=k=>{if(useB&&win.filter(a=>a.sp===k).length<4)return B.eff[k];const g=gains[k];if(g==null)return 15;const e=expG[k]*weeksIn/5;if(e<=0)return 15;const r=g/e;return clamp(r>=1?15+(r-1)*4:10+5*r,8,17)};
   const t0=new Date("2026-09-27").getTime(),t1=new Date("2027-06-27").getTime(),tn=Date.now();const u=(tn-t0)/(t1-t0);
   const expFTP=255+(280-255)*u,expVMA=15.0+(17.0-15.0)*u,expCSS=125-(125-110)*u;
   const trajScore=pctDiff=>clamp(pctDiff>=0?15+pctDiff:15+1.5*pctDiff,5,20);
-  const traj={velo:trajScore((INP.ftp/expFTP-1)*100),course:trajScore((INP.vma/expVMA-1)*100),nat:trajScore(((expCSS/(mmss(INP.css)||115))-1)*100)};
+  const traj={velo:trajScore((INP.ftp/expFTP-1)*100),course:trajScore((INP.vma/expVMA-1)*100),nat:0};
   const planScore=k=>{if(!planH[k])return 18;const r=doneH[k]/planH[k];return clamp(r<=1.1?20*Math.min(1,r):20-(r-1.1)*20,0,20)};
   const names={nat:"Natation",velo:"Vélo",course:"Course"};
   const disc=["nat","velo","course"].map(k=>{const p=planScore(k),e=effScore(k),t=traj[k];return {k:k==="nat"?"natation":k,n:names[k],v:+(.4*p+.3*e+.3*t).toFixed(1),plan:+p.toFixed(1),eff:+e.toFixed(1),traj:+t.toFixed(1),
@@ -952,8 +961,11 @@ function recompute(){
   const global=disc.reduce((a,d)=>a+d.v*(planH[d.k==="natation"?"nat":d.k]||1),0)/wsum;
   // cap Ironman
   const swims=acts.filter(a=>a.sp==="nat"&&a.distance>1500&&a.date>=dkey(new Date(Date.now()-42*864e5))).map(a=>a.moving_time/(a.distance/100)).sort((a,b)=>a-b);
-  const swimPace=swims.length?swims[Math.floor(swims.length/2)]:(mmss(INP.css)||115)+8;
+  const swimPace=swims.length?swims[Math.floor(swims.length/2)]:(B?B.swimPace:(mmss(INP.css)||115)+8);
+  traj.nat=trajScore((120/swimPace-1)*100*.5);   // natation en entretien : tenir ~2:00/100 m, écart compté à moitié
+  disc.forEach(d=>{if(d.k==="natation"){d.traj=+traj.nat.toFixed(1);d.v=+(.4*d.plan+.3*d.eff+.3*d.traj).toFixed(1)}});
   const lin=(x,z,c)=>clamp((x-z)/(c-z),0,1);
+  const global2=disc.reduce((a,d)=>a+d.v*(planH[d.k==="natation"?"nat":d.k]||1),0)/wsum;
   const parts=[{n:"Vélo (FTP)",w:.35,v:lin(INP.ftp,215,280)},{n:"Course (5 km)",w:.30,v:lin(-(mmss(INP.best5k)||1401),-1506,-1290)},{n:"Natation",w:.10,v:lin(-swimPace,-150,-126)},{n:"Endurance",w:.25,v:lin(L.ctl,42,INP.ctlTarget)}];
   const capV=Math.round(parts.reduce((a,p)=>a+p.w*p.v,0)*100);
   const swimMin=3800/100*swimPace*1.05/60,bikeKmh=27.7*Math.cbrt(.7*INP.ftp/180),bikeMin=180/bikeKmh*60,runMin=(mmss(INP.best5k)||1401)/60*Math.pow(42.195/5,1.06)*1.15;
@@ -966,11 +978,11 @@ function recompute(){
   const vsTraj=+(capV-pv).toFixed(1);
   // semaine en cours
   const wkNow=PLAN&&PLAN.weeks.find(w=>{const e=new Date(w.start+"T00:00:00");e.setDate(e.getDate()+7);return w.start<=today&&dkey(e)>today});
-  const doneWeek=wkNow?acts.filter(a=>a.date>=wkNow.start).reduce((s,a)=>s+a.moving_time/3600,0):null;
+  const doneWeek=wkNow?actsN.filter(a=>a.date>=wkNow.start&&a.sp!=="mob").reduce((s,a)=>s+a.moving_time/3600,0)+(B&&B.week&&B.week.start===wkNow.start?B.week.h:0):null;
   const eftp=Math.max(0,...acts.filter(a=>a.icu_eftp&&a.date>=dkey(new Date(Date.now()-30*864e5))).map(a=>a.icu_eftp));
-  LIVE={asof:today,at:Date.now(),source:"Intervals.icu · actualisé le "+new Date().toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}),
+  LIVE={ev:EV,asof:today,at:Date.now(),source:(B?"Socle au "+fdate(B.asof)+" + ":"")+"Intervals.icu · actualisé le "+new Date().toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}),
     block:{name:blk.n,start:blk.from,work:!(wkNow&&wkNow.deload)},
-    note:{global:+global.toFixed(1),disc},
+    note:{global:+global2.toFixed(1),disc},
     fatigue:{v:fnow,series:fser,atl:Math.round(L.atl),ctl:Math.round(L.ctl),form:Math.round(L.ctl-L.atl),sleep:avgW("sleepSecs")?hm(avgW("sleepSecs")/60):"—",sleepScore:avgW("sleepScore")?Math.round(avgW("sleepScore")):"—",hrv:avgW("hrv")?Math.round(avgW("hrv")):"—",hrvBase:hrvKeys.length?Math.round(hrvKeys.slice(-28).reduce((a,k)=>a+well[k].hrv,0)/Math.min(28,hrvKeys.length)):"—",ans:null,ansLow3:false,highDays,rhr:avgW("restingHR")?Math.round(avgW("restingHR")):"—"},
     cap:{v:capV,vsTraj,parts:parts.map(p=>({n:p.n,v:Math.round(p.v*100)})),est:{total:hm(tot),swim:hm(swimMin),t:"0h10",bike:hm(bikeMin),run:hm(runMin)},target:"11h30",real,plan:planLine,marks:(DATA&&DATA.cap&&DATA.cap.marks)||[]},
     physio:{ftp:INP.ftp,ftpEst:eftp?Math.round(eftp)+" (eFTP)":"—",wkg:+(INP.ftp/INP.weight).toFixed(1),vma:INP.vma,vo2:Math.round(INP.vma*3.5),nextTest:nextTest()},

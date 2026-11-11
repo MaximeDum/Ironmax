@@ -492,5 +492,39 @@
  "dup": {
   "ratioMedian": null
  },
- "sessions": []
+ "sessions": [],
+ "base": {
+  "asof": "2026-11-11",
+  "from": "2026-09-28",
+  "note": "Socle au 11 nov. 2026 : heures réelles Strava du 28 sept. au 11 nov., charge et fatigue du dashboard Polar Track.",
+  "doneH": {
+   "velo": 32.6,
+   "course": 13.0,
+   "nat": 3.9,
+   "muscu": 14.0
+  },
+  "plannedH": {
+   "velo": 34.0,
+   "course": 13.4,
+   "nat": 4.3,
+   "muscu": 13.0
+  },
+  "ctl": 63,
+  "atl": 59,
+  "eff": {
+   "nat": 15.7,
+   "velo": 17.0,
+   "course": 17.0
+  },
+  "gains": {
+   "velo": 6.3,
+   "course": 6.3,
+   "nat": 0.6
+  },
+  "swimPace": 116,
+  "week": {
+   "start": "2026-11-09",
+   "h": 3.8
+  }
+ }
 }
