@@ -556,7 +556,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.9 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.10 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -801,7 +801,7 @@ const hm=min=>{min=Math.round(min);return Math.floor(min/60)+"h"+pad(min%60)};
 function loadPlan(){fetch("plan.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{PLAN=j;if(LIVE===null&&lsGet(LSK.raw,null))recompute();render()}).catch(()=>{})}
 
 /* ============ INTERVALS.ICU ============ */
-const FIELDS="id,start_date_local,type,name,moving_time,distance,icu_weighted_avg_watts,average_watts,average_heartrate,max_heartrate,icu_training_load,decoupling,trainer,icu_rpe,icu_eftp";
+const FIELDS="id,start_date_local,type,name,description,moving_time,distance,icu_weighted_avg_watts,average_watts,average_heartrate,max_heartrate,icu_training_load,decoupling,trainer,icu_rpe,icu_eftp";
 async function apiGet(path){
   const r=await fetch("https://intervals.icu/api/v1/athlete/"+encodeURIComponent(CFG.athlete)+path,{headers:{Authorization:"Basic "+btoa("API_KEY:"+CFG.key)}});
   if(r.status===401||r.status===403)throw new Error("Clé ou identifiant refusé par Intervals.icu");
@@ -829,7 +829,11 @@ function planTarget(s){
 async function analyzeRecent(acts){
   const since=dkey(new Date(Date.now()-21*864e5));
   for(const a of acts){
-    if(a.date<since||ANA[a.id]||!(a.sp==="velo"||a.sp==="course")||(a.moving_time||0)<1200)continue;
+    if(a.date<since||ANA[a.id])continue;
+    if(a.sp==="nat"){const ps=plannedFor(a.date,"nat");if(!ps)continue;const feel=ps.p.light?"facile":({"1":"facile","2":"modere","3":"facile","4":"soutenu"})[ps.p.var]||(ps.k==="ow"?"modere":"modere");
+      const r=IronAnalyze.analyzeSwim({m:ps.p.m,feel},{distance:a.distance,moving_time:a.moving_time,hr:a.average_heartrate,description:a.description},{fcmax:INP.fcmax,fcrest:INP.fcrest});
+      ANA[a.id]={title:ps.title,comment:r.comment,verdict:r.verdict,sum:r.sum,sport:"nat",date:a.date};continue}
+    if(!(a.sp==="velo"||a.sp==="course")||(a.moving_time||0)<1200)continue;
     const ps=plannedFor(a.date,a.sp),plan=planTarget(ps);if(!plan)continue;
     try{
       const raw=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.id)+"/streams.json?types=time,watts,heartrate,velocity_smooth");

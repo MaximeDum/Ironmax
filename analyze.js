@@ -106,11 +106,37 @@
     return res;
   }
 
+  // Natation : distance (corrigée par la description si besoin), allure /100 m et FC vs l'intensité prévue (au ressenti).
+  // plan = {m, feel:"facile"|"modere"|"soutenu", ow:bool} ; act = {distance, moving_time, hr, description}
+  function realSwimDistance(act) {
+    const d = act.description || "";
+    let m = /(\d[\d\s.,]*)\s*\*/.exec(d);
+    if (m) { const v = parseFloat(m[1].replace(/\s/g, "").replace(",", ".")); if (v > 0) return v < 20 ? v * 1000 : v; }
+    m = /(\d+(?:[.,]\d+)?)\s*km au compteur/i.exec(d);
+    if (m) return parseFloat(m[1].replace(",", ".")) * 1000;
+    return act.distance || 0;
+  }
+  function analyzeSwim(plan, act, prof) {
+    const R = prof.fcmax - prof.fcrest, dist = realSwimDistance(act), corr = dist !== act.distance;
+    const sec100 = act.moving_time / (dist / 100), p100 = Math.floor(sec100 / 60) + ":" + String(Math.round(sec100 % 60)).padStart(2, "0");
+    const pctD = plan.m ? dist / plan.m * 100 : 100, hr = act.hr, res = (hr - prof.fcrest) / R;
+    // repères natation (FC plus basse qu'à pied) : facile < 55 % de réserve, modéré 55–68 %, soutenu > 62 %
+    const zone = !hr ? null : res < 0.55 ? "facile" : res < 0.68 ? "modéré" : "soutenu";
+    const want = plan.feel || "modere", wantN = { facile: "facile", modere: "modéré", soutenu: "soutenu" }[want] || "modéré";
+    const bits = [`${Math.round(dist).toLocaleString("fr-FR")} m${corr ? " (distance corrigée)" : ""} pour ${plan.m ? Number(plan.m).toLocaleString("fr-FR") + " m prévus" : "—"} · ${p100}/100 m` + (hr ? ` · FC ${Math.round(hr)} bpm (${zone})` : "")];
+    const warn = [];
+    if (pctD < 85) warn.push(`volume à ${Math.round(pctD)} % du prévu`);
+    if (zone && want === "facile" && zone === "soutenu") warn.push("plus intense que prévu");
+    if (zone && want === "soutenu" && zone === "facile") warn.push("plus facile que prévu");
+    const verdict = warn.length ? "warn" : pctD > 110 ? "up" : "ok";
+    const concl = warn.length ? `À surveiller : ${warn.join(", ")}.` : `Conforme à la séance ${wantN}e prévue.`.replace("modérée", "modérée").replace("facilee", "facile");
+    return { verdict, comment: bits.join("") + ". " + concl, sum: { dist, sec100, pctD, zone } };
+  }
   // "3×18'" + "5'" → {n, repSec, recSec}
   function parseSets(sets, rec) {
     const m = /^(\d+)×(\d+)'(\d+)?/.exec(sets || ""); const r = /(\d+)'(\d+)?/.exec(rec || "");
     return m ? { n: +m[1], repSec: +m[2] * 60 + (+m[3] || 0), recSec: r ? +r[1] * 60 + (+r[2] || 0) : 0 } : (/^(\d+)'$/.test(sets || "") ? { n: 1, repSec: parseInt(sets) * 60, recSec: 0 } : null);
   }
-  const api = { analyze, parseSets, cleanHR, pace };
+  const api = { analyze, analyzeSwim, realSwimDistance, parseSets, cleanHR, pace };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.IronAnalyze = api;
 })(typeof self !== "undefined" ? self : this);
