@@ -199,7 +199,7 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .chart text{fill:var(--mut);font-size:10px;font-family:-apple-system,system-ui}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .tile{background:var(--card);border-radius:16px;padding:12px}.tile span{font-size:11.5px;color:var(--mut)}.tile b{display:block;font-family:var(--disp);font-weight:800;font-size:26px;line-height:1.1;margin-top:4px}.tile b small{font-size:12px;color:var(--mut);margin-left:2px}.tile em{font-style:normal;font-size:11px;color:var(--mut)}
-.vp{padding:10px 0;border-top:1px solid var(--line)}.vp:first-of-type{border:0}
+.vp{padding:14px 0;border-top:3px solid var(--line)}.vg{display:grid;grid-template-columns:1fr 1fr .8fr;gap:6px;margin-top:8px}.vg small{display:block;font-size:10.5px;color:var(--mut)}.vg b{font-family:var(--disp);font-size:15px}.vg b.up{color:#3DDC84}.vg b.ok{color:#4EA8FF}.vg b.warn{color:#F5A524}.emk{position:absolute;top:-4px;width:3px;height:16px;margin-left:-1.5px;background:var(--txt);border-radius:2px}.vp:first-of-type{border:0}
 .vp .t{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-weight:600;font-size:14px}
 .vp .x{font-size:12.5px;color:var(--mut);margin-top:2px}
 .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
@@ -557,7 +557,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.15 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.16 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -797,8 +797,8 @@ function vDash(){
   const msgs=rules(D).map(m=>`<div class="msg ${m[0]}"><i>${m[0]==="alert"?"!":m[0]==="warn"?"•":"i"}</i><div>${esc(m[1])}</div></div>`).join("");
   const bars=D.note.disc.map(d=>`<div class="bar"><div class="h"><span>${d.n}</span><b>${frn(d.v)}<small class="muted" style="font-size:12px">/20</small></b></div><div class="trk"><i style="width:${d.v*5}%;background:${DC[d.k]}"></i></div><div class="f">Plan ${frn(d.plan)} · efficacité ${frn(d.eff)} · trajectoire ${frn(d.traj)}<br>${esc(d.txt)}</div></div>`).join("");
   const pc=v=>v>=85?"#3DDC84":v>=65?"#A3D94B":v>=45?"#F5A524":v>=25?"#FF7A3D":"#E4002B";
-  const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px;color:${pc(p.v)}">${p.v} %</b></div><div class="trk"><i style="width:${p.v}%;background:${pc(p.v)}"></i></div></div>`).join("");
-  const vp=(D.vsPlan||[]).map(r=>`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
+  const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px;color:${pc(p.v)}">${p.v} %${p.e!=null?`<small class="muted" style="font-size:11px;font-weight:500"> · attendu ${p.e} %</small>`:""}</b></div><div class="trk" style="position:relative;overflow:visible"><i style="width:${p.v}%;background:${pc(p.v)}"></i>${p.e!=null?`<span class="emk" style="left:${p.e}%"></span>`:""}</div></div>`).join("");
+  const vp=(D.vsPlan||[]).map(r=>r.delta!==undefined?`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="vg"><div><small>Attendu aujourd'hui</small><b>${esc(r.exp)}</b></div><div><small>Réel</small><b>${esc(r.real)}</b></div><div><small>Écart</small><b class="${r.s}">${esc(r.delta||"—")}</b></div></div>${r.goal?`<div class="x">Objectif final : ${esc(r.goal)}</div>`:""}</div>`:`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
   const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).slice(0,5).map(a=>{const an=ANA[a.id];return {date:a.date,sport:a.sp,title:a.name,metrics:autoComment(a),comment:an?an.comment:"",verdict:an&&an.verdict}}):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,5);
   const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.verdict==="warn"?"À surveiller":x.verdict==="up"?"Marge":"Maîtrisée"}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc">${esc(x.comment)}</div>`:""}</div>`).join("")}</div>`:"";
   const hero=heroBanner(D);
@@ -810,9 +810,9 @@ function vDash(){
     ${fatChart(f.series)}
     <ul class="facts"><li><span>Charge récente (7 j)</span><b>${f.atl}</b></li><li><span>Charge de fond (42 j)</span><b>${f.ctl}</b></li><li><span>Forme</span><b>${f.form>0?"+":""}${f.form}</b></li><li><span>Sommeil, 7 nuits</span><b>${f.sleep} · score ${f.sleepScore}</b></li><li><span>HRV de nuit (base)</span><b>${f.hrv} ms (${f.hrvBase})</b></li>${f.ans!=null?`<li><span>Charge nerveuse ANS, 3 nuits</span><b>${frn(f.ans)}</b></li>`:`<li><span>FC de repos, 7 nuits</span><b>${f.rhr} bpm</b></li>`}</ul></div>
   <div class="dc"><div class="dl">Note d'entraînement<small>${esc(D.block.name)} · depuis le ${fdate(D.block.start)}</small></div><div class="big">${frn(D.note.global)}<small>/ 20</small></div>${bars}</div>
-  <div class="dc"><div class="dl">Cap sur l'Ironman<small>du tri M du 31 mai (0 %) à l'objectif minimum du 27 juin (100 %)</small></div><div class="big">${C.v} %<small>· ${C.vsTraj>=0?"+":""}${frn(C.vsTraj)} pt vs prévu</small></div>
+  <div class="dc"><div class="dl">Cap sur l'Ironman<small>du tri M du 31 mai (0 %) à l'objectif minimum du 27 juin (100 %)</small></div><div class="big">${C.v} %<small>· attendu ${C.expNow!=null?C.expNow:Math.round(C.v-C.vsTraj)} % (${C.vsTraj>=0?"+":""}${frn(C.vsTraj)} pt)</small></div>
     <div class="splits"><div><span>Nage</span><b>${C.est.swim}</b></div><div><span>T1+T2</span><b>${C.est.t}</b></div><div><span>Vélo</span><b>${C.est.bike}</b></div><div><span>Marathon</span><b>${C.est.run}</b></div><div><span>Estimé</span><b>${C.est.total}</b></div></div>
-    ${capChart(C)}<div class="f muted" style="font-size:11.5px"><span style="color:var(--acc)">━</span> réel  <span>╌</span> trajectoire prévue</div>${parts}</div>
+    ${capChart(C)}<div class="f muted" style="font-size:11.5px"><span style="color:var(--acc)">━</span> réel  <span>╌</span> niveau à avoir à chaque date pour être prêt le jour J · <span style="color:var(--txt)">▏</span> repère sur les barres = attendu aujourd'hui</div>${parts}</div>
   <div class="dc" style="display:flex;align-items:center;gap:12px"><span style="font-size:24px">🧘</span><div style="flex:1"><div class="dl" style="color:var(--txt)">Mobilité cette semaine<small>${mobW.n} séance${mobW.n>1?"s":""} · ${hm(mobW.min)} · objectif 3 séances</small></div><div class="trk" style="margin-top:6px"><i style="width:${Math.min(100,mobW.n/3*100)}%;background:${mobW.n>=3?"#3DDC84":"#F5A524"}"></i></div></div></div>
   <div class="tiles"><div class="tile"><span>FTP</span><b>${P.ftp}<small>W</small></b><em>${frn(P.wkg)} W/kg · est. ${P.ftpEst}</em></div><div class="tile"><span>VMA</span><b>${frn(P.vma)}<small>km/h</small></b><em>seuil ≈ ${paceKm(P.vma*.88)}/km</em></div><div class="tile"><span>VO2max</span><b>~${P.vo2}</b><em>estimée</em></div></div>
   ${D.vsPlan?`<div class="dc"><div class="dl">Où tu en es vs le plan</div>${vp}</div>`:""}
@@ -927,7 +927,7 @@ function dedupe(acts){
   }
   return acts.filter(a=>!drop.has(a.id));
 }
-const EV=4;
+const EV=5;
 function maybeRecompute(){if(DATA&&PLAN&&lsGet(LSK.raw,null)&&(!LIVE||LIVE.ev!==EV)){recompute();render()}}
 function recompute(){
   const raw=lsGet(LSK.raw,null);if(!raw)return;
@@ -1009,11 +1009,15 @@ function recompute(){
   // allure ramenée à 140 bpm sur les sorties Z2 (FC moyenne 125–150, > 30 min) : 2,5 s/km par bpm d'écart
   const z2p=actsN.filter(a=>a.sp==="course"&&a.average_heartrate>=125&&a.average_heartrate<=150&&a.moving_time>=1800&&a.distance>3000).sort((a,b)=>a.date<b.date?-1:1).map(a=>a.moving_time/(a.distance/1000)-(140-a.average_heartrate)*2.5);
   const p140s=(B&&B.p140?[B.p140.s]:[]).concat(z2p).slice(-5);const p140=p140s.length?p140s.slice().sort((a,b)=>a-b)[Math.floor(p140s.length/2)]:330;
-  const peak=new Date("2027-05-30").getTime(),uP=Math.min(1,(tn-t0)/(peak-t0));
-  const exp={p140:340-(340-300)*u,longRun:14+(30-14)*uP,km4w:25+(45-25)*uP,longRide:3+(5.5-3)*uP};
+  // Trajectoire attendue : le niveau qu'il faut avoir à chaque date pour être prêt le 27 juin (départ 28 sept., pic de volume fin mai)
+  const T0=new Date("2026-09-28").getTime(),TR=new Date("2027-06-27").getTime(),TP=new Date("2027-05-30").getTime();
+  const expAt=ms=>{const uu=clamp((ms-T0)/(TR-T0),0,1),up=clamp((ms-T0)/(TP-T0),0,1);return {ftp:255+25*uu,longRide:3+2.5*up,p140:340-40*uu,longRun:14+16*up,km4w:25+20*up,ctl:58+(INP.ctlTarget-58)*up,swim:130-4*uu}};
+  const partsAt=m=>({velo:.7*lin(m.ftp,215,280)+.3*lin(m.longRide,2,5.5),course:.5*lin(-m.p140,-370,-300)+.25*lin(m.longRun,10,30)+.25*lin(m.km4w,15,45),nat:lin(-m.swim,-150,-126),end:lin(m.ctl,42,INP.ctlTarget)});
+  const capAt=ms=>{const p=partsAt(expAt(ms));return (.35*p.velo+.3*p.course+.1*p.nat+.25*p.end)*100};
+  const exp=expAt(tn),expP=partsAt(exp);
   const bikeV=.7*lin(INP.ftp,215,280)+.3*lin(longRide,2,5.5);
   const runV=.5*lin(-p140,-370,-300)+.25*lin(longRun,10,30)+.25*lin(km4w,15,45);
-  const parts=[{n:"Vélo (FTP + endurance)",w:.35,v:bikeV},{n:"Course (prépa marathon)",w:.30,v:runV},{n:"Natation",w:.10,v:lin(-swimPace,-150,-126)},{n:"Endurance (charge de fond)",w:.25,v:lin(L.ctl,42,INP.ctlTarget)}];
+  const parts=[{n:"Vélo (FTP + endurance)",w:.35,v:bikeV,e:expP.velo},{n:"Course (prépa marathon)",w:.30,v:runV,e:expP.course},{n:"Natation",w:.10,v:lin(-swimPace,-150,-126),e:expP.nat},{n:"Endurance (charge de fond)",w:.25,v:lin(L.ctl,42,INP.ctlTarget),e:expP.end}];
   traj.course=trajScore((exp.p140/p140-1)*100);
   disc.forEach(d=>{if(d.k==="course"){d.traj=+traj.course.toFixed(1);d.v=+(.4*d.plan+.3*d.eff+.3*d.traj).toFixed(1)}});
   const global2=disc.reduce((a,d)=>a+d.v*(planH[d.k==="natation"?"nat":d.k]||1),0)/wsum;
@@ -1027,9 +1031,9 @@ function recompute(){
   let caph=lsGet(LSK.caph,[]);caph=caph.filter(p=>p.d!==today);caph.push({d:today,v:capV});caph.sort((a,b)=>a.d<b.d?-1:1);lsSet(LSK.caph,caph.slice(-200));
   const snapReal=(DATA&&DATA.cap&&DATA.cap.real)||[];
   const real=snapReal.filter(p=>p.d<caph[0].d).concat(caph);
-  const planLine=(DATA&&DATA.cap&&DATA.cap.plan)||[];
+  const planLine=[];for(let ms=T0;ms<TR;ms+=7*864e5)planLine.push({d:dkey(new Date(ms)),v:+capAt(ms).toFixed(1)});planLine.push({d:"2027-06-27",v:100});
   const pv=(()=>{if(planLine.length<2)return capV;for(let i=1;i<planLine.length;i++){if(planLine[i].d>=today){const a=planLine[i-1],b=planLine[i];const f=(new Date(today)-new Date(a.d))/(new Date(b.d)-new Date(a.d));return a.v+(b.v-a.v)*f}}return 100})();
-  const vsTraj=+(capV-pv).toFixed(1);
+  const vsTraj=+(capV-capAt(tn)).toFixed(1);
   // semaine en cours
   const wkNow=PLAN&&PLAN.weeks.find(w=>{const e=new Date(w.start+"T00:00:00");e.setDate(e.getDate()+7);return w.start<=today&&dkey(e)>today});
   const doneWeek=wkNow?actsN.filter(a=>a.date>=wkNow.start&&a.sp!=="mob").reduce((s,a)=>s+a.moving_time/3600,0)+(B&&B.week&&B.week.start===wkNow.start?B.week.h:0):null;
@@ -1038,7 +1042,7 @@ function recompute(){
     block:{name:blk.n,start:blk.from,work:!(wkNow&&wkNow.deload)},
     note:{global:+global2.toFixed(1),disc},
     fatigue:{v:fnow,series:fser,atl:Math.round(L.atl),ctl:Math.round(L.ctl),form:Math.round(L.ctl-L.atl),sleep:avgW("sleepSecs")?hm(avgW("sleepSecs")/60):"—",sleepScore:avgW("sleepScore")?Math.round(avgW("sleepScore")):"—",hrv:avgW("hrv")?Math.round(avgW("hrv")):"—",hrvBase:hrvKeys.length?Math.round(hrvKeys.slice(-28).reduce((a,k)=>a+well[k].hrv,0)/Math.min(28,hrvKeys.length)):"—",ans:null,ansLow3:false,highDays,rhr:avgW("restingHR")?Math.round(avgW("restingHR")):"—"},
-    cap:{v:capV,vsTraj,parts:parts.map(p=>({n:p.n,v:Math.round(p.v*100)})),est:{total:hm(tot),swim:hm(swimMin),t:"0h10",bike:hm(bikeMin),run:hm(runMin)},target:"11h30",real,plan:planLine,marks:(DATA&&DATA.cap&&DATA.cap.marks)||[]},
+    cap:{v:capV,vsTraj,parts:parts.map(p=>({n:p.n,v:Math.round(p.v*100),e:Math.round(p.e*100)})),expNow:Math.round(capAt(tn)),est:{total:hm(tot),swim:hm(swimMin),t:"0h10",bike:hm(bikeMin),run:hm(runMin)},target:"11h30",real,plan:planLine,marks:(DATA&&DATA.cap&&DATA.cap.marks)||[]},
     physio:{ftp:INP.ftp,ftpEst:eftp?Math.round(eftp)+" (eFTP)":"—",wkg:+(INP.ftp/INP.weight).toFixed(1),vma:INP.vma,vo2:Math.round(INP.vma*3.5),nextTest:nextTest()},
     week:wkNow?{plannedH:+weekSessions(wkNow).filter(s=>!s.p.cancel).reduce((a,s)=>a+(s.min||0)/60,0).toFixed(1),doneH:+doneWeek.toFixed(1),keyMissed:[],elapsed:(Date.now()-new Date(wkNow.start+"T00:00:00"))/(7*864e5)}:null,
     dup:{ratioMedian:null},acts:acts.slice(-60),eftp};
@@ -1047,19 +1051,20 @@ function recompute(){
   const tH=k=>Object.keys(k).reduce((a,x)=>a+k[x],0);const dTot=tH(doneH),pTot=tH(planH),vr=pTot?dTot/pTot:1;
   const st=(x,lo,hi)=>x>=hi?["up","En avance"]:x>=lo?["ok","Dans les temps"]:["warn","En retard"];
   const g=(k,e)=>gains[k]==null?null:gains[k];const expEff={velo:4*weeksIn/5,course:3*weeksIn/5,nat:.5*weeksIn/5};
-  const rows=[],fr=x=>String(x).replace(".",","),hhm=x=>Math.floor(x)+"h"+pad(Math.round(x%1*60));
-  const row=(i,e,r,ratio,lo=.97,hi=1.03)=>rows.push({i,exp:e,real:r,s:ratio>=hi?"up":ratio>=lo?"ok":"warn",t:ratio>=hi?"En avance":ratio>=lo?"Dans les temps":"En retard"});
-  row("Volume depuis le "+fdate(blk.from),"~"+Math.round(pTot)+" h","~"+Math.round(dTot)+" h",vr,.9,1.1);
-  row("🚴 FTP","≈ "+Math.round(expFTP)+" W (280 W en juin)",INP.ftp+" W"+(eftp?" · eFTP "+Math.round(eftp)+" W":""),INP.ftp/expFTP,.98,1.02);
-  const expKmh=30*Math.cbrt(.75*expFTP/210)*Math.pow(81/(INP.weight||81),.1)*(.85+.15*lin(exp.longRide,2,5.5));
-  row("🚴 Vitesse Ironman estimée",fr(expKmh.toFixed(1))+" km/h (30 km/h en juin)",fr(bikeKmh.toFixed(1))+" km/h · vélo en "+hm(bikeMin),bikeKmh/expKmh,.99,1.01);
-  row("🚴 Plus longue sortie (6 sem.)",hhm(exp.longRide)+" (5h30 en mai)",hhm(longRide),longRide/exp.longRide,.9,1.1);
-  row("🏃 Allure à 140 bpm",paceKm(3600/exp.p140)+" (5:00/km en juin)",paceKm(3600/p140),exp.p140/p140,.98,1.02);
-  row("🏃 Plus longue sortie (6 sem.)",fr(exp.longRun.toFixed(0))+" km (30 km en mai)",fr(longRun.toFixed(1))+" km",longRun/exp.longRun,.9,1.1);
-  row("🏃 Volume hebdo (4 sem.)",fr(exp.km4w.toFixed(0))+" km (45 km en mai)",fr(km4w.toFixed(1))+" km",km4w/exp.km4w,.9,1.1);
+  const rows=[],fr=x=>String(x).replace(".",","),hhm=x=>Math.floor(x)+"h"+pad(Math.round(x%1*60)),sg=x=>(x>=0?"+":"−")+fr(Math.abs(x));
+  const row=(i,e,r,ratio,lo,hi,goal,delta)=>rows.push({i,exp:e,real:r,goal,delta,s:ratio>=hi?"up":ratio>=lo?"ok":"warn",t:ratio>=hi?"En avance":ratio>=lo?"Dans les temps":"En retard"});
+  row("Volume depuis le "+fdate(blk.from),Math.round(pTot)+" h",Math.round(dTot)+" h",vr,.9,1.1,"",sg(Math.round(dTot-pTot))+" h");
+  row("🚴 FTP",Math.round(exp.ftp)+" W",INP.ftp+" W"+(eftp?" (eFTP "+Math.round(eftp)+")":""),INP.ftp/exp.ftp,.98,1.02,"280 W",sg(Math.round(INP.ftp-exp.ftp))+" W");
+  const expKmh=30*Math.cbrt(.75*exp.ftp/210)*Math.pow(81/(INP.weight||81),.1)*(.85+.15*lin(exp.longRide,2,5.5));
+  row("🚴 Vitesse Ironman estimée",fr(expKmh.toFixed(1))+" km/h",fr(bikeKmh.toFixed(1))+" km/h",bikeKmh/expKmh,.99,1.01,"30 km/h (6h00)",sg((bikeKmh-expKmh).toFixed(1))+" km/h");
+  row("🚴 Plus longue sortie (6 sem.)",hhm(exp.longRide),hhm(longRide),longRide/exp.longRide,.9,1.1,"5h30 fin mai",sg(Math.round((longRide-exp.longRide)*60))+" min");
+  row("🏃 Allure à 140 bpm",paceKm(3600/exp.p140)+"/km",paceKm(3600/p140)+"/km",exp.p140/p140,.98,1.02,"5:00/km",sg(Math.round(exp.p140-p140))+" s/km");
+  row("🏃 Plus longue sortie (6 sem.)",fr(exp.longRun.toFixed(1))+" km",fr(longRun.toFixed(1))+" km",longRun/exp.longRun,.9,1.1,"30 km fin mai",sg((longRun-exp.longRun).toFixed(1))+" km");
+  row("🏃 Volume hebdo (4 sem.)",fr(exp.km4w.toFixed(1))+" km",fr(km4w.toFixed(1))+" km",km4w/exp.km4w,.9,1.1,"45 km fin mai",sg((km4w-exp.km4w).toFixed(1))+" km");
   const expRun=exp.p140*1.12*(1+.06*(1-Math.min(1,(exp.longRun/30+exp.km4w/45)/2)));
-  row("🏃 Allure marathon Ironman estimée",paceKm(3600/expRun)+" (5:40/km en juin)",paceKm(3600/runPace)+" · marathon en "+hm(runMin),expRun/runPace,.98,1.02);
-  [["velo","🚴 Efficacité cardiaque"],["course","🏃 Efficacité cardiaque"],["nat","🏊 Efficacité cardiaque"]].forEach(([k,l])=>{const v=gains[k];if(v==null)return;const r=v/Math.max(.1,expEff[k]);row(l,"+"+fr(expEff[k].toFixed(1))+" %",(v>=0?"+":"")+fr(v.toFixed(1))+" %",r,.8,1.2)});
+  row("🏃 Allure marathon Ironman estimée",paceKm(3600/expRun)+"/km",paceKm(3600/runPace)+"/km",expRun/runPace,.98,1.02,"5:40/km (4h00)",sg(Math.round(expRun-runPace))+" s/km");
+  row("💪 Charge de fond (CTL)",String(Math.round(exp.ctl)),String(Math.round(L.ctl)),L.ctl/exp.ctl,.95,1.05,String(INP.ctlTarget)+" fin mai",sg(Math.round(L.ctl-exp.ctl)));
+  [["velo","🚴 Efficacité cardiaque"],["course","🏃 Efficacité cardiaque"],["nat","🏊 Efficacité cardiaque"]].forEach(([k,l])=>{const v=gains[k];if(v==null)return;const r=v/Math.max(.1,expEff[k]);row(l,"+"+fr(expEff[k].toFixed(1))+" %",(v>=0?"+":"")+fr(v.toFixed(1))+" %",r,.8,1.2,"",sg((v-expEff[k]).toFixed(1))+" pt")});
   rows.push({i:"Fatigue accumulée",exp:"< 40",real:fnow+"/100",s:fnow<40?"ok":"warn",t:fnow<40?"Dans la cible":"À surveiller"});
   const vig=(LIVE.adjust||[]).map(a=>a.t).concat(highDays>4?["Fatigue élevée depuis "+highDays+" jours"]:[]);
   rows.push({i:"Points de vigilance",exp:"aucun",real:vig.length?vig.join(" ; "):"aucun",s:vig.length?"warn":"ok",t:vig.length?"À surveiller":"RAS"});
