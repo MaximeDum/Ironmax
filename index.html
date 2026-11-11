@@ -142,6 +142,35 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .end .big{font-family:var(--disp);font-weight:800;font-size:56px;color:var(--acc);line-height:1}
 .x-btn{width:38px;height:38px;border-radius:99px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px}
 .empty{color:var(--mut);text-align:center;padding:20px 0}
+.dc{background:var(--card);border-radius:var(--r);padding:18px;margin-top:12px}
+.dl{font-size:13px;color:var(--mut);font-weight:600}
+.dl small{display:block;font-weight:400;font-size:11.5px;margin-top:1px}
+.big{font-family:var(--disp);font-weight:800;font-size:52px;line-height:1;margin:6px 0 10px}
+.big small{font-size:18px;color:var(--mut);font-weight:700;margin-left:4px}
+.bar{margin-top:10px}.bar .h{display:flex;justify-content:space-between;font-size:14px;font-weight:600}.bar .h b{font-family:var(--disp);font-size:18px}
+.trk{height:8px;border-radius:9px;background:var(--card2);overflow:hidden;margin:5px 0 3px}.trk i{display:block;height:100%;border-radius:9px}
+.bar .f{font-size:12px;color:var(--mut)}
+.gauge{position:relative;display:flex;height:10px;border-radius:9px;overflow:hidden;margin:4px 0 4px}
+.gauge span{height:100%}.gauge b{position:absolute;top:-4px;width:5px;height:18px;margin-left:-2.5px;background:var(--txt);border-radius:3px;box-shadow:0 0 0 2px var(--card)}
+.gsc{display:flex;font-size:10.5px;color:var(--mut)}
+.facts{list-style:none;padding:0;margin:12px 0 0;font-size:13.5px}.facts li{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid var(--line)}.facts li span{color:var(--mut)}
+.msg{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--card);margin-top:8px;font-size:14px}
+.msg i{font-style:normal;flex:0 0 auto;width:24px;height:24px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.msg.alert i{background:var(--acc);color:#fff}.msg.warn i{background:#F5A524;color:#111}.msg.info i{background:var(--card2);color:var(--txt)}
+.splits{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:10px}
+.splits div{flex:1;text-align:center;padding:8px 2px;border-right:1px solid var(--line)}.splits div:last-child{border:0;background:rgba(228,0,43,.14)}
+.splits span{display:block;font-size:10.5px;color:var(--mut)}.splits b{font-family:var(--disp);font-size:15px}
+.splits div:last-child b{color:var(--acc)}
+.chart{width:100%;display:block;margin-top:10px}
+.chart text{fill:var(--mut);font-size:10px;font-family:-apple-system,system-ui}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.tile{background:var(--card);border-radius:16px;padding:12px}.tile span{font-size:11.5px;color:var(--mut)}.tile b{display:block;font-family:var(--disp);font-weight:800;font-size:26px;line-height:1.1;margin-top:4px}.tile b small{font-size:12px;color:var(--mut);margin-left:2px}.tile em{font-style:normal;font-size:11px;color:var(--mut)}
+.vp{padding:10px 0;border-top:1px solid var(--line)}.vp:first-of-type{border:0}
+.vp .t{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-weight:600;font-size:14px}
+.vp .x{font-size:12.5px;color:var(--mut);margin-top:2px}
+.st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.st.up{background:rgba(61,220,132,.15);color:#3DDC84}.st.ok{background:rgba(78,168,255,.16);color:#4EA8FF}.st.warn{background:rgba(245,165,36,.18);color:#F5A524}
+.src{font-size:11.5px;color:var(--mut);text-align:center;margin-top:16px}
 .intro{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;justify-content:center;align-items:center;transition:opacity .5s}
 .intro.out{opacity:0;pointer-events:none}
 .intro svg{width:100%;max-width:560px}
@@ -156,7 +185,8 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 <div class="app" id="app"></div>
 
 <nav class="tabs"><div class="in">
-  <button data-tab="seances" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 13h3M8 16h6"/></svg>Séances</button>
+  <button data-tab="dash" class="on"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 18 0"/><path d="M12 12l4-4"/><path d="M3 16h18"/></svg>Dashboard</button>
+  <button data-tab="seances"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 13h3M8 16h6"/></svg>Séances</button>
   <button data-tab="corps"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2"/><path d="M5 9l7 1 7-1M12 10v5M12 15l-3 6M12 15l3 6"/></svg>Corps</button>
   <button data-tab="suivi"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Suivi</button>
   <button data-tab="reglages"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Réglages</button>
@@ -287,7 +317,7 @@ const SCN={court:"Court",normal:"Normal",long:"Long"};
 const LS="delie.v1";
 let S={sessions:[],pain:[],prefs:{voice:true,beep:true,scale:"normal",intro:true}};
 try{const r=JSON.parse(localStorage.getItem(LS)||"null");if(r){S.sessions=r.sessions||[];S.pain=r.pain||[];Object.assign(S.prefs,r.prefs||{})}}catch(e){}
-const UI={tab:"seances",cat:"triathlon",mode:"pre",sel:[],bodyMode:"cible",view:"front",gMin:10,gMode:"pre",gen:null,confirmDel:null};
+const UI={tab:"dash",cat:"triathlon",mode:"pre",sel:[],bodyMode:"cible",view:"front",gMin:10,gMode:"pre",gen:null,confirmDel:null};
 function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
 
 let DB=null;
@@ -381,9 +411,10 @@ function genSession(){
 function render(){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===UI.tab));
   const app=$("#app");
-  const head=`<header class="top"><div><div class="brand">Ironmax<i>.</i></div><div class="sub">Mobilité pour triathlète</div></div><div class="sync${sync.on?" on":""}"><b></b>${sync.on?"Synchronisé":"Local"}</div></header>`;
+  const head=`<header class="top"><div><div class="brand">Ironmax<i>.</i></div><div class="sub">${UI.tab==="dash"?"Cap sur l'Ironman · J-"+daysTo("2027-06-27"):"Mobilité pour triathlète"}</div></div><div class="sync${sync.on?" on":""}"><b></b>${sync.on?"Synchronisé":"Local"}</div></header>`;
   let body="";
-  if(UI.tab==="seances")body=vSeances();
+  if(UI.tab==="dash")body=vDash();
+  else if(UI.tab==="seances")body=vSeances();
   else if(UI.tab==="corps")body=vCorps();
   else if(UI.tab==="suivi")body=vSuivi();
   else body=vReglages();
@@ -479,7 +510,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.2 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.3 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -608,6 +639,78 @@ document.addEventListener("click",ev=>{
 });
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&PL&&!PL.ended){wakeOn();PL.last=performance.now()}});
 
+
+/* ============ DASHBOARD ============ */
+const DC={natation:"#4EA8FF",velo:"#F5A524",course:"#E4002B"};
+let DATA=null,DERR=false;
+function daysTo(d){return Math.max(0,Math.ceil((new Date(d+"T00:00:00")-new Date())/864e5))}
+function loadData(){fetch("data.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{DATA=j;DERR=false;if(UI.tab==="dash")render()}).catch(()=>{DERR=true;if(UI.tab==="dash")render()})}
+const frn=v=>String(v).replace(".",",");
+const fdate=d=>new Date(d+"T00:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
+function rules(D){
+  const m=[],f=D.fatigue;
+  if(f.v>=60)m.push(["alert","Fatigue très élevée : remplace la prochaine séance clé par de l'endurance Z1–Z2."]);
+  if(f.ansLow3)m.push(["alert","Récupération nerveuse basse 3 nuits : journée facile ou repos."]);
+  const r=D.dup&&D.dup.ratioMedian;if(r&&(r<.85||r>1.15))m.push(["alert","Écart de puissance anormal entre Zwift et Polar : vérifie l'appairage du capteur."]);
+  if(f.v>=40&&f.v<60&&f.highDays>4)m.push(["warn","Fatigue élevée qui dure : allège la prochaine séance d'intensité."]);
+  const w=D.week;if(w&&w.doneH!=null&&w.plannedH){const p=Math.round(w.doneH/w.plannedH*100);if(p<80||p>115)m.push(["warn","Volume à "+p+" % du plan cette semaine."])}
+  (w&&w.keyMissed||[]).forEach(k=>m.push(["warn","Séance clé manquée : "+k+"."]));
+  if(D.cap.vsTraj>3)m.push(["info","En avance sur la trajectoire Ironman (+"+frn(D.cap.vsTraj)+" pts)."]);
+  if(D.block.work&&f.v<20)m.push(["info","Bonne fraîcheur : feu vert pour la séance clé."]);
+  const nt=D.physio.nextTest;if(nt){const n=daysTo(nt.d);if(n<=45)m.push(["info",nt.n+" dans "+n+" jours ("+fdate(nt.d)+")."])}
+  const o={alert:0,warn:1,info:2};return m.sort((a,b)=>o[a[0]]-o[b[0]]).slice(0,3);
+}
+function fatChart(series){
+  const W=320,H=110,pl=4,pr=4,pt=6,pb=18,n=series.length;
+  const X=i=>pl+i*(W-pl-pr)/(n-1),Y=v=>pt+(H-pt-pb)*(1-v/80);
+  const bands=[[0,20,"#1E3A2C"],[20,40,"#2A2F1E"],[40,60,"#3A2A1C"],[60,80,"#3A1C22"]];
+  let o=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;
+  bands.forEach(b=>o+=`<rect x="${pl}" y="${Y(b[1])}" width="${W-pl-pr}" height="${Y(b[0])-Y(b[1])}" fill="${b[2]}" opacity=".55"/>`);
+  const pts=series.map((p,i)=>X(i).toFixed(1)+","+Y(p.v).toFixed(1)).join(" ");
+  o+=`<polygon points="${X(0)},${Y(0)} ${pts} ${X(n-1)},${Y(0)}" fill="var(--acc)" opacity=".12"/><polyline points="${pts}" fill="none" stroke="var(--acc)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const l=series[n-1];o+=`<circle cx="${X(n-1)}" cy="${Y(l.v)}" r="4" fill="var(--acc)" stroke="var(--card)" stroke-width="2"/>`;
+  let mx=0;series.forEach((p,i)=>{if(p.v>series[mx].v)mx=i});
+  o+=`<text x="${X(mx)}" y="${Y(series[mx].v)-6}" text-anchor="middle">pic ${series[mx].v}</text>`;
+  o+=`<text x="${pl}" y="${H-4}">${fdate(series[0].d)}</text><text x="${W-pr}" y="${H-4}" text-anchor="end">${fdate(l.d)}</text></svg>`;
+  return o;
+}
+function capChart(C){
+  const W=330,H=170,pl=30,pr=8,pt=14,pb=20;
+  const t0=new Date(C.real[0].d).getTime(),t1=new Date("2027-06-27").getTime();
+  const X=d=>pl+(new Date(d).getTime()-t0)/(t1-t0)*(W-pl-pr),Y=v=>pt+(H-pt-pb)*(1-v/100);
+  let o=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;
+  [0,25,50,75,100].forEach(v=>o+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pl-4}" y="${Y(v)+3}" text-anchor="end">${v} %</text>`);
+  o+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(100)}" y2="${Y(100)}" stroke="var(--acc)" stroke-dasharray="2 3" stroke-width="1.4"/><text x="${pl+4}" y="${Y(100)-4}" style="fill:var(--acc);font-weight:700">Objectif minimum · ${C.target}</text>`;
+  [["2026-08-01","août"],["2026-10-01","oct."],["2026-12-01","déc."],["2027-02-01","févr."],["2027-04-01","avr."],["2027-06-01","juin"]].forEach(m=>o+=`<text x="${X(m[0])}" y="${H-5}" text-anchor="middle">${m[1]}</text>`);
+  o+=`<polyline points="${C.plan.map(p=>X(p.d).toFixed(1)+","+Y(p.v).toFixed(1)).join(" ")}" fill="none" stroke="var(--mut)" stroke-width="1.6" stroke-dasharray="5 4"/>`;
+  const rp=C.real.map(p=>X(p.d).toFixed(1)+","+Y(p.v).toFixed(1)).join(" ");const L=C.real[C.real.length-1];
+  o+=`<polygon points="${X(C.real[0].d)},${Y(0)} ${rp} ${X(L.d)},${Y(0)}" fill="var(--acc)" opacity=".14"/><polyline points="${rp}" fill="none" stroke="var(--acc)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>`;
+  (C.marks||[]).forEach(m=>o+=`<line x1="${X(m.d)}" x2="${X(m.d)}" y1="${Y(0)}" y2="${Y(0)-5}" stroke="var(--mut)"/><text x="${X(m.d)}" y="${Y(0)-8}" text-anchor="middle">${m.n}</text>`);
+  o+=`<circle cx="${X(L.d)}" cy="${Y(L.v)}" r="4.5" fill="var(--acc)" stroke="var(--card)" stroke-width="2"/><text x="${X(L.d)+7}" y="${Y(L.v)+3}" style="fill:var(--txt);font-weight:700">${Math.round(L.v)} %</text></svg>`;
+  return o;
+}
+function vDash(){
+  if(!DATA)return DERR?`<div class="card"><div class="empty">Données indisponibles hors ligne pour l'instant. Rouvre l'appli avec du réseau.</div></div>`:`<div class="card"><div class="empty">Chargement…</div></div>`;
+  const D=DATA,f=D.fatigue,C=D.cap,P=D.physio;
+  const fz=f.v<20?"Faible":f.v<40?"Modérée":f.v<60?"Élevée":"Très élevée";
+  const msgs=rules(D).map(m=>`<div class="msg ${m[0]}"><i>${m[0]==="alert"?"!":m[0]==="warn"?"•":"i"}</i><div>${esc(m[1])}</div></div>`).join("");
+  const bars=D.note.disc.map(d=>`<div class="bar"><div class="h"><span>${d.n}</span><b>${frn(d.v)}<small class="muted" style="font-size:12px">/20</small></b></div><div class="trk"><i style="width:${d.v*5}%;background:${DC[d.k]}"></i></div><div class="f">Plan ${frn(d.plan)} · efficacité ${frn(d.eff)} · trajectoire ${frn(d.traj)}<br>${esc(d.txt)}</div></div>`).join("");
+  const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px">${p.v} %</b></div><div class="trk"><i style="width:${p.v}%;background:var(--acc)"></i></div></div>`).join("");
+  const vp=D.vsPlan.map(r=>`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
+  return `${msgs}
+  <div class="dc"><div class="dl">Note d'entraînement<small>${esc(D.block.name)} · depuis le ${fdate(D.block.start)}</small></div><div class="big">${frn(D.note.global)}<small>/ 20</small></div>${bars}</div>
+  <div class="dc"><div class="dl">Fatigue accumulée<small>indice 0–100 · charge + sommeil et HRV</small></div><div class="big">${f.v}<small>/ 100 · ${fz}</small></div>
+    <div class="gauge"><span style="width:20%;background:#2E7D5B"></span><span style="width:20%;background:#B59A2A"></span><span style="width:20%;background:#D9711C"></span><span style="width:40%;background:var(--acc)"></span><b style="left:${f.v}%"></b></div>
+    <div class="gsc"><span style="width:20%">Faible</span><span style="width:20%">Modérée</span><span style="width:20%">Élevée</span><span style="width:40%">Très élevée</span></div>
+    ${fatChart(f.series)}
+    <ul class="facts"><li><span>Charge récente (7 j)</span><b>${f.atl}</b></li><li><span>Charge de fond (42 j)</span><b>${f.ctl}</b></li><li><span>Forme</span><b>${f.form>0?"+":""}${f.form}</b></li><li><span>Sommeil, 7 nuits</span><b>${f.sleep} · score ${f.sleepScore}</b></li><li><span>HRV de nuit (base)</span><b>${f.hrv} ms (${f.hrvBase})</b></li><li><span>Charge nerveuse ANS, 3 nuits</span><b>${frn(f.ans)}</b></li></ul></div>
+  <div class="dc"><div class="dl">Cap sur l'Ironman<small>du tri M du 31 mai (0 %) à l'objectif minimum du 27 juin (100 %)</small></div><div class="big">${C.v} %<small>· ${C.vsTraj>=0?"+":""}${frn(C.vsTraj)} pt vs prévu</small></div>
+    <div class="splits"><div><span>Nage</span><b>${C.est.swim}</b></div><div><span>T1+T2</span><b>${C.est.t}</b></div><div><span>Vélo</span><b>${C.est.bike}</b></div><div><span>Marathon</span><b>${C.est.run}</b></div><div><span>Estimé</span><b>${C.est.total}</b></div></div>
+    ${capChart(C)}<div class="f muted" style="font-size:11.5px"><span style="color:var(--acc)">━</span> réel  <span>╌</span> trajectoire prévue</div>${parts}</div>
+  <div class="tiles"><div class="tile"><span>FTP</span><b>${P.ftp}<small>W</small></b><em>${frn(P.wkg)} W/kg · est. ${P.ftpEst}</em></div><div class="tile"><span>VMA</span><b>${frn(P.vma)}<small>km/h</small></b><em>test 11 nov.</em></div><div class="tile"><span>VO2max</span><b>~${P.vo2}</b><em>estimée</em></div></div>
+  <div class="dc"><div class="dl">Où tu en es vs le plan</div>${vp}</div>
+  <div class="src">${esc(D.source)}<br>Données au ${fdate(D.asof)}</div>`;
+}
 /* ============ INTRO ============ */
 function runIntro(){
   if(!S.prefs.intro)return;
@@ -666,6 +769,7 @@ function runIntro(){
   el.addEventListener("click",()=>{close()});
   raf=requestAnimationFrame(frame);
 }
+loadData();
 render();
 runIntro();
 if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(()=>{})}
