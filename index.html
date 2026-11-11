@@ -65,7 +65,7 @@ h2{font-family:var(--disp);font-weight:800;font-size:22px;margin:22px 0 10px}
 /* tab bar */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(13,16,20,.86);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line);padding:8px 10px calc(var(--sab) + 8px);display:flex;justify-content:center}
 nav.tabs .in{display:flex;max-width:560px;width:100%}
-nav.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--mut);padding:4px 0}
+nav.tabs button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--mut);padding:4px 0}
 nav.tabs svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button.on{color:var(--acc)}
 /* body map */
@@ -142,6 +142,14 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .end .big{font-family:var(--disp);font-weight:800;font-size:56px;color:var(--acc);line-height:1}
 .x-btn{width:38px;height:38px;border-radius:99px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px}
 .empty{color:var(--mut);text-align:center;padding:20px 0}
+.inp{width:96px;text-align:right;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--txt);font:600 16px -apple-system,system-ui;padding:8px 10px}
+.inp.wide{width:100%;text-align:left;margin-top:10px;font-weight:400}
+.wk{display:flex;width:100%;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line);text-align:left;font-size:13.5px}
+.wk .wn{font-family:var(--disp);font-weight:800;width:34px}.wk .wd{color:var(--mut);width:52px;font-size:12px}.wk .wt{flex:1;color:var(--mut);font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wk .wh{font-family:var(--disp);font-weight:700}
+.wk .tt{color:var(--acc);font-weight:700}
+.wk.past{opacity:.45}.wk.cur{background:rgba(228,0,43,.12);border-radius:10px;padding-left:8px;padding-right:8px;opacity:1}
+.wdet{padding:2px 0 10px 42px}.dsplit{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mut);margin-bottom:6px}
+.ses{display:flex;gap:8px;align-items:baseline;padding:4px 0;font-size:13.5px}.ses .sl{flex:1}.ses b{font-family:var(--disp);white-space:nowrap}
 .dc{background:var(--card);border-radius:var(--r);padding:18px;margin-top:12px}
 .dl{font-size:13px;color:var(--mut);font-weight:600}
 .dl small{display:block;font-weight:400;font-size:11.5px;margin-top:1px}
@@ -186,7 +194,8 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 
 <nav class="tabs"><div class="in">
   <button data-tab="dash" class="on"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 18 0"/><path d="M12 12l4-4"/><path d="M3 16h18"/></svg>Dashboard</button>
-  <button data-tab="seances"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 13h3M8 16h6"/></svg>Séances</button>
+  <button data-tab="programme"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4M7 13h4M7 17h7"/></svg>Programme</button>
+  <button data-tab="seances"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 13h3M8 16h6"/></svg>Mobilité</button>
   <button data-tab="corps"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2"/><path d="M5 9l7 1 7-1M12 10v5M12 15l-3 6M12 15l3 6"/></svg>Corps</button>
   <button data-tab="suivi"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Suivi</button>
   <button data-tab="reglages"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Réglages</button>
@@ -411,9 +420,10 @@ function genSession(){
 function render(){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===UI.tab));
   const app=$("#app");
-  const head=`<header class="top"><div><div class="brand">Ironmax<i>.</i></div><div class="sub">${UI.tab==="dash"?"Cap sur l'Ironman · J-"+daysTo("2027-06-27"):"Mobilité pour triathlète"}</div></div><div class="sync${sync.on?" on":""}"><b></b>${sync.on?"Synchronisé":"Local"}</div></header>`;
+  const head=`<header class="top"><div><div class="brand">Ironmax<i>.</i></div><div class="sub">${UI.tab==="dash"||UI.tab==="programme"?"Cap sur l'Ironman · J-"+daysTo("2027-06-27"):"Mobilité pour triathlète"}</div></div><div class="sync${(sync.on||LIVE)?" on":""}"><b></b>${LIVE?"Intervals":sync.on?"Synchronisé":"Local"}</div></header>`;
   let body="";
   if(UI.tab==="dash")body=vDash();
+  else if(UI.tab==="programme")body=vProgramme();
   else if(UI.tab==="seances")body=vSeances();
   else if(UI.tab==="corps")body=vCorps();
   else if(UI.tab==="suivi")body=vSuivi();
@@ -505,12 +515,20 @@ function vSuivi(){
 }
 function vReglages(){
   const T=(k,l,d)=>`<div class="set"><div><b>${l}</b><div class="muted" style="font-size:13px">${d}</div></div><button class="tg${S.prefs[k]?" on":""}" data-act="pref" data-k="${k}"></button></div>`;
-  return `<h2>Guidage</h2><div class="card" style="padding:4px 18px">${T("voice","Voix","Annonce les exercices et les changements de côté")}${T("beep","Bips","3-2-1 avant chaque changement")}${T("intro","Animation d'accueil","La ligne d'arrivée au lancement de l'appli")}</div>
+  const IN=(k,l,u,t)=>`<div class="set"><div><b>${l}</b><div class="muted" style="font-size:12px">${u}</div></div><input class="inp" data-inp="${k}" value="${esc(INP[k])}" inputmode="${t||"decimal"}"></div>`;
+  const hist=INH.slice(0,6).map(h=>`<div class="muted" style="font-size:12px;padding:3px 0">${fdate(h.d)} · ${h.k} ${esc(h.old)} → <b style="color:var(--txt)">${esc(h.v)}</b> (${esc(h.why)})</div>`).join("");
+  return `<h2>Connexion Intervals.icu</h2><div class="card"><div class="muted" style="font-size:13px">Intervals.icu → Settings → Developer Settings. La clé reste uniquement sur ce téléphone.</div>
+  <input class="inp wide" id="cfgA" placeholder="Athlete ID (ex. i123456)" value="${esc(CFG.athlete)}" autocapitalize="off" autocorrect="off">
+  <input class="inp wide" id="cfgK" placeholder="API key" value="${esc(CFG.key)}" type="password" autocapitalize="off" autocorrect="off">
+  <div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="savecfg">Enregistrer et actualiser</button>${CFG.key?'<button class="btn red" data-act="delcfg">Effacer</button>':""}</div></div>
+  <h2>Mes seuils</h2><div class="card" style="padding:4px 18px">${IN("ftp","FTP","W · après un test vélo")}${IN("vma","VMA","km/h · test 6' ou demi-Cooper")}${IN("fcmax","FC max","bpm","numeric")}${IN("fcrest","FC de repos","bpm","numeric")}${IN("fcnight","FC de nuit de base","bpm","numeric")}${IN("css","CSS natation","min:s / 100 m","text")}${IN("best5k","Meilleur 5 km récent","min:s","text")}${IN("weight","Poids","kg")}${IN("ctlTarget","Charge de fond visée","CTL Ironman","numeric")}
+  <button class="go" style="margin:12px 0 14px" data-act="saveinp">Enregistrer les seuils</button>${hist?'<div style="padding-bottom:12px"><div class="dl" style="margin-bottom:4px">Historique</div>'+hist+'</div>':""}</div>
+  <h2>Guidage</h2><div class="card" style="padding:4px 18px">${T("voice","Voix","Annonce les exercices et les changements de côté")}${T("beep","Bips","3-2-1 avant chaque changement")}${T("intro","Animation d'accueil","La ligne d'arrivée au lancement de l'appli")}</div>
   <h2>Sauvegarde</h2><div class="card"><div class="muted" style="font-size:14px">${sync.on?"Tes séances sont synchronisées en ligne. Tu peux aussi copier une sauvegarde.":"Tes séances sont stockées sur cet appareil. Pense à copier une sauvegarde de temps en temps."}</div>
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.3 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.4 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -610,6 +628,14 @@ document.addEventListener("click",ev=>{
   const a=b.dataset.act,v=b.dataset.v;
   switch(a){
     case"cat":UI.cat=b.dataset.id;render();break;
+    case"refresh":refreshData();break;
+    case"wk":UI.openWeek=(UI.openWeek===+v?null:+v);render();break;
+    case"adjapply":applyAdj(v);render();break;
+    case"adjdismiss":dismissAdj(v);break;
+    case"adjreset":ADJ={};lsSet(LSK.adj,ADJ);render();toast("Ajustements remis à zéro");break;
+    case"savecfg":CFG={athlete:$("#cfgA").value.trim(),key:$("#cfgK").value.trim()};lsSet(LSK.cfg,CFG);UI.tab="dash";render();refreshData();break;
+    case"delcfg":CFG={athlete:"",key:""};lsSet(LSK.cfg,CFG);localStorage.removeItem(LSK.raw);localStorage.removeItem(LSK.live);LIVE=null;render();toast("Connexion effacée");break;
+    case"saveinp":{let n=0;document.querySelectorAll("[data-inp]").forEach(el=>{const k=el.dataset.inp;let val=el.value.trim().replace(",",".");if(!["css","best5k"].includes(k)){val=+val;if(!isFinite(val)||val<=0)return}else if(!isFinite(mmss(val)))return;if(String(INP[k])!==String(val)){setInput(k,val);n++}});render();toast(n?n+" seuil(s) mis à jour · charges recalculées":"Aucun changement");break}
     case"mode":UI.mode=v;render();break;
     case"scale":S.prefs.scale=v;pushSettings();render();break;
     case"ex":openEx(b.dataset.id);break;
@@ -653,7 +679,7 @@ function rules(D){
   if(f.ansLow3)m.push(["alert","Récupération nerveuse basse 3 nuits : journée facile ou repos."]);
   const r=D.dup&&D.dup.ratioMedian;if(r&&(r<.85||r>1.15))m.push(["alert","Écart de puissance anormal entre Zwift et Polar : vérifie l'appairage du capteur."]);
   if(f.v>=40&&f.v<60&&f.highDays>4)m.push(["warn","Fatigue élevée qui dure : allège la prochaine séance d'intensité."]);
-  const w=D.week;if(w&&w.doneH!=null&&w.plannedH){const p=Math.round(w.doneH/w.plannedH*100);if(p<80||p>115)m.push(["warn","Volume à "+p+" % du plan cette semaine."])}
+  const w=D.week;if(w&&w.doneH!=null&&w.plannedH&&(w.elapsed||1)>=.3){const p=Math.round(w.doneH/(w.plannedH*Math.min(1,w.elapsed||1))*100);if(p<80||p>115)m.push(["warn","Volume à "+p+" % de ce qui était prévu à ce stade de la semaine ("+frn(w.doneH)+" h / "+frn(w.plannedH)+" h)."])}
   (w&&w.keyMissed||[]).forEach(k=>m.push(["warn","Séance clé manquée : "+k+"."]));
   if(D.cap.vsTraj>3)m.push(["info","En avance sur la trajectoire Ironman (+"+frn(D.cap.vsTraj)+" pts)."]);
   if(D.block.work&&f.v<20)m.push(["info","Bonne fraîcheur : feu vert pour la séance clé."]);
@@ -690,27 +716,225 @@ function capChart(C){
   return o;
 }
 function vDash(){
-  if(!DATA)return DERR?`<div class="card"><div class="empty">Données indisponibles hors ligne pour l'instant. Rouvre l'appli avec du réseau.</div></div>`:`<div class="card"><div class="empty">Chargement…</div></div>`;
-  const D=DATA,f=D.fatigue,C=D.cap,P=D.physio;
+  if(!DATA&&!LIVE)return DERR?`<div class="card"><div class="empty">Données indisponibles hors ligne pour l'instant. Rouvre l'appli avec du réseau.</div></div>`:`<div class="card"><div class="empty">Chargement…</div></div>`;
+  const D=LIVE||DATA,f=D.fatigue,C=D.cap,P=D.physio;
+  const top=`<div class="row" style="align-items:center;margin-bottom:4px"><button class="go" style="margin:0;flex:1;padding:12px" data-act="refresh">${REFRESH.busy?"Actualisation…":"⟳ Actualiser"}</button></div>
+  <div class="hint" style="text-align:center">${REFRESH.err?'<span style="color:var(--acc)">'+esc(REFRESH.err)+'</span>':LIVE?esc(LIVE.source):(CFG.key?"Touche Actualiser pour charger tes séances":"Données figées du 11 nov. · connecte Intervals.icu dans Réglages")}</div>`;
+  const adj=(LIVE&&LIVE.adjust||[]).map(a=>`<div class="dc" style="border:1px solid var(--line)"><div class="dl" style="color:var(--txt)">↕ ${esc(a.t)}<small>${esc(a.x)}</small></div><div style="margin-top:8px;font-weight:600">${esc(a.p)}</div><div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="adjapply" data-v="${a.id}">Appliquer</button><button class="btn" style="flex:1" data-act="adjdismiss" data-v="${a.id}">Ignorer</button></div></div>`).join("");
   const fz=f.v<20?"Faible":f.v<40?"Modérée":f.v<60?"Élevée":"Très élevée";
   const msgs=rules(D).map(m=>`<div class="msg ${m[0]}"><i>${m[0]==="alert"?"!":m[0]==="warn"?"•":"i"}</i><div>${esc(m[1])}</div></div>`).join("");
   const bars=D.note.disc.map(d=>`<div class="bar"><div class="h"><span>${d.n}</span><b>${frn(d.v)}<small class="muted" style="font-size:12px">/20</small></b></div><div class="trk"><i style="width:${d.v*5}%;background:${DC[d.k]}"></i></div><div class="f">Plan ${frn(d.plan)} · efficacité ${frn(d.eff)} · trajectoire ${frn(d.traj)}<br>${esc(d.txt)}</div></div>`).join("");
   const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px">${p.v} %</b></div><div class="trk"><i style="width:${p.v}%;background:var(--acc)"></i></div></div>`).join("");
-  const vp=D.vsPlan.map(r=>`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
-  return `${msgs}
+  const vp=(D.vsPlan||[]).map(r=>`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
+  return `${top}${msgs}${adj}
   <div class="dc"><div class="dl">Note d'entraînement<small>${esc(D.block.name)} · depuis le ${fdate(D.block.start)}</small></div><div class="big">${frn(D.note.global)}<small>/ 20</small></div>${bars}</div>
   <div class="dc"><div class="dl">Fatigue accumulée<small>indice 0–100 · charge + sommeil et HRV</small></div><div class="big">${f.v}<small>/ 100 · ${fz}</small></div>
     <div class="gauge"><span style="width:20%;background:#2E7D5B"></span><span style="width:20%;background:#B59A2A"></span><span style="width:20%;background:#D9711C"></span><span style="width:40%;background:var(--acc)"></span><b style="left:${f.v}%"></b></div>
     <div class="gsc"><span style="width:20%">Faible</span><span style="width:20%">Modérée</span><span style="width:20%">Élevée</span><span style="width:40%">Très élevée</span></div>
     ${fatChart(f.series)}
-    <ul class="facts"><li><span>Charge récente (7 j)</span><b>${f.atl}</b></li><li><span>Charge de fond (42 j)</span><b>${f.ctl}</b></li><li><span>Forme</span><b>${f.form>0?"+":""}${f.form}</b></li><li><span>Sommeil, 7 nuits</span><b>${f.sleep} · score ${f.sleepScore}</b></li><li><span>HRV de nuit (base)</span><b>${f.hrv} ms (${f.hrvBase})</b></li><li><span>Charge nerveuse ANS, 3 nuits</span><b>${frn(f.ans)}</b></li></ul></div>
+    <ul class="facts"><li><span>Charge récente (7 j)</span><b>${f.atl}</b></li><li><span>Charge de fond (42 j)</span><b>${f.ctl}</b></li><li><span>Forme</span><b>${f.form>0?"+":""}${f.form}</b></li><li><span>Sommeil, 7 nuits</span><b>${f.sleep} · score ${f.sleepScore}</b></li><li><span>HRV de nuit (base)</span><b>${f.hrv} ms (${f.hrvBase})</b></li>${f.ans!=null?`<li><span>Charge nerveuse ANS, 3 nuits</span><b>${frn(f.ans)}</b></li>`:`<li><span>FC de repos, 7 nuits</span><b>${f.rhr} bpm</b></li>`}</ul></div>
   <div class="dc"><div class="dl">Cap sur l'Ironman<small>du tri M du 31 mai (0 %) à l'objectif minimum du 27 juin (100 %)</small></div><div class="big">${C.v} %<small>· ${C.vsTraj>=0?"+":""}${frn(C.vsTraj)} pt vs prévu</small></div>
     <div class="splits"><div><span>Nage</span><b>${C.est.swim}</b></div><div><span>T1+T2</span><b>${C.est.t}</b></div><div><span>Vélo</span><b>${C.est.bike}</b></div><div><span>Marathon</span><b>${C.est.run}</b></div><div><span>Estimé</span><b>${C.est.total}</b></div></div>
     ${capChart(C)}<div class="f muted" style="font-size:11.5px"><span style="color:var(--acc)">━</span> réel  <span>╌</span> trajectoire prévue</div>${parts}</div>
-  <div class="tiles"><div class="tile"><span>FTP</span><b>${P.ftp}<small>W</small></b><em>${frn(P.wkg)} W/kg · est. ${P.ftpEst}</em></div><div class="tile"><span>VMA</span><b>${frn(P.vma)}<small>km/h</small></b><em>test 11 nov.</em></div><div class="tile"><span>VO2max</span><b>~${P.vo2}</b><em>estimée</em></div></div>
-  <div class="dc"><div class="dl">Où tu en es vs le plan</div>${vp}</div>
+  <div class="tiles"><div class="tile"><span>FTP</span><b>${P.ftp}<small>W</small></b><em>${frn(P.wkg)} W/kg · est. ${P.ftpEst}</em></div><div class="tile"><span>VMA</span><b>${frn(P.vma)}<small>km/h</small></b><em>seuil ≈ ${paceKm(P.vma*.88)}/km</em></div><div class="tile"><span>VO2max</span><b>~${P.vo2}</b><em>estimée</em></div></div>
+  ${D.vsPlan?`<div class="dc"><div class="dl">Où tu en es vs le plan</div>${vp}</div>`:""}
   <div class="src">${esc(D.source)}<br>Données au ${fdate(D.asof)}</div>`;
 }
+/* ============ CONFIG / INPUTS ============ */
+const LSK={cfg:"ironmax.cfg",inp:"ironmax.inputs",adj:"ironmax.adj",raw:"ironmax.raw",live:"ironmax.live",caph:"ironmax.caphist"};
+const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");return v==null?d:v}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
+let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
+let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
+let INH=lsGet(LSK.inp+".hist",[]);
+let ADJ=lsGet(LSK.adj,{});
+let PLAN=null,LIVE=lsGet(LSK.live,null),REFRESH={busy:false,err:""};
+const mmss=s=>{const p=String(s).trim().split(":");return p.length===2?(+p[0])*60+(+p[1]):NaN};
+const toMMSS=sec=>Math.floor(sec/60)+":"+pad(Math.round(sec%60));
+const paceKm=kmh=>toMMSS(3600/kmh);
+const hm=min=>{min=Math.round(min);return Math.floor(min/60)+"h"+pad(min%60)};
+function loadPlan(){fetch("plan.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{PLAN=j;if(LIVE===null&&lsGet(LSK.raw,null))recompute();render()}).catch(()=>{})}
+
+/* ============ INTERVALS.ICU ============ */
+const FIELDS="id,start_date_local,type,name,moving_time,distance,icu_weighted_avg_watts,average_watts,average_heartrate,max_heartrate,icu_training_load,decoupling,trainer,icu_rpe,icu_eftp";
+async function apiGet(path){
+  const r=await fetch("https://intervals.icu/api/v1/athlete/"+encodeURIComponent(CFG.athlete)+path,{headers:{Authorization:"Basic "+btoa("API_KEY:"+CFG.key)}});
+  if(r.status===401||r.status===403)throw new Error("Clé ou identifiant refusé par Intervals.icu");
+  if(!r.ok)throw new Error("Intervals.icu a répondu "+r.status);
+  return r.json();
+}
+async function refreshData(){
+  if(!CFG.athlete||!CFG.key){UI.tab="reglages";render();toast("Renseigne d'abord ta connexion Intervals.icu");return}
+  if(REFRESH.busy)return;REFRESH={busy:true,err:""};render();
+  try{
+    const d=new Date();const old=new Date(d);old.setDate(old.getDate()-150);const ow=new Date(d);ow.setDate(ow.getDate()-70);
+    const [acts,well]=await Promise.all([apiGet("/activities?oldest="+dkey(old)+"&newest="+dkey(d)+"&fields="+FIELDS),apiGet("/wellness?oldest="+dkey(ow)+"&newest="+dkey(d))]);
+    lsSet(LSK.raw,{acts,well,at:Date.now()});recompute();toast("Données actualisées");
+  }catch(e){REFRESH.err=(e&&e.message&&!/Failed to fetch|Load failed|NetworkError/.test(e.message))?e.message:"Connexion impossible (réseau ou accès refusé)"}
+  REFRESH.busy=false;render();
+}
+
+/* ============ CALCULS (cf. doc de méthode) ============ */
+const sportOf=t=>/Ride|Cycl|Bike/i.test(t)?"velo":/Run/i.test(t)?"course":/Swim/i.test(t)?"nat":/Weight|Strength|Workout|Crossfit/i.test(t)?"muscu":/Yoga|Pilates|Stretch|Mobility/i.test(t)?"mob":"autre";
+function actLoad(a){
+  const h=(a.moving_time||0)/3600,sp=sportOf(a.type||"");if(!h)return 0;
+  const R=INP.fcmax-INP.fcrest,lthr=INP.fcrest+.85*R;
+  const wap=a.icu_weighted_avg_watts||a.average_watts;
+  if(sp==="velo"&&wap)return h*Math.pow(wap/INP.ftp,2)*100;
+  if(sp==="course"&&a.distance>500){const v=a.distance/a.moving_time,thr=INP.vma*.88/3.6;return h*Math.pow(v/thr,2)*100}
+  if(sp==="nat"&&a.distance>100){const pace=a.moving_time/(a.distance/100),css=mmss(INP.css)||115;return h*Math.pow(css/pace,3)*100}
+  if(sp==="muscu"||sp==="mob")return a.moving_time/60*(a.icu_rpe||(sp==="mob"?2:5))/6;
+  if(a.average_heartrate)return h*Math.pow(Math.max(0,a.average_heartrate-INP.fcrest)/(lthr-INP.fcrest),2)*100;
+  return a.icu_training_load||0;
+}
+function recompute(){
+  const raw=lsGet(LSK.raw,null);if(!raw)return;
+  const acts=(raw.acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOf(a.type||""),load:actLoad(a)}));
+  const well={};(raw.well||[]).forEach(w=>{if(w&&w.id)well[w.id]=w});
+  const today=dkey(new Date());
+  // CTL/ATL quotidiens
+  const first=new Date();first.setDate(first.getDate()-150);
+  const byDay={};acts.forEach(a=>byDay[a.date]=(byDay[a.date]||0)+a.load);
+  const wk=Object.keys(well).sort();let ctl=wk.length&&well[wk[0]].ctl!=null?well[wk[0]].ctl:40,atl=wk.length&&well[wk[0]].atl!=null?well[wk[0]].atl:ctl;
+  const days=[];for(let d=new Date(first);dkey(d)<=today;d.setDate(d.getDate()+1)){const k=dkey(d),l=byDay[k]||0;ctl+=(l-ctl)/42;atl+=(l-atl)/7;days.push({d:k,l,ctl,atl})}
+  // fatigue
+  const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+  const hrvKeys=wk.filter(k=>well[k].hrv);
+  function recovAt(k){
+    const ks=wk.filter(x=>x<=k).slice(-7);if(!ks.length)return null;
+    const avg=f=>{const v=ks.map(x=>well[x][f]).filter(v=>v!=null&&v>0);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
+    const sl=avg("sleepSecs"),rhr=avg("restingHR"),sc=avg("sleepScore");
+    const h3=ks.slice(-3).map(x=>well[x].hrv).filter(v=>v);const base=hrvKeys.filter(x=>x<=k).slice(-28).map(x=>well[x].hrv);
+    let parts=[],w=[];
+    if(h3.length&&base.length>5){const r=(h3.reduce((a,b)=>a+b,0)/h3.length)/(base.reduce((a,b)=>a+b,0)/base.length);parts.push(clamp((1-r)/.2*100,0,100));w.push(.4)}
+    if(sl){parts.push(clamp((7.5*3600-sl)/(1.5*3600)*100,0,100));w.push(.25)}
+    if(rhr){parts.push(clamp((rhr-INP.fcnight)/6*100,0,100));w.push(.2)}
+    if(sc){parts.push(clamp((85-sc)/25*100,0,100));w.push(.15)}
+    if(!w.length)return null;const ws=w.reduce((a,b)=>a+b,0);return parts.reduce((a,p,i)=>a+p*w[i],0)/ws;
+  }
+  const rawF=days.map(x=>{const lp=clamp((x.atl/Math.max(1,x.ctl)-.8)/.7*100,0,100);const rp=recovAt(x.d);return rp==null?lp:.65*lp+.35*rp});
+  const fat=days.map((x,i)=>({d:x.d,v:Math.round((rawF[Math.max(0,i-2)]+rawF[Math.max(0,i-1)]+rawF[i])/3)}));
+  const fser=fat.slice(-50);const fnow=fser[fser.length-1].v;
+  let highDays=0;for(let i=fser.length-1;i>=0&&fser[i].v>=40;i--)highDays++;
+  const lastW=wk.filter(k=>k<=today).slice(-7).map(k=>well[k]);
+  const avgW=f=>{const v=lastW.map(w=>w[f]).filter(v=>v);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
+  const L=days[days.length-1];
+  // bloc courant & note
+  const blk=(PLAN&&PLAN.blocks.find(b=>b.from<=today&&b.to>=today))||{n:"Base 1",from:"2026-09-28"};
+  const win=acts.filter(a=>a.date>=blk.from);
+  const doneH={velo:0,course:0,nat:0,muscu:0};win.forEach(a=>{if(doneH[a.sp]!=null)doneH[a.sp]+=a.moving_time/3600});
+  const planH={velo:0,course:0,nat:0,muscu:0};
+  if(PLAN){if(PLAN.past[blk.n]&&blk.from<PLAN.weeks[0].start)Object.keys(planH).forEach(k=>planH[k]+=PLAN.past[blk.n].plannedH[k]);
+    PLAN.weeks.forEach(w=>{if(w.start<blk.from||w.start>today)return;const end=new Date(w.start+"T00:00:00");end.setDate(end.getDate()+7);const frac=Math.min(1,(new Date(today+"T23:59:59")-new Date(w.start+"T00:00:00"))/(7*864e5));Object.keys(planH).forEach(k=>planH[k]+=w.disc[k]*frac)})}
+  const weeksIn=Math.max(1,(new Date(today)-new Date(blk.from))/(7*864e5));
+  const ef=(list,f)=>{const v=list.map(f).filter(x=>x&&isFinite(x));if(v.length<4)return null;const n=Math.min(3,Math.floor(v.length/2));const a=v.slice(0,n).reduce((p,c)=>p+c,0)/n,b=v.slice(-n).reduce((p,c)=>p+c,0)/n;return (b/a-1)*100};
+  const z2b=win.filter(a=>a.sp==="velo"&&a.average_heartrate&&(a.icu_weighted_avg_watts||a.average_watts)&&(a.icu_weighted_avg_watts||a.average_watts)<.8*INP.ftp&&a.moving_time>2400).sort((a,b)=>a.date<b.date?-1:1);
+  const z2r=win.filter(a=>a.sp==="course"&&a.average_heartrate&&a.distance>3000).sort((a,b)=>a.date<b.date?-1:1);
+  const z2s=win.filter(a=>a.sp==="nat"&&a.average_heartrate&&a.distance>1000).sort((a,b)=>a.date<b.date?-1:1);
+  const gains={velo:ef(z2b,a=>(a.icu_weighted_avg_watts||a.average_watts)/a.average_heartrate),course:ef(z2r,a=>a.distance/a.moving_time/a.average_heartrate),nat:ef(z2s,a=>a.distance/a.moving_time/a.average_heartrate)};
+  const expG={velo:4,course:3,nat:.5};
+  const effScore=k=>{const g=gains[k];if(g==null)return 15;const e=expG[k]*weeksIn/5;if(e<=0)return 15;const r=g/e;return clamp(r>=1?15+(r-1)*4:10+5*r,8,17)};
+  const t0=new Date("2026-09-27").getTime(),t1=new Date("2027-06-27").getTime(),tn=Date.now();const u=(tn-t0)/(t1-t0);
+  const expFTP=255+(280-255)*u,expVMA=15.0+(17.0-15.0)*u,expCSS=125-(125-110)*u;
+  const trajScore=pctDiff=>clamp(pctDiff>=0?15+pctDiff:15+1.5*pctDiff,5,20);
+  const traj={velo:trajScore((INP.ftp/expFTP-1)*100),course:trajScore((INP.vma/expVMA-1)*100),nat:trajScore(((expCSS/(mmss(INP.css)||115))-1)*100)};
+  const planScore=k=>{if(!planH[k])return 18;const r=doneH[k]/planH[k];return clamp(r<=1.1?20*Math.min(1,r):20-(r-1.1)*20,0,20)};
+  const names={nat:"Natation",velo:"Vélo",course:"Course"};
+  const disc=["nat","velo","course"].map(k=>{const p=planScore(k),e=effScore(k),t=traj[k];return {k:k==="nat"?"natation":k,n:names[k],v:+(.4*p+.3*e+.3*t).toFixed(1),plan:+p.toFixed(1),eff:+e.toFixed(1),traj:+t.toFixed(1),
+    txt:`${(doneH[k]).toFixed(1)} h faites / ${(planH[k]).toFixed(1)} h prévues${gains[k]!=null?" · efficacité "+(gains[k]>=0?"+":"")+gains[k].toFixed(1)+" %":""}`}});
+  const wsum=disc.reduce((a,d)=>a+(planH[d.k==="natation"?"nat":d.k]||1),0);
+  const global=disc.reduce((a,d)=>a+d.v*(planH[d.k==="natation"?"nat":d.k]||1),0)/wsum;
+  // cap Ironman
+  const swims=acts.filter(a=>a.sp==="nat"&&a.distance>1500&&a.date>=dkey(new Date(Date.now()-42*864e5))).map(a=>a.moving_time/(a.distance/100)).sort((a,b)=>a-b);
+  const swimPace=swims.length?swims[Math.floor(swims.length/2)]:(mmss(INP.css)||115)+8;
+  const lin=(x,z,c)=>clamp((x-z)/(c-z),0,1);
+  const parts=[{n:"Vélo (FTP)",w:.35,v:lin(INP.ftp,215,280)},{n:"Course (5 km)",w:.30,v:lin(-(mmss(INP.best5k)||1401),-1506,-1290)},{n:"Natation",w:.10,v:lin(-swimPace,-150,-126)},{n:"Endurance",w:.25,v:lin(L.ctl,42,INP.ctlTarget)}];
+  const capV=Math.round(parts.reduce((a,p)=>a+p.w*p.v,0)*100);
+  const swimMin=3800/100*swimPace*1.05/60,bikeKmh=27.7*Math.cbrt(.7*INP.ftp/180),bikeMin=180/bikeKmh*60,runMin=(mmss(INP.best5k)||1401)/60*Math.pow(42.195/5,1.06)*1.15;
+  const tot=swimMin+10+bikeMin+runMin;
+  let caph=lsGet(LSK.caph,[]);caph=caph.filter(p=>p.d!==today);caph.push({d:today,v:capV});caph.sort((a,b)=>a.d<b.d?-1:1);lsSet(LSK.caph,caph.slice(-200));
+  const snapReal=(DATA&&DATA.cap&&DATA.cap.real)||[];
+  const real=snapReal.filter(p=>p.d<caph[0].d).concat(caph);
+  const planLine=(DATA&&DATA.cap&&DATA.cap.plan)||[];
+  const pv=(()=>{if(planLine.length<2)return capV;for(let i=1;i<planLine.length;i++){if(planLine[i].d>=today){const a=planLine[i-1],b=planLine[i];const f=(new Date(today)-new Date(a.d))/(new Date(b.d)-new Date(a.d));return a.v+(b.v-a.v)*f}}return 100})();
+  const vsTraj=+(capV-pv).toFixed(1);
+  // semaine en cours
+  const wkNow=PLAN&&PLAN.weeks.find(w=>{const e=new Date(w.start+"T00:00:00");e.setDate(e.getDate()+7);return w.start<=today&&dkey(e)>today});
+  const doneWeek=wkNow?acts.filter(a=>a.date>=wkNow.start).reduce((s,a)=>s+a.moving_time/3600,0):null;
+  const eftp=Math.max(0,...acts.filter(a=>a.icu_eftp&&a.date>=dkey(new Date(Date.now()-30*864e5))).map(a=>a.icu_eftp));
+  LIVE={asof:today,at:Date.now(),source:"Intervals.icu · actualisé le "+new Date().toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}),
+    block:{name:blk.n,start:blk.from,work:!(wkNow&&wkNow.deload)},
+    note:{global:+global.toFixed(1),disc},
+    fatigue:{v:fnow,series:fser,atl:Math.round(L.atl),ctl:Math.round(L.ctl),form:Math.round(L.ctl-L.atl),sleep:avgW("sleepSecs")?hm(avgW("sleepSecs")/60):"—",sleepScore:avgW("sleepScore")?Math.round(avgW("sleepScore")):"—",hrv:avgW("hrv")?Math.round(avgW("hrv")):"—",hrvBase:hrvKeys.length?Math.round(hrvKeys.slice(-28).reduce((a,k)=>a+well[k].hrv,0)/Math.min(28,hrvKeys.length)):"—",ans:null,ansLow3:false,highDays,rhr:avgW("restingHR")?Math.round(avgW("restingHR")):"—"},
+    cap:{v:capV,vsTraj,parts:parts.map(p=>({n:p.n,v:Math.round(p.v*100)})),est:{total:hm(tot),swim:hm(swimMin),t:"0h10",bike:hm(bikeMin),run:hm(runMin)},target:"11h30",real,plan:planLine,marks:(DATA&&DATA.cap&&DATA.cap.marks)||[]},
+    physio:{ftp:INP.ftp,ftpEst:eftp?Math.round(eftp)+" (eFTP)":"—",wkg:+(INP.ftp/INP.weight).toFixed(1),vma:INP.vma,vo2:Math.round(INP.vma*3.5),nextTest:nextTest()},
+    week:wkNow?{plannedH:wkNow.h,doneH:+doneWeek.toFixed(1),keyMissed:[],elapsed:(Date.now()-new Date(wkNow.start+"T00:00:00"))/(7*864e5)}:null,
+    dup:{ratioMedian:null},acts:acts.slice(-60),eftp};
+  LIVE.adjust=adjustments(acts,eftp);
+  lsSet(LSK.live,LIVE);
+}
+function nextTest(){if(!PLAN)return null;const t=dkey(new Date());const w=PLAN.weeks.find(w=>w.test&&w.start>=dkey(new Date(Date.now()-6*864e5)));if(!w)return null;let d=w.start;if(/FTP 20/.test(w.test))d="2026-12-12";return {n:w.test.replace(/\s*\(.*\)/,""),d}}
+
+/* ============ AJUSTEMENTS AUTOMATIQUES ============ */
+function adjustments(acts,eftp){
+  const out=[],R=INP.fcmax-INP.fcrest,hrPct=a=>(a.average_heartrate-INP.fcrest)/R;
+  const recent=acts.filter(a=>a.date>=dkey(new Date(Date.now()-28*864e5))&&a.average_heartrate).sort((a,b)=>a.date<b.date?1:-1);
+  const W=a=>a.icu_weighted_avg_watts||a.average_watts;
+  const q=recent.filter(a=>a.sp==="velo"&&W(a)&&W(a)/INP.ftp>=.82&&a.moving_time>=2700).slice(0,3);
+  if(q.length>=2){const easy=q.filter(a=>hrPct(a)<=.6&&(a.decoupling==null||a.decoupling<=3)).length,hard=q.filter(a=>hrPct(a)>=.78||(a.decoupling!=null&&a.decoupling>=8)).length;
+    if(easy>=2)out.push({id:"ss+",k:"ss",d:+5,u:"W",t:"Sweet spot / tempo trop faciles",x:`${easy} séances sur ${q.length} à FC basse (< ${Math.round(INP.fcrest+.6*R)} bpm) sans dérive`,p:"+5 W sur sweet spot, tempo et endurance de force"});
+    else if(hard>=2)out.push({id:"ss-",k:"ss",d:-5,u:"W",t:"Sweet spot / tempo trop durs",x:`${hard} séances sur ${q.length} à FC haute ou dérive ≥ 8 %`,p:"−5 W sur sweet spot, tempo et endurance de force"})}
+  const z=recent.filter(a=>a.sp==="velo"&&W(a)&&W(a)/INP.ftp<.75&&a.moving_time>=3600&&a.decoupling!=null).slice(0,3);
+  if(z.length>=2){if(z.filter(a=>a.decoupling<3).length>=2)out.push({id:"z2+",k:"long",d:+5,u:"W",t:"Endurance vélo très stable",x:"Dérive cardiaque < 3 % sur les dernières sorties longues",p:"+5 W sur les blocs de sortie longue"});
+    else if(z.filter(a=>a.decoupling>8).length>=2)out.push({id:"z2-",k:"long",d:-5,u:"W",t:"Dérive cardiaque en endurance",x:"Dérive > 8 % sur 2 sorties : chaleur, hydratation ou fatigue",p:"−5 W sur les blocs de sortie longue"})}
+  const r=recent.filter(a=>a.sp==="course"&&a.distance>3000&&(a.distance/a.moving_time*3.6)>=.76*INP.vma).slice(0,3);
+  if(r.length>=2){const easy=r.filter(a=>hrPct(a)<=.74).length,hard=r.filter(a=>hrPct(a)>=.87).length;
+    if(easy>=2)out.push({id:"seuil+",k:"seuil",d:+.01,u:"%VMA",t:"Allures seuil faciles",x:`FC moyenne ≤ ${Math.round(INP.fcrest+.74*R)} bpm sur ${easy} séances`,p:"Seuil +1 % de VMA (≈ −4 s/km)"});
+    else if(hard>=2)out.push({id:"seuil-",k:"seuil",d:-.01,u:"%VMA",t:"Allures seuil dures",x:`FC moyenne ≥ ${Math.round(INP.fcrest+.87*R)} bpm sur ${hard} séances`,p:"Seuil −1 % de VMA (≈ +4 s/km)"})}
+  if(eftp&&eftp>=INP.ftp*1.03)out.push({id:"ftp",k:"ftp",d:Math.round(eftp),u:"FTP",t:"FTP estimée en hausse",x:`eFTP Intervals.icu à ${Math.round(eftp)} W sur 30 jours (FTP actuelle ${INP.ftp} W)`,p:`Passer la FTP à ${Math.round(eftp)} W (ou attendre le prochain test)`});
+  const dis=lsGet(LSK.adj+".dismiss",{});
+  return out.filter(o=>!dis[o.id+":"+dkey(new Date()).slice(0,7)]);
+}
+function applyAdj(id){
+  const o=(LIVE&&LIVE.adjust||[]).find(a=>a.id===id);if(!o)return;
+  if(o.k==="ftp"){setInput("ftp",o.d,"eFTP Intervals.icu")}
+  else{const key=o.k==="ss"?["ss","tempo","ef"]:[o.k];key.forEach(k=>ADJ[k]=+((ADJ[k]||0)+o.d).toFixed(3));lsSet(LSK.adj,ADJ)}
+  dismissAdj(id);toast("Ajustement appliqué au programme");
+}
+function dismissAdj(id){const dis=lsGet(LSK.adj+".dismiss",{});dis[id+":"+dkey(new Date()).slice(0,7)]=1;lsSet(LSK.adj+".dismiss",dis);if(LIVE){LIVE.adjust=LIVE.adjust.filter(a=>a.id!==id);lsSet(LSK.live,LIVE)}render()}
+function setInput(k,v,why){const old=INP[k];if(String(old)===String(v))return;INP[k]=v;lsSet(LSK.inp,INP);INH.unshift({d:today(),k,old,v,why:why||"saisie"});INH=INH.slice(0,40);lsSet(LSK.inp+".hist",INH);if(lsGet(LSK.raw,null))recompute()}
+
+/* ============ PROGRAMME ============ */
+function target(s){
+  if(s.w){const pct=s.w<2?s.w:s.w/PLAN.ftpRef;const watts=Math.round(pct*INP.ftp+(ADJ[s.k]||0));return watts+" W"}
+  if(s.v){const v=(s.v+(ADJ[s.k]||0))*INP.vma;return paceKm(v)+"/km"}
+  return "";
+}
+const PH_C={"Base 1":"#4EA8FF","Base 2":"#3DDC84","Build":"#F5A524","Spécifique":"#E4002B","Affûtage":"#C77DFF"};
+const D_IC={velo:"🚴",course:"🏃",nat:"🏊",muscu:"🏋️"};
+function vProgramme(){
+  if(!PLAN)return `<div class="card"><div class="empty">Chargement du programme…</div></div>`;
+  const t=today(),race=PLAN.race,t0=new Date(PLAN.blocks[0].from).getTime(),t1=new Date(race).getTime(),pos=d=>((new Date(d).getTime()-t0)/(t1-t0)*100);
+  const bar=PLAN.blocks.map(b=>`<div style="position:absolute;left:${pos(b.from)}%;width:${pos(b.to)-pos(b.from)}%;top:0;bottom:0;background:${PH_C[b.n]};opacity:.85"></div>`).join("");
+  const cur=PLAN.weeks.find(w=>{const e=new Date(w.start+"T00:00:00");e.setDate(e.getDate()+7);return w.start<=t&&dkey(e)>t})||PLAN.weeks[0];
+  UI.openWeek=UI.openWeek||cur.n;
+  const blocks=PLAN.blocks.map(b=>{
+    const ws=PLAN.weeks.filter(w=>w.start>=b.from&&w.start<=b.to);if(!ws.length)return "";
+    const done=b.to<t,now=b.from<=t&&b.to>=t;
+    return `<div class="dc" style="border-left:4px solid ${PH_C[b.n]}"><div style="display:flex;justify-content:space-between;align-items:baseline"><div class="dl" style="color:var(--txt);font-size:16px;font-family:var(--disp);font-weight:800">${b.n}${now?' <span class="st up" style="font-size:10px">en cours</span>':""}</div><span class="muted" style="font-size:12px">${fdate(b.from)} → ${fdate(b.to)}</span></div><div class="muted" style="font-size:13px;margin-top:2px">${esc(b.f)}</div>
+    ${ws.map(w=>{const open=UI.openWeek===w.n,isCur=w===cur,past=dkey(new Date(new Date(w.start+"T00:00:00").getTime()+7*864e5))<=t;
+      return `<button class="wk${isCur?" cur":""}${past?" past":""}" data-act="wk" data-v="${w.n}"><span class="wn">S${w.n}</span><span class="wd">${fdate(w.start)}</span><span class="wt">${w.test?'<b class="tt">'+esc(w.test)+'</b>':esc(w.note||"")}</span><span class="wh">${String(w.h).replace(".",",")} h</span></button>
+      ${open?`<div class="wdet"><div class="dsplit">${["velo","course","nat","muscu"].map(k=>`<span>${D_IC[k]} ${String(w.disc[k]).replace(".",",")} h</span>`).join("")}</div>${w.s.map(s=>`<div class="ses"><span>${D_IC[s.d]||"•"}</span><span class="sl">${esc(s.l)}</span><b>${target(s)}</b></div>`).join("")}</div>`:""}`}).join("")}</div>`}).join("");
+  const adjTxt=Object.keys(ADJ).filter(k=>ADJ[k]).map(k=>k+" "+(ADJ[k]>0?"+":"")+(Math.abs(ADJ[k])<1?Math.round(ADJ[k]*100)+" % VMA":ADJ[k]+" W")).join(" · ");
+  return `<div class="dc"><div class="dl">Jusqu'à l'Ironman<small>${PLAN.weeks.length} semaines · J-${daysTo(race)} · cibles calculées sur FTP ${INP.ftp} W et VMA ${String(INP.vma).replace(".",",")} km/h</small></div>
+  <div style="position:relative;height:14px;border-radius:9px;overflow:hidden;margin:14px 0 6px;background:var(--card2)">${bar}<div style="position:absolute;left:${pos(t)}%;top:-2px;bottom:-2px;width:3px;background:#fff;border-radius:2px"></div></div>
+  <div style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--mut)">${PLAN.blocks.map(b=>`<span><i style="display:inline-block;width:8px;height:8px;border-radius:9px;background:${PH_C[b.n]};margin-right:4px"></i>${b.n}</span>`).join("")}</div>
+  ${adjTxt?`<div class="hint" style="margin-top:10px">Ajustements appliqués : ${esc(adjTxt)} · <button class="btn" style="padding:4px 10px;font-size:12px" data-act="adjreset">Réinitialiser</button></div>`:""}</div>
+  ${blocks}
+  <div class="dc"><div class="dl">Règles permanentes</div><ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px">${PLAN.rules.map(r=>`<li style="margin-bottom:4px">${esc(r)}</li>`).join("")}</ul></div>`;
+}
+
 /* ============ INTRO ============ */
 function runIntro(){
   if(!S.prefs.intro)return;
@@ -769,7 +993,7 @@ function runIntro(){
   el.addEventListener("click",()=>{close()});
   raf=requestAnimationFrame(frame);
 }
-loadData();
+loadData();loadPlan();
 render();
 runIntro();
 if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(()=>{})}
