@@ -155,7 +155,11 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .sx{display:flex;width:100%;align-items:center;gap:10px;text-align:left;padding:9px 10px;border-radius:12px;background:var(--card2);margin-top:6px}
 .sx.open{background:#262C36}.sx .slot{font-size:10.5px;font-weight:700;color:var(--mut);width:36px;text-transform:uppercase;letter-spacing:.3px}
 .sx .ic{font-size:18px}.sx .ti{flex:1;min-width:0}.sx .ti b{display:block;font-size:14px}.sx .ti small{color:var(--mut);font-size:12px}
-.sx .chev{color:var(--mut);font-size:18px}.sx .ok{color:#3DDC84;font-weight:800}
+.sx .chev{color:var(--mut);font-size:18px}.sx{cursor:pointer}
+.sx .more{padding:4px 8px;margin:-4px -6px -4px 0;color:var(--mut);font-size:20px;line-height:1;border-radius:8px}
+.sx.miss{box-shadow:inset 3px 0 0 #F5A524}.tag2{font-style:normal;font-size:10px;font-weight:700;color:var(--mut);background:var(--bg);padding:2px 6px;border-radius:6px;margin-left:4px;vertical-align:2px}
+.addb{display:block;width:100%;text-align:left;font-size:12px;color:var(--mut);padding:8px 10px 2px}
+.sel{flex:1;background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:9px;font:inherit;font-size:14px}.sx .ok{color:#3DDC84;font-weight:800}
 .sdet{padding:8px 10px 4px 56px}.srow{display:flex;gap:10px;padding:4px 0;font-size:13px;border-bottom:1px dashed var(--line)}.srow:last-child{border:0}
 .srow span{color:var(--mut);width:86px;flex:0 0 auto}.srow b{font-weight:600}
 .cm{margin:6px 0 0 56px;padding:8px 10px;border-left:3px solid #3DDC84;background:rgba(61,220,132,.07);border-radius:0 10px 10px 0;font-size:13px}
@@ -549,7 +553,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.6 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.7 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -652,6 +656,15 @@ document.addEventListener("click",ev=>{
     case"refresh":refreshData();break;
     case"pw":UI.pw=+v;UI.openSes=null;render();window.scrollTo(0,0);break;
     case"ses":UI.openSes=UI.openSes===v?null:v;render();break;
+    case"smore":{const [wn,uid]=v.split("|");sheetSession(wn,uid);break}
+    case"sadd":{const [wn,d]=v.split("|");sheetAdd(wn,d);break}
+    case"asport":{const [wn,d,k]=v.split("|");UI.addSport=k;sheetAdd(wn,d);break}
+    case"sadddo":{const wn=v;const x=LIB[UI.addSport][+(document.querySelector('input[name=alib]:checked')||{value:0}).value];
+      const e=WKED[wn]=WKED[wn]||{};(e.added=e.added||[]).push({uid:"x"+Date.now().toString(36),id:x[0],k:x[1],d:UI.addSport,title:x[2],min:x[3],p:x[4],day:+$("#adD").value,slot:$("#adS").value});saveWked();closeSheet();render();toast("Séance ajoutée");break}
+    case"smove":{const [wn,uid]=v.split("|");const e=WKED[wn]=WKED[wn]||{};const day=+$("#mvD").value,slot=$("#mvS").value;const a=(e.added||[]).find(x=>x.uid===uid);if(a){a.day=day;a.slot=slot}else{(e.moved=e.moved||{})[uid]={day,slot}}saveWked();closeSheet();render();toast("Séance déplacée");break}
+    case"sdel":{const [wn,uid]=v.split("|");const e=WKED[wn]=WKED[wn]||{};if((e.added||[]).some(x=>x.uid===uid))e.added=e.added.filter(x=>x.uid!==uid);else{(e.removed=e.removed||[]).push(uid);if(e.moved)delete e.moved[uid]}saveWked();closeSheet();UI.openSes=null;render();toast("Séance supprimée");break}
+    case"sreset":{const [wn,uid]=v.split("|");const e=WKED[wn]||{};if(e.moved)delete e.moved[uid];saveWked();closeSheet();render();break}
+    case"wkreset":delete WKED[v];saveWked();render();toast("Semaine remise comme prévu");break;
     case"ob":UI.ob=v;render();break;
     case"schedreset":delete SCHED[UI.ob];lsSet("ironmax.sched",SCHED);render();toast("Organisation conseillée rétablie");break;
     case"adjapply":applyAdj(v);render();break;
@@ -853,7 +866,8 @@ function recompute(){
   const doneH={velo:0,course:0,nat:0,muscu:0};win.forEach(a=>{if(doneH[a.sp]!=null)doneH[a.sp]+=a.moving_time/3600});
   const planH={velo:0,course:0,nat:0,muscu:0};
   if(PLAN){if(PLAN.past[blk.n]&&blk.from<PLAN.weeks[0].start)Object.keys(planH).forEach(k=>planH[k]+=PLAN.past[blk.n].plannedH[k]);
-    PLAN.weeks.forEach(w=>{if(w.start<blk.from||w.start>today)return;const end=new Date(w.start+"T00:00:00");end.setDate(end.getDate()+7);const frac=Math.min(1,(new Date(today+"T23:59:59")-new Date(w.start+"T00:00:00"))/(7*864e5));Object.keys(planH).forEach(k=>planH[k]+=w.disc[k]*frac)})}
+    PLAN.weeks.forEach(w=>{if(w.start<blk.from||w.start>today)return;let ws=null;try{ws=PLAN.blocks[0].tpl?weekSessions(w):null}catch(e){}
+      if(ws){ws.forEach(s=>{if(s.date<=today&&planH[s.d]!=null)planH[s.d]+=(s.min||0)/60})}else{const frac=Math.min(1,(new Date(today+"T23:59:59")-new Date(w.start+"T00:00:00"))/(7*864e5));Object.keys(planH).forEach(k=>planH[k]+=w.disc[k]*frac)}})}
   const weeksIn=Math.max(1,(new Date(today)-new Date(blk.from))/(7*864e5));
   const ef=(list,f)=>{const v=list.map(f).filter(x=>x&&isFinite(x));if(v.length<4)return null;const n=Math.min(3,Math.floor(v.length/2));const a=v.slice(0,n).reduce((p,c)=>p+c,0)/n,b=v.slice(-n).reduce((p,c)=>p+c,0)/n;return (b/a-1)*100};
   const z2b=win.filter(a=>a.sp==="velo"&&a.average_heartrate&&(a.icu_weighted_avg_watts||a.average_watts)&&(a.icu_weighted_avg_watts||a.average_watts)<.8*INP.ftp&&a.moving_time>2400).sort((a,b)=>a.date<b.date?-1:1);
@@ -992,10 +1006,20 @@ function mainTarget(k,p){
   if(k==="ow")return (p.m||"").toLocaleString("fr-FR")+" m";
   return "";
 }
+let WKED=lsGet("ironmax.wkedit",{});
+const saveWked=()=>lsSet("ironmax.wkedit",WKED);
+const LIB={velo:[["z2b","tempo","Z2 facile",60,{w:.65}],["ss","ss","Sweet spot 3×15'",75,{sets:"3×15'",w:.90,rec:"5'"}],["thr","thr","Seuil 2×15'",70,{sets:"2×15'",w:.97,rec:"5'"}],["long","long","Sortie longue 3h",180,{z2:.70}]],
+  course:[["z2run","z2run","Footing Z2 45'",45,{}],["seuil","seuil","Seuil 3×10'",55,{sets:"3×10'",v:.86,rec:"2'"}],["lrun","longrun","Sortie longue 1h20",80,{v:.66}]],
+  nat:[["n1","nat","Natation technique",40,{var:"1",m:2000}],["n2","nat","Natation fractionné modéré",50,{var:"2",m:2500}],["n3","nat","Natation endurance continue",50,{var:"3",m:2500}],["n4","nat","Natation soutenue",45,{var:"4",m:2400}]],
+  muscu:[["mA","muscuA","Muscu A",60,{}],["mB","muscuB","Muscu B",60,{}]]};
 function weekSessions(w){
   const b=blockOf(w),tpl={};b.tpl.forEach(t=>tpl[t.id]=t);
   const vo2On=INP.ftp<265&&INH.some(h=>h.k==="ftp"&&h.d>=(PLAN.ftpTestDate||"9999"));
-  return w.s.map(s0=>{const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];const pl=place(b.n,t);const d=new Date(w.start+"T00:00:00");d.setDate(d.getDate()+pl.day);return Object.assign({},s,{k:s.kk||t.k,d:t.d,title:s.l||t.l,day:pl.day,slot:pl.slot,date:dkey(d)})}).sort((a,c)=>a.day-c.day||SLOTS.indexOf(a.slot)-SLOTS.indexOf(c.slot));
+  const ed=WKED[w.n]||{},rm=ed.removed||[],mv=ed.moved||{};
+  const dateOf=day=>{const d=new Date(w.start+"T00:00:00");d.setDate(d.getDate()+day);return dkey(d)};
+  const base=w.s.filter(s0=>!rm.includes(s0.id)).map(s0=>{const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];let pl=place(b.n,t);if(mv[s.id])pl=mv[s.id];return Object.assign({},s,{uid:s.id,k:s.kk||t.k,d:t.d,title:s.l||t.l,day:pl.day,slot:pl.slot,date:dateOf(pl.day),moved:!!mv[s.id]})});
+  const add=(ed.added||[]).map(a=>Object.assign({},a,{date:dateOf(a.day),added:true}));
+  return base.concat(add).sort((a,c)=>a.day-c.day||SLOTS.indexOf(a.slot)-SLOTS.indexOf(c.slot));
 }
 function doneOn(date,sport){
   const out=[];
@@ -1023,12 +1047,13 @@ function vProgramme(){
     const list=ses.filter(s=>s.day===d);
     days+=`<div class="day${isT?" today":""}${past?" past":""}"${isT?' id="todayRow"':""}><div class="dh"><b>${DAYS[d]} ${dd.getDate()}</b>${isT?'<span class="st up">Aujourd\'hui</span>':""}</div>`;
     if(!list.length)days+=`<div class="rest">Repos</div>`;
-    list.forEach(s=>{const id=w.n+"-"+s.id,open=UI.openSes===id;const done=doneOn(s.date,s.d);
-      days+=`<button class="sx${open?" open":""}" data-act="ses" data-v="${id}"><span class="slot">${SLOT_N[s.slot]}</span><span class="ic">${D_IC[s.d]}</span><span class="ti"><b>${esc(s.title)}</b><small>${s.min?hm(s.min):""}${mainTarget(s.k,s.p)?" · "+esc(mainTarget(s.k,s.p)):""}</small></span>${done.length?'<span class="ok">✓</span>':'<span class="chev">›</span>'}</button>`;
+    list.forEach(s=>{const done=doneOn(s.date,s.d);const open=UI.openSes===w.n+"-"+s.uid;
+      const miss=!done.length&&LIVE&&s.date<t;
+      days+=`<div class="sx${open?" open":""}${miss?" miss":""}" data-act="ses" data-v="${w.n}-${s.uid}"><span class="slot">${SLOT_N[s.slot]}</span><span class="ic">${D_IC[s.d]}</span><span class="ti"><b>${esc(s.title)}${s.added?' <i class="tag2">ajoutée</i>':s.moved?' <i class="tag2">déplacée</i>':""}</b><small>${s.min?hm(s.min):""}${mainTarget(s.k,s.p)?" · "+esc(mainTarget(s.k,s.p)):""}${miss?" · non faite":""}</small></span>${done.length?'<span class="ok">✓</span>':""}<span class="more" data-act="smore" data-v="${w.n}|${s.uid}">⋯</span></div>`;
       if(open)days+=`<div class="sdet">${steps(s.k,s.p,s.min,w.phase).map(r=>`<div class="srow"><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join("")}</div>`;
       done.forEach(x=>days+=`<div class="cm"><b>${esc(x.title||"Séance faite")}</b>${x.metrics?'<div class="muted" style="font-size:12px">'+esc(x.metrics)+'</div>':""}<div>${esc(x.comment||"")}</div></div>`);
     });
-    days+=`</div>`;
+    days+=`<button class="addb" data-act="sadd" data-v="${w.n}|${d}">＋ Ajouter une séance</button></div>`;
   }
   const i=PLAN.weeks.indexOf(w);
   const cnt={};ses.forEach(s=>cnt[s.d]=(cnt[s.d]||0)+1);
@@ -1038,6 +1063,7 @@ function vProgramme(){
   return `<div class="dc" style="border-top:3px solid ${PH_C[w.phase]}">
     <div class="wnav"><button data-act="pw" data-v="${i>0?PLAN.weeks[i-1].n:w.n}">‹</button><div><b>Semaine ${w.n}</b><small>${fdate(w.start)} → ${fdate(dkey(end))} · ${w.phase}</small></div><button data-act="pw" data-v="${i<PLAN.weeks.length-1?PLAN.weeks[i+1].n:w.n}">›</button></div>
     ${w!==cur?`<button class="btn" style="width:100%;margin-top:8px" data-act="pw" data-v="${cur.n}">Revenir à cette semaine</button>`:""}
+    ${WKED[w.n]&&((WKED[w.n].added||[]).length||(WKED[w.n].removed||[]).length||Object.keys(WKED[w.n].moved||{}).length)?`<button class="btn" style="width:100%;margin-top:8px" data-act="wkreset" data-v="${w.n}">Annuler mes modifications de la semaine</button>`:""}
     ${w.note||w.test?`<div class="wnote">${w.test?'<b>'+esc(w.test)+'</b> · ':""}${esc(w.note||"")}</div>`:""}
     <div class="dsplit" style="margin-top:10px"><span><b>${String(w.h).replace(".",",")} h</b></span>${["velo","course","nat","muscu"].filter(k=>cnt[k]).map(k=>`<span>${D_IC[k]} ${cnt[k]} · ${String(w.disc[k]).replace(".",",")} h</span>`).join("")}</div></div>
   <div class="dc" style="padding:6px 14px">${days}</div>
@@ -1045,6 +1071,24 @@ function vProgramme(){
     <div style="position:relative;height:12px;border-radius:9px;overflow:hidden;margin:12px 0 10px;background:var(--card2)">${fr}<div style="position:absolute;left:${pos(t)}%;top:-2px;bottom:-2px;width:3px;background:#fff"></div></div>${allw}
     ${Object.keys(ADJ).some(k=>ADJ[k])?`<div class="hint" style="margin-top:10px">Ajustements appliqués aux cibles · <button class="btn" style="padding:4px 10px;font-size:12px" data-act="adjreset">Réinitialiser</button></div>`:""}</div>
   <div class="dc"><div class="dl">Règles permanentes</div><ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px">${PLAN.rules.map(r=>`<li style="margin-bottom:4px">${esc(r)}</li>`).join("")}</ul></div>`;
+}
+function sheetSession(wn,uid){
+  const w=PLAN.weeks.find(x=>x.n===+wn);const s=weekSessions(w).find(x=>x.uid===uid);if(!s)return;
+  $("#sheet").innerHTML=`<div class="grab"></div><h3 style="font-family:var(--disp);font-weight:800;font-size:21px;margin:4px 0 2px">${D_IC[s.d]} ${esc(s.title)}</h3><div class="muted" style="font-size:13px">${DAYS[s.day]} ${fdate(s.date)} · ${SLOT_N[s.slot]}</div>
+  <div class="dl" style="margin-top:16px">Déplacer</div><div class="row" style="margin-top:6px"><select id="mvD" class="sel">${DAYS.map((d,i)=>`<option value="${i}"${i===s.day?" selected":""}>${d}</option>`).join("")}</select><select id="mvS" class="sel">${SLOTS.map(x=>`<option value="${x}"${x===s.slot?" selected":""}>${SLOT_N[x]}</option>`).join("")}</select><button class="btn" style="background:var(--acc);color:#fff" data-act="smove" data-v="${wn}|${uid}">Déplacer</button></div>
+  <button class="go" style="background:var(--card2);color:var(--pain);margin-top:16px" data-act="sdel" data-v="${wn}|${uid}">Supprimer cette séance</button>
+  ${s.moved?`<button class="btn" style="width:100%;margin-top:10px" data-act="sreset" data-v="${wn}|${uid}">Remettre à sa place d'origine</button>`:""}`;
+  $("#ov").classList.add("show");
+}
+function sheetAdd(wn,day){
+  UI.addSport=UI.addSport||"velo";
+  const l=LIB[UI.addSport];
+  $("#sheet").innerHTML=`<div class="grab"></div><h3 style="font-family:var(--disp);font-weight:800;font-size:21px;margin:4px 0 10px">Ajouter une séance</h3>
+  <div class="chips" style="margin-top:0">${Object.keys(LIB).map(k=>`<button class="chip${k===UI.addSport?" sel":""}" data-act="asport" data-v="${wn}|${day}|${k}">${D_IC[k]} ${D_N[k]}</button>`).join("")}</div>
+  <div style="margin-top:12px">${l.map((x,i)=>`<label class="orow" style="cursor:pointer"><input type="radio" name="alib" value="${i}"${i===0?" checked":""}><span class="ol">${esc(x[2])}</span><span class="muted" style="font-size:12px">${hm(x[3])}</span></label>`).join("")}</div>
+  <div class="row" style="margin-top:12px"><select id="adD" class="sel">${DAYS.map((d,i)=>`<option value="${i}"${i===+day?" selected":""}>${d}</option>`).join("")}</select><select id="adS" class="sel">${SLOTS.map(x=>`<option value="${x}"${x==="soir"?" selected":""}>${SLOT_N[x]}</option>`).join("")}</select></div>
+  <button class="go" data-act="sadddo" data-v="${wn}">Ajouter</button>`;
+  $("#ov").classList.add("show");
 }
 function vOrga(){
   if(!PLAN||!PLAN.blocks[0].tpl)return "";
