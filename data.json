@@ -525,6 +525,43 @@
   "week": {
    "start": "2026-11-09",
    "h": 3.8
-  }
+  },
+  "mobWeek": {
+   "start": "2026-11-09",
+   "n": 1,
+   "min": 29
+  },
+  "done": [
+   {
+    "date": "2026-11-09",
+    "sport": "nat",
+    "title": "Natation 2 100 m (décharge)"
+   },
+   {
+    "date": "2026-11-09",
+    "sport": "course",
+    "title": "Footing 35' < 140 bpm"
+   },
+   {
+    "date": "2026-11-10",
+    "sport": "muscu",
+    "title": "Muscu A"
+   },
+   {
+    "date": "2026-11-10",
+    "sport": "velo",
+    "title": "Zwift 40' Z1/Z2 à 160 W"
+   },
+   {
+    "date": "2026-11-11",
+    "sport": "course",
+    "title": "Test VMA 6' : 1 635 m, VMA 16,4 km/h"
+   },
+   {
+    "date": "2026-11-11",
+    "sport": "mob",
+    "title": "Mobilité"
+   }
+  ]
  }
 }
