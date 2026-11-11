@@ -665,6 +665,14 @@
    "date": "2026-11-09",
    "s": 322,
    "src": "Z2 récentes : 5:37–5:42/km à 131–135 bpm → ≈ 5:22/km ramené à 140 bpm"
-  }
+  },
+  "sleep": {
+   "secs": 26940,
+   "score": 81,
+   "hrv": 115,
+   "hrvBase": 102,
+   "rhr": 44
+  },
+  "ftpEst": 259
  }
 }
