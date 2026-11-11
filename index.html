@@ -557,7 +557,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.14 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.15 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -762,7 +762,6 @@ function mobilityWeek(){
   const now=new Date(),mon=new Date(now);mon.setHours(0,0,0,0);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));const m=dkey(mon);
   let n=0,min=0;
   ((LIVE&&LIVE.acts)||[]).forEach(a=>{if(a.sp==="mob"&&a.date>=m){n++;min+=a.moving_time/60}});
-  (S.sessions||[]).forEach(s=>{if(s.date>=m&&s.cat!=="solo"||s.date>=m&&s.cat==="solo"){n++;min+=s.done/60}});
   const B=DATA&&DATA.base;if(B&&B.mobWeek&&B.mobWeek.start===m&&!(LIVE&&LIVE.acts&&LIVE.acts.some(a=>a.sp==="mob"&&a.date<=B.asof&&a.date>=m))){n+=B.mobWeek.n;min+=B.mobWeek.min}
   return {n,min};
 }
@@ -928,7 +927,7 @@ function dedupe(acts){
   }
   return acts.filter(a=>!drop.has(a.id));
 }
-const EV=3;
+const EV=4;
 function maybeRecompute(){if(DATA&&PLAN&&lsGet(LSK.raw,null)&&(!LIVE||LIVE.ev!==EV)){recompute();render()}}
 function recompute(){
   const raw=lsGet(LSK.raw,null);if(!raw)return;
@@ -987,7 +986,7 @@ function recompute(){
   const t0=new Date("2026-09-27").getTime(),t1=new Date("2027-06-27").getTime(),tn=Date.now();const u=(tn-t0)/(t1-t0);
   const expFTP=255+(280-255)*u,expVMA=15.0+(17.0-15.0)*u,expCSS=125-(125-110)*u;
   const trajScore=pctDiff=>clamp(pctDiff>=0?15+pctDiff:15+1.5*pctDiff,5,20);
-  const traj={velo:trajScore((INP.ftp/expFTP-1)*100),course:trajScore((INP.vma/expVMA-1)*100),nat:0};
+  const traj={velo:trajScore((INP.ftp/expFTP-1)*100),course:0,nat:0};
   const planScore=k=>{if(!planH[k])return 18;const r=doneH[k]/planH[k];return clamp(r<=1.1?20*Math.min(1,r):20-(r-1.1)*20,0,20)};
   const names={nat:"Natation",velo:"Vélo",course:"Course"};
   const disc=["nat","velo","course"].map(k=>{const p=planScore(k),e=effScore(k),t=traj[k];return {k:k==="nat"?"natation":k,n:names[k],v:+(.4*p+.3*e+.3*t).toFixed(1),plan:+p.toFixed(1),eff:+e.toFixed(1),traj:+t.toFixed(1),
@@ -1000,10 +999,30 @@ function recompute(){
   traj.nat=trajScore((120/swimPace-1)*100*.5);   // natation en entretien : tenir ~2:00/100 m, écart compté à moitié
   disc.forEach(d=>{if(d.k==="natation"){d.traj=+traj.nat.toFixed(1);d.v=+(.4*d.plan+.3*d.eff+.3*d.traj).toFixed(1)}});
   const lin=(x,z,c)=>clamp((x-z)/(c-z),0,1);
+  // ---- Indicateurs de prépa Ironman (cf. doc de méthode) ----
+  const d42=dkey(new Date(Date.now()-42*864e5)),d28=dkey(new Date(Date.now()-28*864e5));
+  const runsAll=((B&&B.runs)||[]).map(r=>({date:r.date,km:r.km,s:r.s})).concat(actsN.filter(a=>a.sp==="course"&&a.distance>1000).map(a=>({date:a.date,km:a.distance/1000,s:a.moving_time,hr:a.average_heartrate})));
+  const ridesAll=((B&&B.rides)||[]).map(r=>({date:r.date,h:r.h})).concat(actsN.filter(a=>a.sp==="velo").map(a=>({date:a.date,h:a.moving_time/3600})));
+  const longRun=Math.max(0,...runsAll.filter(r=>r.date>=d42).map(r=>r.km));
+  const km4w=runsAll.filter(r=>r.date>=d28).reduce((a,r)=>a+r.km,0)/4;
+  const longRide=Math.max(0,...ridesAll.filter(r=>r.date>=d42).map(r=>r.h));
+  // allure ramenée à 140 bpm sur les sorties Z2 (FC moyenne 125–150, > 30 min) : 2,5 s/km par bpm d'écart
+  const z2p=actsN.filter(a=>a.sp==="course"&&a.average_heartrate>=125&&a.average_heartrate<=150&&a.moving_time>=1800&&a.distance>3000).sort((a,b)=>a.date<b.date?-1:1).map(a=>a.moving_time/(a.distance/1000)-(140-a.average_heartrate)*2.5);
+  const p140s=(B&&B.p140?[B.p140.s]:[]).concat(z2p).slice(-5);const p140=p140s.length?p140s.slice().sort((a,b)=>a-b)[Math.floor(p140s.length/2)]:330;
+  const peak=new Date("2027-05-30").getTime(),uP=Math.min(1,(tn-t0)/(peak-t0));
+  const exp={p140:340-(340-300)*u,longRun:14+(30-14)*uP,km4w:25+(45-25)*uP,longRide:3+(5.5-3)*uP};
+  const bikeV=.7*lin(INP.ftp,215,280)+.3*lin(longRide,2,5.5);
+  const runV=.5*lin(-p140,-370,-300)+.25*lin(longRun,10,30)+.25*lin(km4w,15,45);
+  const parts=[{n:"Vélo (FTP + endurance)",w:.35,v:bikeV},{n:"Course (prépa marathon)",w:.30,v:runV},{n:"Natation",w:.10,v:lin(-swimPace,-150,-126)},{n:"Endurance (charge de fond)",w:.25,v:lin(L.ctl,42,INP.ctlTarget)}];
+  traj.course=trajScore((exp.p140/p140-1)*100);
+  disc.forEach(d=>{if(d.k==="course"){d.traj=+traj.course.toFixed(1);d.v=+(.4*d.plan+.3*d.eff+.3*d.traj).toFixed(1)}});
   const global2=disc.reduce((a,d)=>a+d.v*(planH[d.k==="natation"?"nat":d.k]||1),0)/wsum;
-  const parts=[{n:"Vélo (FTP)",w:.35,v:lin(INP.ftp,215,280)},{n:"Course (5 km)",w:.30,v:lin(-(mmss(INP.best5k)||1401),-1506,-1290)},{n:"Natation",w:.10,v:lin(-swimPace,-150,-126)},{n:"Endurance",w:.25,v:lin(L.ctl,42,INP.ctlTarget)}];
   const capV=Math.round(parts.reduce((a,p)=>a+p.w*p.v,0)*100);
-  const swimMin=3800/100*swimPace*1.05/60,bikeKmh=27.7*Math.cbrt(.7*INP.ftp/180),bikeMin=180/bikeKmh*60,runMin=(mmss(INP.best5k)||1401)/60*Math.pow(42.195/5,1.06)*1.15;
+  // vélo : 30 km/h à 210 W (≈ 75 % d'une FTP de 280 W, 80–82 kg), vitesse ∝ racine cubique de la puissance
+  const imW=.75*INP.ftp,bikeKmh=30*Math.cbrt(imW/210)*Math.pow(81/(INP.weight||81),.1)*(.85+.15*lin(longRide,2,5.5)),bikeMin=180/bikeKmh*60;
+  // marathon : allure à 140 bpm + 12 % (fatigue après 180 km) + jusqu'à 6 % si volume et sortie longue insuffisants
+  const runPace=p140*1.12*(1+.06*(1-Math.min(1,(longRun/30+km4w/45)/2))),runMin=runPace*42.195/60;
+  const swimMin=3800/100*swimPace*1.05/60;
   const tot=swimMin+10+bikeMin+runMin;
   let caph=lsGet(LSK.caph,[]);caph=caph.filter(p=>p.d!==today);caph.push({d:today,v:capV});caph.sort((a,b)=>a.d<b.d?-1:1);lsSet(LSK.caph,caph.slice(-200));
   const snapReal=(DATA&&DATA.cap&&DATA.cap.real)||[];
@@ -1028,11 +1047,19 @@ function recompute(){
   const tH=k=>Object.keys(k).reduce((a,x)=>a+k[x],0);const dTot=tH(doneH),pTot=tH(planH),vr=pTot?dTot/pTot:1;
   const st=(x,lo,hi)=>x>=hi?["up","En avance"]:x>=lo?["ok","Dans les temps"]:["warn","En retard"];
   const g=(k,e)=>gains[k]==null?null:gains[k];const expEff={velo:4*weeksIn/5,course:3*weeksIn/5,nat:.5*weeksIn/5};
-  const rows=[];
-  rows.push({i:"Volume (depuis le "+fdate(blk.from)+")",exp:"~"+Math.round(pTot)+" h",real:"~"+Math.round(dTot)+" h",s:st(vr,.9,1.08)[0],t:vr>1.1?"Au-dessus":st(vr,.9,1.08)[1]});
-  rows.push({i:"FTP vélo",exp:"≈ "+Math.round(expFTP)+" W",real:INP.ftp+" W"+(eftp?" · eFTP "+Math.round(eftp)+" W":""),s:st(INP.ftp/expFTP,.98,1.02)[0],t:st(INP.ftp/expFTP,.98,1.02)[1]});
-  rows.push({i:"VMA",exp:"≈ "+String(expVMA.toFixed(1)).replace(".",",")+" km/h",real:String(INP.vma).replace(".",",")+" km/h",s:st(INP.vma/expVMA,.98,1.02)[0],t:st(INP.vma/expVMA,.98,1.02)[1]});
-  [["velo","Efficacité vélo"],["course","Efficacité course"],["nat","Efficacité natation"]].forEach(([k,l])=>{const v=gains[k];if(v==null)return;const r=v/Math.max(.1,expEff[k]);rows.push({i:l,exp:"+"+String(expEff[k].toFixed(1)).replace(".",",")+" %",real:(v>=0?"+":"")+String(v.toFixed(1)).replace(".",",")+" %",s:st(r,.8,1.2)[0],t:st(r,.8,1.2)[1]})});
+  const rows=[],fr=x=>String(x).replace(".",","),hhm=x=>Math.floor(x)+"h"+pad(Math.round(x%1*60));
+  const row=(i,e,r,ratio,lo=.97,hi=1.03)=>rows.push({i,exp:e,real:r,s:ratio>=hi?"up":ratio>=lo?"ok":"warn",t:ratio>=hi?"En avance":ratio>=lo?"Dans les temps":"En retard"});
+  row("Volume depuis le "+fdate(blk.from),"~"+Math.round(pTot)+" h","~"+Math.round(dTot)+" h",vr,.9,1.1);
+  row("🚴 FTP","≈ "+Math.round(expFTP)+" W (280 W en juin)",INP.ftp+" W"+(eftp?" · eFTP "+Math.round(eftp)+" W":""),INP.ftp/expFTP,.98,1.02);
+  const expKmh=30*Math.cbrt(.75*expFTP/210)*Math.pow(81/(INP.weight||81),.1)*(.85+.15*lin(exp.longRide,2,5.5));
+  row("🚴 Vitesse Ironman estimée",fr(expKmh.toFixed(1))+" km/h (30 km/h en juin)",fr(bikeKmh.toFixed(1))+" km/h · vélo en "+hm(bikeMin),bikeKmh/expKmh,.99,1.01);
+  row("🚴 Plus longue sortie (6 sem.)",hhm(exp.longRide)+" (5h30 en mai)",hhm(longRide),longRide/exp.longRide,.9,1.1);
+  row("🏃 Allure à 140 bpm",paceKm(3600/exp.p140)+" (5:00/km en juin)",paceKm(3600/p140),exp.p140/p140,.98,1.02);
+  row("🏃 Plus longue sortie (6 sem.)",fr(exp.longRun.toFixed(0))+" km (30 km en mai)",fr(longRun.toFixed(1))+" km",longRun/exp.longRun,.9,1.1);
+  row("🏃 Volume hebdo (4 sem.)",fr(exp.km4w.toFixed(0))+" km (45 km en mai)",fr(km4w.toFixed(1))+" km",km4w/exp.km4w,.9,1.1);
+  const expRun=exp.p140*1.12*(1+.06*(1-Math.min(1,(exp.longRun/30+exp.km4w/45)/2)));
+  row("🏃 Allure marathon Ironman estimée",paceKm(3600/expRun)+" (5:40/km en juin)",paceKm(3600/runPace)+" · marathon en "+hm(runMin),expRun/runPace,.98,1.02);
+  [["velo","🚴 Efficacité cardiaque"],["course","🏃 Efficacité cardiaque"],["nat","🏊 Efficacité cardiaque"]].forEach(([k,l])=>{const v=gains[k];if(v==null)return;const r=v/Math.max(.1,expEff[k]);row(l,"+"+fr(expEff[k].toFixed(1))+" %",(v>=0?"+":"")+fr(v.toFixed(1))+" %",r,.8,1.2)});
   rows.push({i:"Fatigue accumulée",exp:"< 40",real:fnow+"/100",s:fnow<40?"ok":"warn",t:fnow<40?"Dans la cible":"À surveiller"});
   const vig=(LIVE.adjust||[]).map(a=>a.t).concat(highDays>4?["Fatigue élevée depuis "+highDays+" jours"]:[]);
   rows.push({i:"Points de vigilance",exp:"aucun",real:vig.length?vig.join(" ; "):"aucun",s:vig.length?"warn":"ok",t:vig.length?"À surveiller":"RAS"});
