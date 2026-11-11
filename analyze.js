@@ -55,6 +55,12 @@
     const r = resample(st), hr = cleanHR(r.hr), val = r.val, isBike = plan.sport === "velo";
     const fmtV = v => isBike ? Math.round(v) + " W" : pace(v);
     const res = { reps: [], recs: [], sum: {}, verdict: "ok", comment: "" };
+    if (!val.some(v => v > 0)) {
+      const h = hr.filter(x => x > 30), m = mean(h);
+      res.sum = { avgHR: m };
+      res.comment = isNaN(m) ? "Ni puissance ni FC exploitables sur cette séance." : `Pas de ${isBike ? "puissance" : "vitesse"} enregistrée (${isBike ? "vélo hors Zwift, ex. Technogym" : "capteur absent"}) : FC moyenne ${Math.round(m)} bpm, max ${Math.round(Math.max(...h))} bpm. Analyse des répétitions impossible.`;
+      return res;
+    }
     // --- séance continue : dérive cardiaque (efficacité 1re moitié vs 2e moitié, hors 10 premières minutes)
     if (!plan.n) {
       const a = 600, b = val.length; if (b - a < 1200) { res.comment = "Séance trop courte pour mesurer la dérive."; return res; }
