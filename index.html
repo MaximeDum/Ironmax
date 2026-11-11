@@ -542,14 +542,14 @@ function vReglages(){
   <input class="inp wide" id="cfgK" placeholder="API key" value="${esc(CFG.key)}" type="password" autocapitalize="off" autocorrect="off">
   <div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="savecfg">Enregistrer et actualiser</button>${CFG.key?'<button class="btn red" data-act="delcfg">Effacer</button>':""}</div></div>
   ${vOrga()}
-  <h2>Mes seuils</h2><div class="card" style="padding:4px 18px">${IN("ftp","FTP","W · après un test vélo")}${IN("vma","VMA","km/h · test 6' ou demi-Cooper")}${IN("fcmax","FC max","bpm","numeric")}${IN("fcrest","FC de repos","bpm","numeric")}${IN("fcnight","FC de nuit de base","bpm","numeric")}${IN("css","CSS natation","min:s / 100 m","text")}${IN("best5k","Meilleur 5 km récent","min:s","text")}${IN("weight","Poids","kg")}${IN("ctlTarget","Charge de fond visée","CTL Ironman","numeric")}
+  <h2>Mes seuils</h2><div class="card" style="padding:4px 18px">${IN("ftp","FTP","W · après un test vélo")}${IN("vma","VMA","km/h · test 6' ou demi-Cooper")}${IN("fcmax","FC max","bpm","numeric")}${IN("fcrest","FC de repos","bpm","numeric")}${IN("fcnight","FC de nuit de base","bpm","numeric")}${IN("css","Allure natation de référence","min:s / 100 m · facultatif","text")}${IN("best5k","Meilleur 5 km récent","min:s","text")}${IN("weight","Poids","kg")}${IN("ctlTarget","Charge de fond visée","CTL Ironman","numeric")}
   <button class="go" style="margin:12px 0 14px" data-act="saveinp">Enregistrer les seuils</button>${hist?'<div style="padding-bottom:12px"><div class="dl" style="margin-bottom:4px">Historique</div>'+hist+'</div>':""}</div>
   <h2>Guidage</h2><div class="card" style="padding:4px 18px">${T("voice","Voix","Annonce les exercices et les changements de côté")}${T("beep","Bips","3-2-1 avant chaque changement")}${T("intro","Animation d'accueil","La ligne d'arrivée au lancement de l'appli")}</div>
   <h2>Sauvegarde</h2><div class="card"><div class="muted" style="font-size:14px">${sync.on?"Tes séances sont synchronisées en ligne. Tu peux aussi copier une sauvegarde.":"Tes séances sont stockées sur cet appareil. Pense à copier une sauvegarde de temps en temps."}</div>
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.5 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.6 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -949,7 +949,9 @@ const Pr=(a,b)=>paceKm(b*INP.vma)+"–"+paceKm(a*INP.vma)+"/km";
 function steps(k,p,min,phase){
   const nut=min>=150?[["Nutrition","60–80 g de glucides/h · boire toutes les 15'"]]:[];
   switch(k){
+    case"vo2":return [["Échauffement","20' progressif dont 3×1' à 105 %"],["Corps de séance",p.sets+" à "+Wt(p.w,"vo2")+" W · récup "+p.rec+" à "+Wt(.5,"vo2")+" W"],["Retour au calme","10' souple"]];
     case"ss":case"thr":case"ef":case"im":
+      if(p.ou)return [["Échauffement","15' progressif Z1→Z2 + 3×1' à 100 rpm"],["Corps de séance",p.sets+" : 3' à "+Wt(p.ou[0],k)+" W / 2' à "+Wt(p.ou[1],k)+" W · récup "+p.rec+" Z1"],["Retour au calme","10' souple"]];
       if(!p.sets)return [["Endurance",hm(min)+" à "+Wr(.62,.70,"tempo")]];
       return [["Échauffement","15' progressif Z1→Z2 + 3×1' à 100 rpm"],["Corps de séance",p.sets+" à "+Wt(p.w,k)+" W"+(p.rpm?" · "+p.rpm+" rpm":"")+" · récup "+p.rec+" à "+Wt(.55,k)+" W"],["Retour au calme","10' souple"]];
     case"tempo":
@@ -967,8 +969,9 @@ function steps(k,p,min,phase){
     case"longrun":if(p.race)return [["Course","3,8 km · 180 km · 42,2 km"],["Allures visées","Vélo ≈ "+Wt(.77,"long")+" W · marathon ≈ "+Pc(.66)]];
       return [["Endurance",hm(min)+" à "+Pr(.62,.68)]].concat(p.blk?[["Bloc",p.blk+" à "+Pc(.66)]]:[]).concat(min>=100?[["Nutrition","30–45 g de glucides/h"]]:[]);
     case"z2run":return [["Footing Z2",hm(min)+" à "+Pr(.62,.68)]];
-    case"nat":return [["Échauffement","400 m souple + 4×50 m éducatifs"],["Corps de séance",p.main+" (CSS "+INP.css+"/100 m)"],["Finale","3×100 m vite, r30\""],["Retour au calme","200 m souple"],["Total",(p.m||"").toLocaleString("fr-FR")+" m"]];
-    case"ow":return [["Eau libre",(p.m||"").toLocaleString("fr-FR")+" m · "+p.main]];
+    case"nat":{const v=(PLAN.swim||{})[p.var]||["Natation",""];if(p.light)return [["Séance",v[0]+" en version courte, tout au ressenti facile"],["Total",(p.m||"").toLocaleString("fr-FR")+" m"]];
+      return [["Séance",v[0]]].concat(v[1].split(" · ").map((x,i)=>[i===0?"Échauffement":"",x])).concat([["Total",(p.m||"").toLocaleString("fr-FR")+" m · ajuste le volume du bloc principal"],["Repère","4/10 facile · 6/10 modéré · 7–8/10 soutenu"]]);}
+    case"ow":return [["Eau libre",(p.m||"").toLocaleString("fr-FR")+" m continu en combinaison, au ressenti allure course (6/10)"],["Technique","Lever la tête toutes les 6 coups de bras · départ groupé si possible"]];
     case"muscuA":case"muscuB":{
       const reps=p.light?"2 × 10 · charges −20 %":(phase==="Base 1"||phase==="Base 2")?"3–4 × 8–12 · tempo 3-1-1":"3 × 8–10 · sans aller à l'échec";
       return [["Format",reps]].concat((PLAN.muscu[k]||[]).map((e,i)=>[String(i+1),e]));}
@@ -979,17 +982,20 @@ function steps(k,p,min,phase){
 function mainTarget(k,p){
   if(p.test)return p.test==="VMA"?"Test 6'":"Test 20'";
   if(p.race)return "";
-  if(["ss","thr","ef","im"].includes(k)&&p.w)return Wt(p.w,k)+" W";
+  if(p.ou)return Wt(p.ou[0],k)+" / "+Wt(p.ou[1],k)+" W";
+  if(["ss","thr","ef","im","vo2"].includes(k)&&p.w)return Wt(p.w,k)+" W";
   if(k==="tempo")return Wt(p.w,"tempo")+" W";
   if(["long","brick","sim"].includes(k))return p.w?Wt(p.w,"long")+" W":Wr(p.z2-.03,p.z2+.03,"long");
   if(["seuil","marathon"].includes(k)&&p.v)return Pc(p.v,k);
   if(["longrun","z2run"].includes(k))return Pr(.62,.68).split("–")[1]?paceKm(.65*INP.vma)+"/km":"";
-  if(k==="nat"||k==="ow")return (p.m||"").toLocaleString("fr-FR")+" m";
+  if(k==="nat")return (p.m||"").toLocaleString("fr-FR")+" m · "+(((PLAN.swim||{})[p.var]||[""])[0]).toLowerCase();
+  if(k==="ow")return (p.m||"").toLocaleString("fr-FR")+" m";
   return "";
 }
 function weekSessions(w){
   const b=blockOf(w),tpl={};b.tpl.forEach(t=>tpl[t.id]=t);
-  return w.s.map(s=>{const t=tpl[s.id];const pl=place(b.n,t);const d=new Date(w.start+"T00:00:00");d.setDate(d.getDate()+pl.day);return Object.assign({},s,{k:t.k,d:t.d,title:s.l||t.l,day:pl.day,slot:pl.slot,date:dkey(d)})}).sort((a,c)=>a.day-c.day||SLOTS.indexOf(a.slot)-SLOTS.indexOf(c.slot));
+  const vo2On=INP.ftp<265&&INH.some(h=>h.k==="ftp"&&h.d>=(PLAN.ftpTestDate||"9999"));
+  return w.s.map(s0=>{const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];const pl=place(b.n,t);const d=new Date(w.start+"T00:00:00");d.setDate(d.getDate()+pl.day);return Object.assign({},s,{k:s.kk||t.k,d:t.d,title:s.l||t.l,day:pl.day,slot:pl.slot,date:dkey(d)})}).sort((a,c)=>a.day-c.day||SLOTS.indexOf(a.slot)-SLOTS.indexOf(c.slot));
 }
 function doneOn(date,sport){
   const out=[];
