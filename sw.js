@@ -1,5 +1,5 @@
 // Ironmax service worker: network-first (always fresh when online), cache fallback offline.
-const C="ironmax-v29";
+const C="ironmax-v30";
 const FILES=["./","index.html","icon.png","manifest.webmanifest","data.json","plan.json","analyze.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(FILES)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))));self.clients.claim()});
