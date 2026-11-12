@@ -175,6 +175,7 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .wk.past{opacity:.45}.wk.cur{background:rgba(228,0,43,.12);border-radius:10px;padding-left:8px;padding-right:8px;opacity:1}
 .wdet{padding:2px 0 10px 42px}.dsplit{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mut);margin-bottom:6px}
 .ses{display:flex;gap:8px;align-items:baseline;padding:4px 0;font-size:13.5px}.ses .sl{flex:1}.ses b{font-family:var(--disp);white-space:nowrap}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.kv small{display:block;font-size:11px;color:var(--mut)}.kv b{font-family:var(--disp);font-size:16px}.feels{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.fchip{padding:8px 11px;border-radius:99px;background:var(--card2);font-size:13px}.fchip.sel{background:var(--acc);color:#fff}.feelb{margin-top:6px;font-size:12px;color:var(--mut);padding:4px 10px;border-radius:99px;background:var(--card2)}.st.just{background:rgba(199,125,255,.16);color:#C77DFF}
 .hero{background:linear-gradient(135deg,rgba(228,0,43,.22),rgba(228,0,43,.04));border:1px solid rgba(228,0,43,.3);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}.hero .hh{font-family:var(--disp);font-weight:800;font-size:20px;margin-bottom:6px}.hero .hl{font-size:14px;margin-top:3px}.hero .hq{font-size:12px;color:var(--mut);margin-top:10px;font-style:italic}
 .dc{background:var(--card);border-radius:var(--r);padding:18px;margin-top:12px}
 .dl{font-size:13px;color:var(--mut);font-weight:600}
@@ -557,7 +558,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.17 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.18 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -658,6 +659,10 @@ document.addEventListener("click",ev=>{
   switch(a){
     case"cat":UI.cat=b.dataset.id;render();break;
     case"refresh":refreshData();break;
+    case"feelpick":UI.feelSel=v;document.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("sel",x.dataset.v===v));break;
+    case"feelok":{const note=($("#feelNote")||{}).value||"";if((UI.feelSel||"ok")==="ok"&&!note)delete FEEL[v];else FEEL[v]={f:UI.feelSel||"ok",note:note.trim(),at:Date.now()};lsSet("ironmax.feel",FEEL);FEELQ=FEELQ.filter(x=>String(x)!==String(v));recompute();render();if(UI.feelFromQ)nextFeel();else closeSheet();break}
+    case"feelskip":FEELQ=FEELQ.filter(x=>String(x)!==String(v));if(UI.feelFromQ)nextFeel();else closeSheet();break;
+    case"feeledit":feelPopup(v,false);break;
     case"pw":UI.pw=+v;UI.openSes=null;render();window.scrollTo(0,0);break;
     case"ses":UI.openSes=UI.openSes===v?null:v;render();break;
     case"smore":{const [wn,uid]=v.split("|");sheetSession(wn,uid);break}
@@ -772,7 +777,7 @@ function heroBanner(D){
   const lines=[];
   // séance d'hier
   const yd=["velo","course","nat","muscu"].map(s=>doneOn(yk,s)).flat();
-  if(yd.length){const v=yd.find(x=>x.verdict)||yd[0];lines.push(v.verdict==="warn"?`Hier : ${v.title||"séance"} un peu difficile, on regarde ça de près.`:v.verdict==="up"?`Bonne séance hier, et avec de la marge 💪`:`Bonne séance hier${v.title?" ("+v.title+")":""} ✅`)}
+  if(yd.length){const v=yd.find(x=>x.verdict)||yd[0];lines.push(v.verdict==="just"?`Séance d'hier faite malgré tout, bravo 👏 (${esc(v.feel||"")})`:v.verdict==="warn"?`Hier : ${v.title||"séance"} un peu difficile, on regarde ça de près.`:v.verdict==="up"?`Bonne séance hier, et avec de la marge 💪`:`Bonne séance hier${v.title?" ("+v.title+")":""} ✅`)}
   // programme du jour
   let todayS=[];try{const w=PLAN&&PLAN.weeks.find(x=>{const e=new Date(x.start+"T00:00:00");e.setDate(e.getDate()+7);return x.start<=tk&&dkey(e)>tk});if(w)todayS=weekSessions(w).filter(s=>s.date===tk&&!s.p.cancel)}catch(e){}
   const todayDone=["velo","course","nat","muscu"].some(s=>doneOn(tk,s).length);
@@ -799,8 +804,8 @@ function vDash(){
   const pc=v=>v>=85?"#3DDC84":v>=65?"#A3D94B":v>=45?"#F5A524":v>=25?"#FF7A3D":"#E4002B";
   const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px;color:${pc(p.v)}">${p.v} %${p.e!=null?`<small class="muted" style="font-size:11px;font-weight:500"> · attendu ${p.e} %</small>`:""}</b></div><div class="trk" style="position:relative;overflow:visible"><i style="width:${p.v}%;background:${pc(p.v)}"></i>${p.e!=null?`<span class="emk" style="left:${p.e}%"></span>`:""}</div></div>`).join("");
   const vp=(D.vsPlan||[]).map(r=>r.delta!==undefined?`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="vg"><div><small>Attendu aujourd'hui</small><b>${esc(r.exp)}</b></div><div><small>Réel</small><b>${esc(r.real)}</b></div><div><small>Écart</small><b class="${r.s}">${esc(r.delta||"—")}</b></div></div>${r.goal?`<div class="x">Objectif final : ${esc(r.goal)}</div>`:""}</div>`:`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
-  const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).slice(0,5).map(a=>{const an=ANA[a.id];return {date:a.date,sport:a.sp,title:a.name,metrics:autoComment(a),comment:an?an.comment:"",verdict:an&&an.verdict}}):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,5);
-  const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.verdict==="warn"?"À surveiller":x.verdict==="up"?"Marge":"Maîtrisée"}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc">${esc(x.comment)}</div>`:""}</div>`).join("")}</div>`:"";
+  const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).slice(0,5).map(a=>{const an=ANA[a.id],j=JUSTIFY.has(feelOf(a.id));return {id:a.id,date:a.date,sport:a.sp,title:a.name,metrics:autoComment(a),comment:an?an.comment:"",verdict:j?"just":an&&an.verdict,feel:feelLabel(a.id)}}):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,5);
+  const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.verdict==="just"?"Justifiée":x.verdict==="warn"?"À surveiller":x.verdict==="up"?"Marge":"Maîtrisée"}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc">${esc(x.comment)}</div>`:""}${x.id!=null?`<button class="feelb" data-act="feeledit" data-v="${x.id}">${x.feel?esc(x.feel):"＋ Ressenti"}</button>`:""}</div>`).join("")}</div>`:"";
   const hero=heroBanner(D);
   const mobW=mobilityWeek();
   return `${hero}${top}${msgs}${adj}${lastH}
@@ -882,6 +887,38 @@ async function analyzeRecent(acts){
   const keys=Object.keys(ANA).sort((x,y)=>(ANA[x].date<ANA[y].date?1:-1));keys.slice(80).forEach(k=>delete ANA[k]);lsSet("ironmax.ana",ANA);
 }
 async function apiGetAbs(url){const r=await fetch(url,{headers:{Authorization:"Basic "+btoa("API_KEY:"+CFG.key)}});if(!r.ok)throw new Error(r.status);return r.json()}
+/* ============ RESSENTI APRÈS SYNCHRO ============ */
+let FEEL=lsGet("ironmax.feel",{}),SEEN=lsGet("ironmax.seen",null),FEELQ=[];
+const FEELS=[["ok","👍 Correct"],["easy","😎 Facile"],["hard","🥵 Dur"],["sick","🤒 Malade"],["sleep","😴 Fatigué · manque de sommeil"],["stress","🧠 Fatigué · stress / travail"],["load","🏋️ Fatigué · charge des jours précédents"],["pain","🩹 Douleur / gêne"],["cond","🌡️ Conditions (chaleur, matériel, terrain)"]];
+const JUSTIFY=new Set(["sick","sleep","stress","load","pain","cond"]);
+const feelOf=id=>FEEL[id]&&FEEL[id].f||"ok";
+const feelLabel=id=>{const f=FEEL[id];if(!f||f.f==="ok")return "";const l=(FEELS.find(x=>x[0]===f.f)||["",""])[1];return l+(f.note?" · "+f.note:"")};
+function queueNewSessions(acts){
+  const ids=acts.filter(a=>a.sp!=="mob").map(a=>String(a.id));
+  if(SEEN===null){SEEN=ids;lsSet("ironmax.seen",SEEN);return}   // 1re synchro : on ne questionne pas sur l'historique
+  const s=new Set(SEEN);const fresh=acts.filter(a=>a.sp!=="mob"&&!s.has(String(a.id))).sort((a,b)=>a.start_date_local<b.start_date_local?-1:1);
+  fresh.forEach(a=>{if(!FEELQ.includes(a.id))FEELQ.push(a.id)});SEEN=Array.from(new Set(SEEN.concat(ids))).slice(-400);lsSet("ironmax.seen",SEEN);
+}
+function feelPopup(id,fromQueue){
+  const a=(LIVE&&LIVE.acts||[]).find(x=>String(x.id)===String(id));if(!a){nextFeel();return}
+  const an=ANA[a.id],ps=plannedFor(a.date,a.sp),cur=FEEL[a.id]||{f:"ok",note:""};
+  const W=a.icu_weighted_avg_watts||a.average_watts;
+  const kv=[["Durée",hm(a.moving_time/60)]];
+  if(a.distance&&a.sp!=="muscu")kv.push(["Distance",a.sp==="nat"?Math.round(a.distance)+" m":(a.distance/1000).toFixed(1).replace(".",",")+" km"]);
+  if(W)kv.push(["Puissance",W+" W (NP)"]);if(a.sp==="course"&&a.distance)kv.push(["Allure",paceKm(a.distance/a.moving_time*3.6)+"/km"]);
+  if(a.average_heartrate)kv.push(["FC moy.",Math.round(a.average_heartrate)+" bpm"]);kv.push(["Charge",String(Math.round(a.load||0))]);
+  $("#sheet").innerHTML=`<div class="grab"></div><div class="muted" style="font-size:12px">${fromQueue&&FEELQ.length>1?"Nouvelle séance · encore "+(FEELQ.length-1)+" ensuite":"Ta séance"}</div>
+  <h3 style="font-family:var(--disp);font-weight:800;font-size:21px;margin:2px 0">${D_IC[a.sp]||"•"} ${esc(a.name||"Séance")}</h3><div class="muted" style="font-size:13px">${fdate(a.date)}${ps?" · prévu : "+esc(ps.title):""}</div>
+  <div class="kv">${kv.map(x=>`<div><small>${x[0]}</small><b>${esc(x[1])}</b></div>`).join("")}</div>
+  ${an&&an.comment?`<div class="lc" style="margin-top:10px">${esc(an.comment)}</div>`:""}
+  <div class="dl" style="margin-top:16px">Ressenti <small>sans choix = correct</small></div>
+  <div class="feels">${FEELS.map(f=>`<button class="fchip${cur.f===f[0]?" sel":""}" data-act="feelpick" data-v="${f[0]}">${f[1]}</button>`).join("")}</div>
+  <input class="inp wide" id="feelNote" placeholder="Un mot (facultatif)" value="${esc(cur.note||"")}">
+  <div class="muted" style="font-size:12px;margin-top:8px">Malade, fatigue, douleur ou conditions : la séance est notée « justifiée » et n'entre pas dans les ajustements ni dans le calcul d'efficacité.</div>
+  <div class="row" style="margin-top:12px"><button class="btn" style="flex:1" data-act="feelskip" data-v="${a.id}">Passer</button><button class="btn" style="flex:2;background:var(--acc);color:#fff" data-act="feelok" data-v="${a.id}">Valider</button></div>`;
+  UI.feelSel=cur.f;UI.feelFromQ=!!fromQueue;$("#ov").classList.add("show");
+}
+function nextFeel(){if(FEELQ.length){feelPopup(FEELQ[0],true)}else closeSheet()}
 async function refreshData(){
   if(!CFG.athlete||!CFG.key){UI.tab="reglages";render();toast("Renseigne d'abord ta connexion Intervals.icu");return}
   if(REFRESH.busy)return;REFRESH={busy:true,err:""};render();
@@ -889,7 +926,7 @@ async function refreshData(){
     const d=new Date();const old=new Date(d);old.setDate(old.getDate()-150);const ow=new Date(d);ow.setDate(ow.getDate()-70);
     const [acts,well]=await Promise.all([apiGet("/activities?oldest="+dkey(old)+"&newest="+dkey(d)+"&fields="+FIELDS),apiGet("/wellness?oldest="+dkey(ow)+"&newest="+dkey(d))]);
     lsSet(LSK.raw,{acts,well,at:Date.now()});recompute();
-    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))));recompute();toast("Données actualisées");
+    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))));recompute();queueNewSessions((LIVE&&LIVE.acts)||[]);toast("Données actualisées");if(FEELQ.length)setTimeout(nextFeel,300);
   }catch(e){REFRESH.err=(e&&e.message&&!/Failed to fetch|Load failed|NetworkError/.test(e.message))?e.message:"Connexion impossible (réseau ou accès refusé)"}
   REFRESH.busy=false;render();
 }
@@ -927,7 +964,7 @@ function dedupe(acts){
   }
   return acts.filter(a=>!drop.has(a.id));
 }
-const EV=6;
+const EV=7;
 function maybeRecompute(){if(DATA&&PLAN&&lsGet(LSK.raw,null)&&(!LIVE||LIVE.ev!==EV)){recompute();render()}}
 function recompute(){
   const raw=lsGet(LSK.raw,null);if(!raw)return;
@@ -970,6 +1007,7 @@ function recompute(){
   const blk=(PLAN&&PLAN.blocks.find(b=>b.from<=today&&b.to>=today))||{n:"Base 1",from:"2026-09-28"};
   const useB=B&&blk.from<=B.asof;
   const win=(useB?actsN:acts).filter(a=>a.date>=blk.from);
+  const winEff=win.filter(a=>!JUSTIFY.has(feelOf(a.id)));
   const doneH=useB?Object.assign({},B.doneH):{velo:0,course:0,nat:0,muscu:0};win.forEach(a=>{if(doneH[a.sp]!=null)doneH[a.sp]+=a.moving_time/3600});
   const planH=useB?Object.assign({},B.plannedH):{velo:0,course:0,nat:0,muscu:0};
   if(PLAN&&useB){PLAN.weeks.forEach(w=>{try{weekSessions(w).forEach(s=>{if(s.date>B.asof&&s.date<=today&&!s.p.cancel&&planH[s.d]!=null)planH[s.d]+=(s.min||0)/60})}catch(e){}})}
@@ -978,9 +1016,9 @@ function recompute(){
       if(ws){ws.forEach(s=>{if(s.date<=today&&planH[s.d]!=null)planH[s.d]+=(s.min||0)/60})}else{const frac=Math.min(1,(new Date(today+"T23:59:59")-new Date(w.start+"T00:00:00"))/(7*864e5));Object.keys(planH).forEach(k=>planH[k]+=w.disc[k]*frac)}})}
   const weeksIn=Math.max(1,(new Date(today)-new Date(blk.from))/(7*864e5));
   const ef=(list,f)=>{const v=list.map(f).filter(x=>x&&isFinite(x));if(v.length<4)return null;const n=Math.min(3,Math.floor(v.length/2));const a=v.slice(0,n).reduce((p,c)=>p+c,0)/n,b=v.slice(-n).reduce((p,c)=>p+c,0)/n;return (b/a-1)*100};
-  const z2b=win.filter(a=>a.sp==="velo"&&a.average_heartrate&&(a.icu_weighted_avg_watts||a.average_watts)&&(a.icu_weighted_avg_watts||a.average_watts)<.8*INP.ftp&&a.moving_time>2400).sort((a,b)=>a.date<b.date?-1:1);
-  const z2r=win.filter(a=>a.sp==="course"&&a.average_heartrate&&a.distance>3000).sort((a,b)=>a.date<b.date?-1:1);
-  const z2s=win.filter(a=>a.sp==="nat"&&a.average_heartrate&&a.distance>1000).sort((a,b)=>a.date<b.date?-1:1);
+  const z2b=winEff.filter(a=>a.sp==="velo"&&a.average_heartrate&&(a.icu_weighted_avg_watts||a.average_watts)&&(a.icu_weighted_avg_watts||a.average_watts)<.8*INP.ftp&&a.moving_time>2400).sort((a,b)=>a.date<b.date?-1:1);
+  const z2r=winEff.filter(a=>a.sp==="course"&&a.average_heartrate&&a.distance>3000).sort((a,b)=>a.date<b.date?-1:1);
+  const z2s=winEff.filter(a=>a.sp==="nat"&&a.average_heartrate&&a.distance>1000).sort((a,b)=>a.date<b.date?-1:1);
   const gains={velo:ef(z2b,a=>(a.icu_weighted_avg_watts||a.average_watts)/a.average_heartrate),course:ef(z2r,a=>a.distance/a.moving_time/a.average_heartrate),nat:ef(z2s,a=>a.distance/a.moving_time/a.average_heartrate)};
   const expG={velo:4,course:3,nat:.5};
   if(useB)Object.keys(gains).forEach(k=>{if(gains[k]==null)gains[k]=B.gains[k]});
@@ -1088,7 +1126,7 @@ function nextTest(){if(!PLAN)return null;const t=dkey(new Date());const w=PLAN.w
 /* ============ AJUSTEMENTS AUTOMATIQUES ============ */
 function adjustments(acts,eftp){
   const out=[],R=INP.fcmax-INP.fcrest,hrPct=a=>(a.average_heartrate-INP.fcrest)/R;
-  const recent=acts.filter(a=>a.date>=dkey(new Date(Date.now()-28*864e5))&&a.average_heartrate).sort((a,b)=>a.date<b.date?1:-1);
+  const recent=acts.filter(a=>a.date>=dkey(new Date(Date.now()-28*864e5))&&a.average_heartrate&&!JUSTIFY.has(feelOf(a.id))).sort((a,b)=>a.date<b.date?1:-1);
   const W=a=>a.icu_weighted_avg_watts||a.average_watts;
   const anaHR=a=>{const an=ANA[a.id];return an&&an.reps&&an.reps.length?Object.assign({},a,{average_heartrate:an.reps.reduce((s,r)=>s+r[2],0)/an.reps.length,decoupling:an.sum&&an.sum.drift!=null?an.sum.drift:a.decoupling}):a};
   const q=recent.filter(a=>a.sp==="velo"&&((ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length&&ANA[a.id].sum.pct>=95)||(W(a)&&W(a)/INP.ftp>=.82&&a.moving_time>=2700))).slice(0,3).map(anaHR);
@@ -1211,7 +1249,7 @@ function doneOn(date,sport){
   const out=[];
   ((DATA&&DATA.sessions)||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push(s)});
   if(!out.length&&DATA&&DATA.base&&date<=DATA.base.asof)(DATA.base.done||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push({date,sport,title:s.title,comment:""})});
-  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{const an=ANA[a.id];out.push({date,sport,title:a.name,metrics:autoComment(a),comment:an?an.comment:"",verdict:an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs})});
+  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{const an=ANA[a.id],fl=feelLabel(a.id);out.push({date,sport,title:a.name,metrics:autoComment(a),comment:(an?an.comment:"")+(fl?" · Ressenti : "+fl:""),verdict:JUSTIFY.has(feelOf(a.id))?"ok":an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs})});
   return out;
 }
 function autoComment(a){
