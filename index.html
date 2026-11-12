@@ -27,7 +27,7 @@ header.top{display:flex;align-items:flex-end;justify-content:space-between;margi
 .brand i{font-style:normal;color:var(--acc)}
 .sub{color:var(--mut);font-size:13px;margin-top:4px}
 .sync{font-size:11px;color:var(--mut);display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:99px}
-.sync b{width:7px;height:7px;border-radius:9px;background:var(--mut);display:inline-block}
+.sync b{width:7px;height:7px;border-radius:9px;background:var(--mut);display:inline-block}button.sync{color:var(--txt);font-size:12.5px;font-weight:600;padding:7px 12px;background:var(--card)}@keyframes spin{to{transform:rotate(360deg)}}.hsep{border-top:1px solid rgba(255,255,255,.08);margin:10px 0 2px}.hm{font-size:13px;margin-top:6px;display:flex;gap:8px;align-items:flex-start;color:var(--txt)}.hm i{width:7px;height:7px;border-radius:9px;margin-top:6px;flex-shrink:0;background:var(--mut)}.hm.warn i{background:#F5A524}.hm.alert i{background:#E4002B}.hm.info i{background:#4EA8FF}.lt{display:flex;gap:10px;align-items:flex-start;margin-top:8px}.lt .dot{width:12px;height:12px;border-radius:50%;margin-top:4px;flex-shrink:0}.lt .bt{font-size:12.5px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-weight:600}
 .sync.on b{background:var(--acc)}
 h2{font-family:var(--disp);font-weight:800;font-size:22px;margin:22px 0 10px}
 .cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--card);padding:8px;border-radius:var(--r)}
@@ -449,7 +449,7 @@ function genSession(){
 function render(){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===UI.tab));
   const app=$("#app");
-  const head=`<header class="top"><div><div class="brand">Ironmax<i>.</i></div><div class="sub">${UI.tab==="dash"||UI.tab==="programme"?"Cap sur l'Ironman · J-"+daysTo("2027-06-27"):"Mobilité pour triathlète"}</div></div><div class="sync${(sync.on||LIVE)?" on":""}"><b></b>${LIVE?"Intervals":sync.on?"Synchronisé":"Local"}</div></header>`;
+  const head=`<header class="top"><div><div class="brand">Ironmax<i>.</i></div><div class="sub">${UI.tab==="dash"||UI.tab==="programme"?"Cap sur l'Ironman · J-"+daysTo("2027-06-27"):"Mobilité pour triathlète"}</div></div>${CFG.key?`<button class="sync on" data-act="refresh" aria-label="Actualiser"><span style="font-size:14px;line-height:1${REFRESH.busy?";display:inline-block;animation:spin 1s linear infinite":""}">⟳</span>${REFRESH.busy?"Actualisation…":(()=>{const r=lsGet(LSK.raw,null);if(!r||!r.at)return "Actualiser";const d=new Date(r.at),td=dkey(d)===today();return (td?"":d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+" ")+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})})()}</button>`:`<div class="sync"><b></b>Local</div>`}</header>`;
   let body="";
   if(UI.tab==="dash")body=vDash();
   else if(UI.tab==="programme")body=vProgramme();
@@ -570,7 +570,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.30 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.31 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -819,7 +819,7 @@ function dueSessions(list,t){
   return list.filter(s=>{if(s.date<t)return true;if(s.date>t)return false;
     const {done}=splitToday(byDay[s.date],s.date);return done.includes(s)||h>=(SLOT_END[s.slot]||21)});
 }
-function heroBanner(D){
+function heroBanner(D,extra){
   const now=new Date(),hrs=now.getHours(),hello=hrs<12?"Bonjour":hrs<18?"Bon après-midi":"Bonsoir";
   const y=new Date(now);y.setDate(y.getDate()-1);const yk=dkey(y),tk=dkey(now);
   const lines=[];
@@ -847,7 +847,7 @@ function heroBanner(D){
   try{const longS=todayS.find(s=>!todayDone&&nutriPlan(s,(PLAN.weeks.find(x=>x.start<=tk&&addDays(x.start,7)>tk)||{}).phase));if(longS){const np=nutriPlan(longS,(PLAN.weeks.find(x=>x.start<=tk&&addDays(x.start,7)>tk)||{}).phase);lines.push("Ravito : "+np.lines.join(", ")+".")}}catch(e){}
   try{const st=readyState(),n=st.filter(x=>x.done).length,late=st.filter(x=>!x.done&&x.r[3]<tk).length;if(late)lines.push(`Check-list Ironman : ${late} point${late>1?"s":""} en retard.`)}catch(e){}
   const q=QUOTES[Math.floor(Date.now()/864e5)%QUOTES.length];
-  return `<div class="hero"><div class="hh">${hello} Maxime 👋</div>${lines.map(l=>`<div class="hl">${esc(l)}</div>`).join("")}<div class="hq">« ${esc(q)} » · J-${daysTo("2027-06-27")}</div></div>`;
+  return `<div class="hero"><div class="hh">${hello} Maxime 👋</div>${lines.map(l=>`<div class="hl">${esc(l)}</div>`).join("")}${extra||""}<div class="hq">« ${esc(q)} »</div></div>`;
 }
 
 /* ============ FEU DU JOUR ============
@@ -870,12 +870,14 @@ function dayLight(){
   const night=wl?(wl.id===t?"cette nuit":"dernière nuit synchronisée : "+fdate(wl.id)):"nuit du socle";
   return {lvl,why,ok,night};
 }
-function vLight(){
+function vLight(compact){
   if(!PLAN)return"";const L=dayLight();if(!L)return"";const t=today();
   const w=PLAN.weeks.find(x=>x.start<=t&&addDays(x.start,7)>t);if(!w)return"";
   const all=weekSessions(w).filter(s=>s.date===t&&!s.p.cancel),left=splitToday(all,t).left;
   if(!left.length)return"";
   const col=["#3DDC84","#F5A524","#E4002B"][L.lvl],ttl=["Feu vert : séance comme prévue","Feu orange : version allégée conseillée","Feu rouge : repos ou Z2 très facile"][L.lvl];
+  if(compact){const btn=left.filter(s=>s.lt||L.lvl).map(s=>`<button class="bt" style="margin:6px 6px 0 0${s.lt?"":";border-color:"+col+";color:"+col}" data-act="light" data-v="${w.n}|${s.uid}">${s.lt?"Remettre "+esc(s.title.replace(/ allégée/i,""))+" normale":"Alléger "+esc(s.title)}</button>`).join("");
+    return `<div class="lt"><span class="dot" style="background:${col};box-shadow:0 0 8px ${col}"></span><div style="flex:1"><b style="font-size:14px">${ttl}</b><div class="muted" style="font-size:12px;margin-top:2px">${esc(L.lvl?L.why.join(", "):L.ok.join(" · "))}</div>${btn}</div></div>`}
   const txt=L.lvl?"Pourquoi : "+L.why.join(", ")+".":"Tout est au vert : "+L.ok.join(", ")+".";
   const rows=left.map(s=>`<div class="row" style="align-items:center;margin-top:8px;gap:8px"><span style="flex:1;font-size:13.5px">${D_IC[s.d]} ${esc(s.title)}${s.lt&&!/allég/i.test(s.title)?' <span class="muted">· allégée</span>':""}</span>${s.lt?`<button class="btn" data-act="light" data-v="${w.n}|${s.uid}">Version normale</button>`:L.lvl?`<button class="btn" style="border-color:${col};color:${col}" data-act="light" data-v="${w.n}|${s.uid}">Alléger</button>`:""}</div>`).join("");
   return `<div class="dc" style="border-left:4px solid ${col}"><div class="row" style="align-items:center;gap:10px"><span style="width:14px;height:14px;border-radius:50%;background:${col};box-shadow:0 0 10px ${col};flex-shrink:0"></span><b style="font-size:15px">${ttl}</b></div>
@@ -906,10 +908,10 @@ function vMeteo(){
   const nx=nextLongRide();if(!nx)return"";loadMeteo();const {w,s}=nx,m=meteoFor(s);
   const verdict=m?[["Dehors 👍","#3DDC84"],["Dehors possible, à surveiller","#F5A524"],["Plutôt sur Zwift","#E4002B"]][m.v]:null;
   const r1=v=>Math.round(v);
-  const det=m?`${m.from}h–${m.to}h : ${r1(m.t0)}→${r1(m.t1)} °C · pluie ${r1(m.pp)} % (${frn(m.mm.toFixed(1))} mm) · vent ${r1(m.wind)} km/h, rafales ${r1(m.gust)}`:"Prévisions en cours de chargement (réseau nécessaire).";
-  return `<div class="dc"><div class="dl" style="color:var(--txt)">🌦️ ${esc(s.title)} · ${DAYS[s.day]} ${fdate(s.date)}<small>${hm(s.min)} · météo à Conflans</small></div>
-  ${verdict?`<div style="margin-top:8px;font-weight:700;color:${verdict[1]}">${verdict[0]}</div>`:""}<div class="muted" style="font-size:12.5px;margin-top:4px">${det}</div>
-  <label class="row" style="align-items:center;gap:10px;margin-top:12px;cursor:pointer"><input type="checkbox" data-act="indoor" data-v="${w.n}|${s.uid}"${s.indoor?" checked":""} style="width:22px;height:22px;accent-color:var(--acc)"><span style="font-size:14px"><b>À faire sur Zwift</b><br><span class="muted" style="font-size:12px">coché : la séance part dans Zwift via Intervals</span></span></label></div>`;
+  const det=m?`${m.from}h–${m.to}h · ${r1(m.t0)}→${r1(m.t1)} °C · pluie ${r1(m.pp)} % (${frn(m.mm.toFixed(1))} mm) · vent ${r1(m.wind)} km/h, rafales ${r1(m.gust)}`:"";
+  return `<div class="dc" style="padding:12px 14px"><div class="row" style="align-items:center;gap:10px"><span style="font-size:22px">🌦️</span><div style="flex:1;min-width:0"><b style="font-size:14px">${DAYS[s.day]} ${fdate(s.date)} · ${esc(s.title)} (${hm(s.min)})</b>
+  <div style="font-size:12.5px;margin-top:2px">${verdict?`<b style="color:${verdict[1]}">${verdict[0]}</b> · <span class="muted">${det}</span>`:'<span class="muted">Météo pas encore disponible</span>'}</div></div>
+  <label style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex-shrink:0"><input type="checkbox" data-act="indoor" data-v="${w.n}|${s.uid}"${s.indoor?" checked":""} style="width:22px;height:22px;accent-color:var(--acc)"><span class="muted" style="font-size:10.5px">Zwift</span></label></div></div>`;
 }
 function toggleFlag(wn,uid,kind){
   const ed=WKED[wn]=WKED[wn]||{};
@@ -926,17 +928,17 @@ function vDash(){
   <div class="hint" style="text-align:center">${REFRESH.err?'<span style="color:var(--acc)">'+esc(REFRESH.err)+'</span>':LIVE?esc(LIVE.source):(CFG.key?"Touche Actualiser pour charger tes séances":"Données figées du 11 nov. · connecte Intervals.icu dans Réglages")}</div>`;
   const adj=(LIVE&&LIVE.adjust||[]).map(a=>`<div class="dc" style="border:1px solid var(--line)"><div class="dl" style="color:var(--txt)">↕ ${esc(a.t)}<small>${esc(a.x)}</small></div><div style="margin-top:8px;font-weight:600">${esc(a.p)}</div><div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="adjapply" data-v="${a.id}">Appliquer</button><button class="btn" style="flex:1" data-act="adjdismiss" data-v="${a.id}">Ignorer</button></div></div>`).join("");
   const fz=f.v<20?"Faible":f.v<40?"Modérée":f.v<60?"Élevée":"Très élevée";
-  const msgs=rules(D).map(m=>`<div class="msg ${m[0]}"><i>${m[0]==="alert"?"!":m[0]==="warn"?"•":"i"}</i><div>${esc(m[1])}</div></div>`).join("");
+  const msgs=(REFRESH.err?[["alert",REFRESH.err]]:[]).concat(CFG.key?[]:[["info","Connecte Intervals.icu dans Réglages pour charger tes séances."]]).concat(rules(D)).map(m=>`<div class="hm ${m[0]}"><i></i><div>${esc(m[1])}</div></div>`).join("");
   const bars=D.note.disc.map(d=>`<div class="bar"><div class="h"><span>${d.n}</span><b>${frn(d.v)}<small class="muted" style="font-size:12px">/20</small></b></div><div class="trk"><i style="width:${d.v*5}%;background:${DC[d.k]}"></i></div><div class="f">Plan ${frn(d.plan)} · efficacité ${frn(d.eff)} · trajectoire ${frn(d.traj)}<br>${esc(d.txt)}</div></div>`).join("");
   const pc=v=>v>=85?"#3DDC84":v>=65?"#A3D94B":v>=45?"#F5A524":v>=25?"#FF7A3D":"#E4002B";
   const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px;color:${pc(p.v)}">${p.v} %${p.e!=null?`<small class="muted" style="font-size:11px;font-weight:500"> · attendu ${p.e} %</small>`:""}</b></div><div class="trk" style="position:relative;overflow:visible"><i style="width:${p.v}%;background:${pc(p.v)}"></i>${p.e!=null?`<span class="emk" style="left:${p.e}%"></span>`:""}</div></div>`).join("");
   const vp=(D.vsPlan||[]).map(r=>r.delta!==undefined?`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="vg"><div><small>Attendu aujourd'hui</small><b>${esc(r.exp)}</b></div><div><small>Réel</small><b>${esc(r.real)}</b></div><div><small>Écart</small><b class="${r.s}">${esc(r.delta||"—")}</b></div></div>${r.goal?`<div class="x">Objectif final : ${esc(r.goal)}</div>`:""}</div>`:`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
   const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).filter(a=>a.sp!=="mob").slice(0,2).map(a=>{const an=ANA[a.id],j=JUSTIFY.has(feelOf(a.id));return {id:a.id,date:a.date,sport:a.sp,title:a.name,metrics:autoComment(a),comment:an?an.comment:"",verdict:j?"just":an&&an.verdict,feel:feelLabel(a.id)}}):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,2);
   const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.verdict==="just"?"Justifiée":x.verdict==="warn"?"À surveiller":x.verdict==="up"?"Marge":"Maîtrisée"}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc ${x.verdict||""}">${esc(x.comment)}</div>`:""}${x.id!=null?`<button class="feelb" data-act="feeledit" data-v="${x.id}">${x.feel?esc(x.feel):"＋ Ressenti"}</button>`:""}</div>`).join("")}</div>`:"";
-  const hero=heroBanner(D);
+  const lightH=vLight(true),hero=heroBanner(D,(lightH||msgs)?`<div class="hsep"></div>${lightH}${msgs}`:"");
   const mobW=mobilityWeek();
   const dow=new Date().getDay(),bil=(dow===0&&new Date().getHours()>=17)||dow===1?`<button class="dc" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px" data-act="gobilan"><span style="font-size:22px">📊</span><span style="flex:1"><b>Bilan de la semaine disponible</b><br><span class="muted" style="font-size:12px">Volume, séances clés, fatigue et semaine suivante</span></span><span class="muted">›</span></button>`:"";
-  return `${hero}${vLight()}${vMeteo()}${bil}${top}${msgs}${adj}${lastH}
+  return `${hero}${vMeteo()}${bil}${adj}${lastH}
   <div class="dc"><div class="dl">Fatigue accumulée<small>indice 0–100 · charge + sommeil et HRV</small></div><div class="big">${f.v}<small>/ 100 · ${fz}</small></div>
     <div class="gauge"><span style="width:20%;background:#2E7D5B"></span><span style="width:20%;background:#B59A2A"></span><span style="width:20%;background:#D9711C"></span><span style="width:40%;background:var(--acc)"></span><b style="left:${f.v}%"></b></div>
     <div class="gsc"><span style="width:20%">Faible</span><span style="width:20%">Modérée</span><span style="width:20%">Élevée</span><span style="width:40%">Très élevée</span></div>
@@ -1151,7 +1153,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.30",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.31",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
