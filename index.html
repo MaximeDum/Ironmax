@@ -559,6 +559,7 @@ function vReglages(){
   <div class="set"><div><b>Dépôt</b><div class="muted" style="font-size:12px">propriétaire/nom</div></div><input class="inp" id="ghrepo" value="${esc(GH.repo)}" style="width:190px" autocapitalize="off"></div>
   <div class="set"><div><b>Jeton GitHub</b><div class="muted" style="font-size:12px">fine-grained, Contents : lecture/écriture sur ce dépôt seulement</div></div><input class="inp" id="ghtok" type="password" value="${GH.token?"••••••••":""}" style="width:190px" autocapitalize="off"></div>
   <div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="ghsave">Enregistrer</button><button class="btn" style="flex:1" data-act="ghpush">${GHBUSY?"Envoi…":"Envoyer maintenant"}</button></div>
+  <button class="btn${UI.ghConfirm===1?" red":""}" style="width:100%;margin-top:8px" data-act="ghrestore">${UI.ghConfirm===1?"Appuie encore : remplace les données de ce téléphone":"Restaurer depuis GitHub (nouveau téléphone, app réinstallée)"}</button>
   <div class="muted" style="font-size:12px;margin-top:6px">${GH.at?"Dernier envoi : "+new Date(GH.at).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"Jamais envoyé"}${GH.err?" · <span style=\"color:var(--acc)\">"+esc(GH.err)+"</span>":""}</div></div>
   ${vOrga()}
   <h2>Mes seuils</h2><div class="card" style="padding:4px 18px">${IN("ftp","FTP","W · après un test vélo")}${IN("vma","VMA","km/h · test 6' ou demi-Cooper")}${IN("fcmax","FC max","bpm","numeric")}${IN("fcrest","FC de repos","bpm","numeric")}${IN("fcnight","FC de nuit de base","bpm","numeric")}${IN("css","Allure natation de référence","min:s / 100 m · facultatif","text")}${IN("best5k","Meilleur 5 km récent","min:s","text")}${IN("weight","Poids","kg")}${IN("ctlTarget","Charge de fond visée","CTL Ironman","numeric")}
@@ -569,7 +570,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.24 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.25 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -699,6 +700,9 @@ document.addEventListener("click",ev=>{
       zwPushWeek(w,false).then(n=>toast("Zwift : "+n+" séance"+(n>1?"s":"")+" envoyée"+(n>1?"s":"")+" à Intervals")).catch(e=>{ZWERR=e.message||"échec";toast(ZWERR)}).finally(()=>{UI.zwBusy=null;render()});break}
     case"ghsave":{const r=($("#ghrepo").value||"").trim(),t=($("#ghtok").value||"").trim();GH.repo=r||GH.repo;if(t&&!/^•+$/.test(t))GH.token=t;GH.err="";lsSet(LSG,GH);toast("Enregistré");ghPush(true);break}
     case"ghpush":ghPush(true);break;
+    case"ghrestore":{if(!GH.token){toast("Enregistre d'abord le jeton GitHub");break}
+      if(UI.ghConfirm!==1){UI.ghConfirm=1;render();break}
+      UI.ghConfirm=0;toast("Restauration…");ghRestore().catch(e=>{toast(e.message||"échec");render()});break}
     case"zwauto":lsSet(LSZA,!zwAuto());render();break;
     case"savecfg":CFG={athlete:$("#cfgA").value.trim(),key:$("#cfgK").value.trim()};lsSet(LSK.cfg,CFG);UI.tab="dash";render();refreshData();break;
     case"delcfg":CFG={athlete:"",key:""};lsSet(LSK.cfg,CFG);localStorage.removeItem(LSK.raw);localStorage.removeItem(LSK.live);LIVE=null;render();toast("Connexion effacée");break;
@@ -750,7 +754,11 @@ function rules(D){
   if(f.ansLow3)m.push(["alert","Récupération nerveuse basse 3 nuits : journée facile ou repos."]);
   const r=D.dup&&D.dup.ratioMedian;if(r&&(r<.85||r>1.15))m.push(["alert","Écart de puissance anormal entre Zwift et Polar : vérifie l'appairage du capteur."]);
   if(f.v>=40&&f.v<60&&f.highDays>4)m.push(["warn","Fatigue élevée qui dure : allège la prochaine séance d'intensité."]);
-  const w=D.week;if(w&&w.doneH!=null&&w.plannedH&&(w.elapsed||1)>=.3){const p=Math.round(w.doneH/(w.plannedH*Math.min(1,w.elapsed||1))*100);if(p<80||p>115)m.push(["warn","Volume à "+p+" % de ce qui était prévu à ce stade de la semaine ("+frn(w.doneH)+" h / "+frn(w.plannedH)+" h)."])}
+  const w=D.week;if(w&&w.doneH!=null&&w.plannedH&&(w.elapsed||1)>=.3&&PLAN){
+    // prévu à ce jour = séances dont le jour ou le créneau est passé (ou déjà faites)
+    const t=today(),pw=PLAN.weeks.find(x=>x.start<=t&&addDays(x.start,7)>t);
+    const due=pw?dueSessions(weekSessions(pw).filter(s=>!s.p.cancel),t).reduce((a,s)=>a+(s.min||0)/60,0):w.plannedH*Math.min(1,w.elapsed||1);
+    if(due>=1){const p=Math.round(w.doneH/due*100);if(p<80||p>115)m.push(["warn","Volume à "+p+" % de ce qui était prévu à ce jour ("+frn(w.doneH.toFixed(1))+" h faites / "+frn(due.toFixed(1))+" h prévues)."])}}
   (w&&w.keyMissed||[]).forEach(k=>m.push(["warn","Séance clé manquée : "+k+"."]));
   if(D.cap.vsTraj>3)m.push(["info","En avance sur la trajectoire Ironman (+"+frn(D.cap.vsTraj)+" pts)."]);
   if(D.block.work&&f.v<20)m.push(["info","Bonne fraîcheur : feu vert pour la séance clé."]);
@@ -940,7 +948,8 @@ const feelOf=id=>FEEL[id]&&FEEL[id].f||"ok";
 const feelLabel=id=>{const f=FEEL[id];if(!f||f.f==="ok")return "";const l=(FEELS.find(x=>x[0]===f.f)||["",""])[1];return l+(f.note?" · "+f.note:"")};
 function queueNewSessions(acts){
   const ids=acts.filter(a=>a.sp!=="mob").map(a=>String(a.id));
-  if(SEEN===null){SEEN=ids;lsSet("ironmax.seen",SEEN);return}   // 1re synchro : on ne questionne pas sur l'historique
+  if(SEEN===null){ // 1re synchro : pas de questions sur l'historique, seulement sur les 2 derniers jours
+    const lim=dkey(new Date(Date.now()-2*864e5));SEEN=acts.filter(a=>a.sp!=="mob"&&a.date<lim).map(a=>String(a.id));}
   const s=new Set(SEEN);const fresh=acts.filter(a=>a.sp!=="mob"&&!s.has(String(a.id))).sort((a,b)=>a.start_date_local<b.start_date_local?-1:1);
   fresh.forEach(a=>{if(!FEELQ.includes(a.id))FEELQ.push(a.id)});SEEN=Array.from(new Set(SEEN.concat(ids))).slice(-400);lsSet("ironmax.seen",SEEN);
 }
@@ -1064,11 +1073,11 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.24",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.25",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
-    zwift:L("ironmax.zw"),ready:L("ironmax.ready"),best:L("ironmax.best"),food:L("ironmax.food"),mobilite:L("delie.v1")};
+    zwift:L("ironmax.zw"),seen:L("ironmax.seen"),ready:L("ironmax.ready"),best:L("ironmax.best"),food:L("ironmax.food"),mobilite:L("delie.v1")};
 }
 async function ghPush(manual){
   if(!GH.token||!GH.repo||GHBUSY)return;GHBUSY=true;GH.err="";
@@ -1081,6 +1090,18 @@ async function ghPush(manual){
     GH.at=Date.now();if(manual)toast("Envoyé à GitHub ✓");
   }catch(e){GH.err=e.message||"échec";if(manual)toast(GH.err)}
   finally{GHBUSY=false;lsSet(LSG,GH);render()}
+}
+/* Restauration : remet sur ce téléphone tout ce qui a été sauvegardé dans state.json (sauf la clé Intervals). */
+async function ghRestore(){
+  const url="https://api.github.com/repos/"+GH.repo+"/contents/state.json";
+  const r=await fetch(url,{headers:{Authorization:"Bearer "+GH.token,Accept:"application/vnd.github.raw+json"}});
+  if(!r.ok)throw new Error("GitHub "+r.status);const d=await r.json();
+  const put=(k,v)=>{if(v!=null)localStorage.setItem(k,JSON.stringify(v))};
+  put(LSK.inp,d.inputs);put(LSK.adj,d.adjust);put(LSK.raw,d.intervals);put(LSK.caph,d.capHist);put("ironmax.ana",d.analyses);put("ironmax.feel",d.feel);
+  const pg=d.programme||{};put("ironmax.wkedit",pg.edits);put("ironmax.sched",pg.sched);put("ironmax.deload",pg.deload);
+  put("ironmax.zw",d.zwift);put("ironmax.seen",d.seen);put("ironmax.ready",d.ready);put("ironmax.best",d.best);put("ironmax.food",d.food);put("delie.v1",d.mobilite);
+  if(d.athlete&&!CFG.athlete){CFG.athlete=d.athlete;lsSet(LSK.cfg,CFG)}
+  localStorage.removeItem(LSK.live);location.reload();
 }
 async function refreshData(){
   if(!CFG.athlete||!CFG.key){UI.tab="reglages";render();toast("Renseigne d'abord ta connexion Intervals.icu");return}
