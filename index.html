@@ -555,6 +555,11 @@ function vReglages(){
   <input class="inp wide" id="cfgK" placeholder="API key" value="${esc(CFG.key)}" type="password" autocapitalize="off" autocorrect="off">
   <div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="savecfg">Enregistrer et actualiser</button>${CFG.key?'<button class="btn red" data-act="delcfg">Effacer</button>':""}</div>
   <div class="row" style="margin-top:12px;align-items:center"><div style="flex:1;font-size:13.5px"><b>Séances vélo vers Zwift</b><div class="muted" style="font-size:12px">À chaque actualisation, Ironmax met les séances vélo de la semaine dans ton calendrier Intervals (et celles de la semaine suivante dès le samedi). Intervals les envoie à Zwift. Garde la même FTP dans Ironmax, Intervals et Zwift.</div></div><button class="btn${zwAuto()?"":" red"}" data-act="zwauto">${zwAuto()?"Auto ✓":"Désactivé"}</button></div></div>
+  <h2>Partage avec Claude (GitHub privé)</h2><div class="card"><div class="muted" style="font-size:13px">Après chaque actualisation et chaque ressenti, Ironmax écrit son état dans state.json, dans ton dépôt <b>privé</b>. Claude le lit pour se mettre à jour. La clé Intervals et ce jeton ne sont jamais envoyés.</div>
+  <div class="set"><div><b>Dépôt</b><div class="muted" style="font-size:12px">propriétaire/nom</div></div><input class="inp" id="ghrepo" value="${esc(GH.repo)}" style="width:190px" autocapitalize="off"></div>
+  <div class="set"><div><b>Jeton GitHub</b><div class="muted" style="font-size:12px">fine-grained, Contents : lecture/écriture sur ce dépôt seulement</div></div><input class="inp" id="ghtok" type="password" value="${GH.token?"••••••••":""}" style="width:190px" autocapitalize="off"></div>
+  <div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="ghsave">Enregistrer</button><button class="btn" style="flex:1" data-act="ghpush">${GHBUSY?"Envoi…":"Envoyer maintenant"}</button></div>
+  <div class="muted" style="font-size:12px;margin-top:6px">${GH.at?"Dernier envoi : "+new Date(GH.at).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"Jamais envoyé"}${GH.err?" · <span style=\"color:var(--acc)\">"+esc(GH.err)+"</span>":""}</div></div>
   ${vOrga()}
   <h2>Mes seuils</h2><div class="card" style="padding:4px 18px">${IN("ftp","FTP","W · après un test vélo")}${IN("vma","VMA","km/h · test 6' ou demi-Cooper")}${IN("fcmax","FC max","bpm","numeric")}${IN("fcrest","FC de repos","bpm","numeric")}${IN("fcnight","FC de nuit de base","bpm","numeric")}${IN("css","Allure natation de référence","min:s / 100 m · facultatif","text")}${IN("best5k","Meilleur 5 km récent","min:s","text")}${IN("weight","Poids","kg")}${IN("ctlTarget","Charge de fond visée","CTL Ironman","numeric")}
   <button class="go" style="margin:12px 0 14px" data-act="saveinp">Enregistrer les seuils</button>${hist?'<div style="padding-bottom:12px"><div class="dl" style="margin-bottom:4px">Historique</div>'+hist+'</div>':""}</div>
@@ -564,7 +569,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.21 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.22 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -692,6 +697,8 @@ document.addEventListener("click",ev=>{
     case"adjreset":ADJ={};lsSet(LSK.adj,ADJ);render();toast("Ajustements remis à zéro");break;
     case"zwpush":{const w=PLAN.weeks.find(x=>x.n===+v);if(!w||UI.zwBusy)break;UI.zwBusy=w.n;render();ZWERR="";
       zwPushWeek(w,false).then(n=>toast("Zwift : "+n+" séance"+(n>1?"s":"")+" envoyée"+(n>1?"s":"")+" à Intervals")).catch(e=>{ZWERR=e.message||"échec";toast(ZWERR)}).finally(()=>{UI.zwBusy=null;render()});break}
+    case"ghsave":{const r=($("#ghrepo").value||"").trim(),t=($("#ghtok").value||"").trim();GH.repo=r||GH.repo;if(t&&!/^•+$/.test(t))GH.token=t;GH.err="";lsSet(LSG,GH);toast("Enregistré");ghPush(true);break}
+    case"ghpush":ghPush(true);break;
     case"zwauto":lsSet(LSZA,!zwAuto());render();break;
     case"savecfg":CFG={athlete:$("#cfgA").value.trim(),key:$("#cfgK").value.trim()};lsSet(LSK.cfg,CFG);UI.tab="dash";render();refreshData();break;
     case"delcfg":CFG={athlete:"",key:""};lsSet(LSK.cfg,CFG);localStorage.removeItem(LSK.raw);localStorage.removeItem(LSK.live);LIVE=null;render();toast("Connexion effacée");break;
@@ -955,7 +962,7 @@ function feelPopup(id,fromQueue){
   <div class="row" style="margin-top:12px"><button class="btn" style="flex:1" data-act="feelskip" data-v="${a.id}">Passer</button><button class="btn" style="flex:2;background:var(--acc);color:#fff" data-act="feelok" data-v="${a.id}">Valider</button></div>`;
   UI.feelSel=cur.f;UI.feelFromQ=!!fromQueue;$("#ov").classList.add("show");
 }
-function nextFeel(){if(FEELQ.length){feelPopup(FEELQ[0],true)}else closeSheet()}
+function nextFeel(){if(FEELQ.length){feelPopup(FEELQ[0],true)}else{closeSheet();ghPush(false)}}
 
 /* ============ ZWIFT, via le calendrier Intervals.icu ============
    Ironmax écrit les séances vélo de la semaine dans le calendrier Intervals (séances prévues).
@@ -1049,6 +1056,30 @@ function zwStatus(w){
   const z=ZW[w.n];if(!z)return "Pas encore envoyée";
   const d=new Date(z.at);return z.n+" séance"+(z.n>1?"s":"")+" envoyée"+(z.n>1?"s":"")+" le "+d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+" à "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+(z.h!==zhash(JSON.stringify(zwEvents(w))+INP.ftp)?" · modifiée depuis, à renvoyer":"");
 }
+
+/* ============ SAUVEGARDE PRIVÉE SUR GITHUB (pour que Claude voie ce qu'a fait l'appli) ============
+   Écrit state.json dans un dépôt PRIVÉ (ironmax-data). Jamais la clé Intervals ni le jeton GitHub. */
+const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
+function ghSnapshot(){
+  const L=k=>lsGet(k,null);
+  return {app:"Ironmax",version:"v1.22",ev:EV,at:new Date().toISOString(),
+    athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
+    intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
+    programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
+    zwift:L("ironmax.zw"),ready:L("ironmax.ready"),best:L("ironmax.best"),food:L("ironmax.food"),mobilite:L("delie.v1")};
+}
+async function ghPush(manual){
+  if(!GH.token||!GH.repo||GHBUSY)return;GHBUSY=true;GH.err="";
+  try{
+    const url="https://api.github.com/repos/"+GH.repo+"/contents/state.json",h={Authorization:"Bearer "+GH.token,Accept:"application/vnd.github+json"};
+    let sha;const g=await fetch(url,{headers:h});if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error("GitHub "+g.status+(g.status===401?" (jeton refusé)":g.status===403?" (droits insuffisants)":""));
+    const txt=JSON.stringify(ghSnapshot(),null,1),b64=btoa(unescape(encodeURIComponent(txt)));
+    const r=await fetch(url,{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},h),body:JSON.stringify({message:"Ironmax "+new Date().toLocaleString("fr-FR"),content:b64,sha})});
+    if(!r.ok)throw new Error("GitHub "+r.status+(r.status===404?" (dépôt introuvable ou jeton sans accès)":""));
+    GH.at=Date.now();if(manual)toast("Envoyé à GitHub ✓");
+  }catch(e){GH.err=e.message||"échec";if(manual)toast(GH.err)}
+  finally{GHBUSY=false;lsSet(LSG,GH);render()}
+}
 async function refreshData(){
   if(!CFG.athlete||!CFG.key){UI.tab="reglages";render();toast("Renseigne d'abord ta connexion Intervals.icu");return}
   if(REFRESH.busy)return;REFRESH={busy:true,err:""};render();
@@ -1056,7 +1087,7 @@ async function refreshData(){
     const d=new Date();const old=new Date(d);old.setDate(old.getDate()-150);const ow=new Date(d);ow.setDate(ow.getDate()-70);
     const [acts,well]=await Promise.all([apiGet("/activities?oldest="+dkey(old)+"&newest="+dkey(d)+"&fields="+FIELDS),apiGet("/wellness?oldest="+dkey(ow)+"&newest="+dkey(d))]);
     lsSet(LSK.raw,{acts,well,at:Date.now()});recompute();
-    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))));recompute();queueNewSessions((LIVE&&LIVE.acts)||[]);toast("Données actualisées");zwAutoPush().then(()=>render());if(FEELQ.length)setTimeout(nextFeel,300);
+    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))));recompute();queueNewSessions((LIVE&&LIVE.acts)||[]);toast("Données actualisées");zwAutoPush().then(()=>{render();ghPush(false)});if(FEELQ.length)setTimeout(nextFeel,300);
   }catch(e){REFRESH.err=(e&&e.message&&!/Failed to fetch|Load failed|NetworkError/.test(e.message))?e.message:"Connexion impossible (réseau ou accès refusé)"}
   REFRESH.busy=false;render();
 }
