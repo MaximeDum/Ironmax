@@ -177,7 +177,7 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .ses{display:flex;gap:8px;align-items:baseline;padding:4px 0;font-size:13.5px}.ses .sl{flex:1}.ses b{font-family:var(--disp);white-space:nowrap}
 .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.kv small{display:block;font-size:11px;color:var(--mut)}.kv b{font-family:var(--disp);font-size:16px}.feels{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.fchip{padding:8px 11px;border-radius:99px;background:var(--card2);font-size:13px}.fchip.sel{background:var(--acc);color:#fff}.feelb{margin-top:6px;font-size:12px;color:var(--mut);padding:4px 10px;border-radius:99px;background:var(--card2)}.st.just{background:rgba(199,125,255,.16);color:#C77DFF}
 .brow{display:flex;align-items:center;font-size:13px;padding:4px 0}.brow>span{width:96px}.brow b{font-family:var(--disp);font-size:14px;white-space:nowrap}.legend2{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--mut);margin-top:4px}.legend2 i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}.ck{display:flex;width:100%;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);text-align:left;font-size:13.5px}.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:0 0 auto}.ck.on .box{background:#3DDC84;border-color:#3DDC84}.ck.on .ct{color:var(--mut);text-decoration:line-through}.ck .ct{flex:1}.ck .cd{font-size:11px;color:var(--mut);white-space:nowrap}.ck .cd.late{color:#F5A524;font-weight:700}
-.hero{background:linear-gradient(135deg,rgba(228,0,43,.22),rgba(228,0,43,.04));border:1px solid rgba(228,0,43,.3);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}.hero .hh{font-family:var(--disp);font-weight:800;font-size:20px;margin-bottom:6px}.hero .hl{font-size:14px;margin-top:3px}.hero .hq{font-size:12px;color:var(--mut);margin-top:10px;font-style:italic}
+.hero{background:linear-gradient(135deg,rgba(78,168,255,.11),rgba(78,168,255,.02));border:1px solid rgba(78,168,255,.22);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}.hero .hh{font-family:var(--disp);font-weight:800;font-size:20px;margin-bottom:6px}.hero .hl{font-size:14px;margin-top:3px}.hero .hq{font-size:12px;color:var(--mut);margin-top:10px;font-style:italic}
 .dc{background:var(--card);border-radius:var(--r);padding:18px;margin-top:12px}
 .dl{font-size:13px;color:var(--mut);font-weight:600}
 .dl small{display:block;font-weight:400;font-size:11.5px;margin-top:1px}
@@ -570,7 +570,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.29 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.30 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -823,11 +823,15 @@ function heroBanner(D){
   const now=new Date(),hrs=now.getHours(),hello=hrs<12?"Bonjour":hrs<18?"Bon après-midi":"Bonsoir";
   const y=new Date(now);y.setDate(y.getDate()-1);const yk=dkey(y),tk=dkey(now);
   const lines=[];
-  // séance d'hier
-  const yd=["velo","course","nat","muscu"].map(s=>doneOn(yk,s)).flat();
-  if(yd.length){const v=yd.find(x=>x.verdict)||yd[0];lines.push(v.verdict==="just"?`Séance d'hier faite malgré tout, bravo 👏 (${esc(v.feel||"")})`:v.verdict==="warn"?`Hier : ${v.title||"séance"} un peu difficile, on regarde ça de près.`:v.verdict==="up"?`Bonne séance hier, et avec de la marge 💪`:`Bonne séance hier${v.title?" ("+v.title+")":""} ✅`)}
   // programme du jour
   let todayS=[];try{const w=PLAN&&PLAN.weeks.find(x=>{const e=new Date(x.start+"T00:00:00");e.setDate(e.getDate()+7);return x.start<=tk&&dkey(e)>tk});if(w)todayS=weekSessions(w).filter(s=>s.date===tk&&!s.p.cancel)}catch(e){}
+  // retour sur la dernière séance faite : aujourd'hui en priorité, sinon hier
+  const SP=["velo","course","nat","muscu"],td=SP.map(s=>doneOn(tk,s)).flat(),yd=SP.map(s=>doneOn(yk,s)).flat();
+  const fb=(list,when,plannedList)=>{const v=list.find(x=>x.verdict&&x.sport!=="muscu")||list.find(x=>x.verdict)||list[list.length-1];
+    const pl=(plannedList||[]).find(x=>x.d===v.sport),ti=(pl&&pl.title)||v.title||"séance";
+    return v.verdict==="just"?`${when} : ${ti} faite malgré tout, bravo 👏`:v.verdict==="warn"?`${when} : ${ti} un peu difficile, on regarde ça de près.`:v.verdict==="up"?`${when} : ${ti} maîtrisée, avec de la marge 💪`:v.verdict==="ok"?`${when} : ${ti} maîtrisée ✅`:`${when} : ${ti} faite ✅`};
+  if(td.length)lines.push(fb(td,hrs>=17?"Ce soir":"Aujourd'hui",todayS));
+  else if(yd.length){let ys=[];try{const w=PLAN.weeks.find(x=>x.start<=yk&&addDays(x.start,7)>yk);if(w)ys=weekSessions(w).filter(s=>s.date===yk)}catch(e){}lines.push(fb(yd,"Hier",ys))}
   const todayDone=["velo","course","nat","muscu"].some(s=>doneOn(tk,s).length);
   const {left:todayLeft,done:todayDoneS}=splitToday(todayS,tk);
   const lbl=s=>`${s.title}${mainTarget(s.k,s.p)?" ("+mainTarget(s.k,s.p)+")":""}`;
@@ -1147,7 +1151,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.29",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.30",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
