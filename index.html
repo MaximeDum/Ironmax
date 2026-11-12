@@ -176,6 +176,7 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .wdet{padding:2px 0 10px 42px}.dsplit{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mut);margin-bottom:6px}
 .ses{display:flex;gap:8px;align-items:baseline;padding:4px 0;font-size:13.5px}.ses .sl{flex:1}.ses b{font-family:var(--disp);white-space:nowrap}
 .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.kv small{display:block;font-size:11px;color:var(--mut)}.kv b{font-family:var(--disp);font-size:16px}.feels{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.fchip{padding:8px 11px;border-radius:99px;background:var(--card2);font-size:13px}.fchip.sel{background:var(--acc);color:#fff}.feelb{margin-top:6px;font-size:12px;color:var(--mut);padding:4px 10px;border-radius:99px;background:var(--card2)}.st.just{background:rgba(199,125,255,.16);color:#C77DFF}
+.brow{display:flex;align-items:center;font-size:13px;padding:4px 0}.brow>span{width:96px}.brow b{font-family:var(--disp);font-size:14px;white-space:nowrap}.legend2{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--mut);margin-top:4px}.legend2 i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}.ck{display:flex;width:100%;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);text-align:left;font-size:13.5px}.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:0 0 auto}.ck.on .box{background:#3DDC84;border-color:#3DDC84}.ck.on .ct{color:var(--mut);text-decoration:line-through}.ck .ct{flex:1}.ck .cd{font-size:11px;color:var(--mut);white-space:nowrap}.ck .cd.late{color:#F5A524;font-weight:700}
 .hero{background:linear-gradient(135deg,rgba(228,0,43,.22),rgba(228,0,43,.04));border:1px solid rgba(228,0,43,.3);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}.hero .hh{font-family:var(--disp);font-weight:800;font-size:20px;margin-bottom:6px}.hero .hl{font-size:14px;margin-top:3px}.hero .hq{font-size:12px;color:var(--mut);margin-top:10px;font-style:italic}
 .dc{background:var(--card);border-radius:var(--r);padding:18px;margin-top:12px}
 .dl{font-size:13px;color:var(--mut);font-weight:600}
@@ -531,6 +532,9 @@ function stats(){
   return {streak,week:Math.round(week/60),n:done.length,days,mon};
 }
 function vSuivi(){
+  return vBilan()+`<h2>Tendances</h2><div class="dc"><div class="dl">Volume par semaine<small>12 dernières semaines · trait pointillé = prévu</small></div>${volChart()}</div><div class="dc"><div class="dl">Charge de fond et charge récente</div>${loadChart()}</div>`+vWkg()+vReady()+`<h2>Mobilité avec Ironmax</h2>`+vSuiviMob();
+}
+function vSuiviMob(){
   const st=stats();
   const perDay={};S.sessions.forEach(s=>{perDay[s.date]=(perDay[s.date]||0)+s.done});
   const start=new Date(st.mon);start.setDate(start.getDate()-21);
@@ -553,12 +557,13 @@ function vReglages(){
   ${vOrga()}
   <h2>Mes seuils</h2><div class="card" style="padding:4px 18px">${IN("ftp","FTP","W · après un test vélo")}${IN("vma","VMA","km/h · test 6' ou demi-Cooper")}${IN("fcmax","FC max","bpm","numeric")}${IN("fcrest","FC de repos","bpm","numeric")}${IN("fcnight","FC de nuit de base","bpm","numeric")}${IN("css","Allure natation de référence","min:s / 100 m · facultatif","text")}${IN("best5k","Meilleur 5 km récent","min:s","text")}${IN("weight","Poids","kg")}${IN("ctlTarget","Charge de fond visée","CTL Ironman","numeric")}
   <button class="go" style="margin:12px 0 14px" data-act="saveinp">Enregistrer les seuils</button>${hist?'<div style="padding-bottom:12px"><div class="dl" style="margin-bottom:4px">Historique</div>'+hist+'</div>':""}</div>
+  ${vStock()}
   <h2>Guidage</h2><div class="card" style="padding:4px 18px">${T("voice","Voix","Annonce les exercices et les changements de côté")}${T("beep","Bips","3-2-1 avant chaque changement")}${T("intro","Animation d'accueil","La ligne d'arrivée au lancement de l'appli")}</div>
   <h2>Sauvegarde</h2><div class="card"><div class="muted" style="font-size:14px">${sync.on?"Tes séances sont synchronisées en ligne. Tu peux aussi copier une sauvegarde.":"Tes séances sont stockées sur cet appareil. Pense à copier une sauvegarde de temps en temps."}</div>
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.18 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.19 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -659,6 +664,10 @@ document.addEventListener("click",ev=>{
   switch(a){
     case"cat":UI.cat=b.dataset.id;render();break;
     case"refresh":refreshData();break;
+    case"bw":UI.bw=v;render();break;
+    case"gobilan":UI.tab="suivi";UI.bw=new Date().getDay()===1?"prev":"cur";render();window.scrollTo(0,0);break;
+    case"rdy":RDY[v]=!RDY[v];if(!RDY[v])delete RDY[v];lsSet("ironmax.ready",RDY);render();break;
+    case"weighin":{const kg=parseFloat((($("#wIn")||{}).value||"").replace(",","."));if(!(kg>40&&kg<150)){toast("Poids invalide");break}const old=INP.weight;INP.weight=kg;lsSet(LSK.inp,INP);INH.unshift({d:today(),k:"weight",old,v:kg,why:"pesée"});lsSet(LSK.inp+".hist",INH);if(lsGet(LSK.raw,null))recompute();render();toast("Pesée ajoutée");break}
     case"feelpick":UI.feelSel=v;document.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("sel",x.dataset.v===v));break;
     case"feelok":{const note=($("#feelNote")||{}).value||"";if((UI.feelSel||"ok")==="ok"&&!note)delete FEEL[v];else FEEL[v]={f:UI.feelSel||"ok",note:note.trim(),at:Date.now()};lsSet("ironmax.feel",FEEL);FEELQ=FEELQ.filter(x=>String(x)!==String(v));recompute();render();if(UI.feelFromQ)nextFeel();else closeSheet();break}
     case"feelskip":FEELQ=FEELQ.filter(x=>String(x)!==String(v));if(UI.feelFromQ)nextFeel();else closeSheet();break;
@@ -710,7 +719,10 @@ document.addEventListener("click",ev=>{
     case"pclose":$("#player").classList.remove("show");PL=null;render();break;
   }
 });
-document.addEventListener("change",ev=>{const el=ev.target;if(!el.dataset||!el.dataset.sched)return;const bn=UI.ob;SCHED[bn]=SCHED[bn]||{};const o=SCHED[bn][el.dataset.sched]=SCHED[bn][el.dataset.sched]||{};o[el.dataset.f]=el.dataset.f==="day"?+el.value:el.value;lsSet("ironmax.sched",SCHED);toast("Séance déplacée");});
+document.addEventListener("change",ev=>{const el=ev.target;
+  if(el.dataset&&el.dataset.food){STOCK[el.dataset.food]=Object.assign(STOCK[el.dataset.food]||{},{on:el.checked?1:0});lsSet("ironmax.food",STOCK);toast("Stock mis à jour");return}
+  if(el.dataset&&el.dataset.foodg){const g=parseFloat(el.value);if(g>=0){STOCK[el.dataset.foodg]=Object.assign(STOCK[el.dataset.foodg]||{},{g});lsSet("ironmax.food",STOCK)}return}
+  if(!el.dataset||!el.dataset.sched)return;const bn=UI.ob;SCHED[bn]=SCHED[bn]||{};const o=SCHED[bn][el.dataset.sched]=SCHED[bn][el.dataset.sched]||{};o[el.dataset.f]=el.dataset.f==="day"?+el.value:el.value;lsSet("ironmax.sched",SCHED);toast("Séance déplacée");});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&PL&&!PL.ended){wakeOn();PL.last=performance.now()}});
 
 
@@ -789,6 +801,8 @@ function heroBanner(D){
   if(f>=60)lines.push("Fatigue très élevée : écoute ton corps, on allège.");
   else if(f<20&&!todayDone&&todayS.some(s=>s.p.sets||s.p.test))lines.push("Tu es frais : feu vert pour la qualité.");
   const nt=D.physio&&D.physio.nextTest;if(nt){const n=daysTo(nt.d);if(n>0&&n<=14)lines.push(`${nt.n} dans ${n} jour${n>1?"s":""}.`)}
+  try{const longS=todayS.find(s=>!todayDone&&nutriPlan(s,(PLAN.weeks.find(x=>x.start<=tk&&addDays(x.start,7)>tk)||{}).phase));if(longS){const np=nutriPlan(longS,(PLAN.weeks.find(x=>x.start<=tk&&addDays(x.start,7)>tk)||{}).phase);lines.push("Ravito : "+np.lines.join(", ")+".")}}catch(e){}
+  try{const st=readyState(),n=st.filter(x=>x.done).length,late=st.filter(x=>!x.done&&x.r[3]<tk).length;if(late)lines.push(`Check-list Ironman : ${late} point${late>1?"s":""} en retard.`)}catch(e){}
   const q=QUOTES[Math.floor(Date.now()/864e5)%QUOTES.length];
   return `<div class="hero"><div class="hh">${hello} Maxime 👋</div>${lines.map(l=>`<div class="hl">${esc(l)}</div>`).join("")}<div class="hq">« ${esc(q)} » · J-${daysTo("2027-06-27")}</div></div>`;
 }
@@ -808,7 +822,8 @@ function vDash(){
   const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.verdict==="just"?"Justifiée":x.verdict==="warn"?"À surveiller":x.verdict==="up"?"Marge":"Maîtrisée"}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc">${esc(x.comment)}</div>`:""}${x.id!=null?`<button class="feelb" data-act="feeledit" data-v="${x.id}">${x.feel?esc(x.feel):"＋ Ressenti"}</button>`:""}</div>`).join("")}</div>`:"";
   const hero=heroBanner(D);
   const mobW=mobilityWeek();
-  return `${hero}${top}${msgs}${adj}${lastH}
+  const dow=new Date().getDay(),bil=(dow===0&&new Date().getHours()>=17)||dow===1?`<button class="dc" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px" data-act="gobilan"><span style="font-size:22px">📊</span><span style="flex:1"><b>Bilan de la semaine disponible</b><br><span class="muted" style="font-size:12px">Volume, séances clés, fatigue et semaine suivante</span></span><span class="muted">›</span></button>`:"";
+  return `${hero}${bil}${top}${msgs}${adj}${lastH}
   <div class="dc"><div class="dl">Fatigue accumulée<small>indice 0–100 · charge + sommeil et HRV</small></div><div class="big">${f.v}<small>/ 100 · ${fz}</small></div>
     <div class="gauge"><span style="width:20%;background:#2E7D5B"></span><span style="width:20%;background:#B59A2A"></span><span style="width:20%;background:#D9711C"></span><span style="width:40%;background:var(--acc)"></span><b style="left:${f.v}%"></b></div>
     <div class="gsc"><span style="width:20%">Faible</span><span style="width:20%">Modérée</span><span style="width:20%">Élevée</span><span style="width:40%">Très élevée</span></div>
@@ -964,7 +979,7 @@ function dedupe(acts){
   }
   return acts.filter(a=>!drop.has(a.id));
 }
-const EV=7;
+const EV=8;
 function maybeRecompute(){if(DATA&&PLAN&&lsGet(LSK.raw,null)&&(!LIVE||LIVE.ev!==EV)){recompute();render()}}
 function recompute(){
   const raw=lsGet(LSK.raw,null);if(!raw)return;
@@ -1097,6 +1112,9 @@ function recompute(){
     week:wkNow?{plannedH:+weekSessions(wkNow).filter(s=>!s.p.cancel).reduce((a,s)=>a+(s.min||0)/60,0).toFixed(1),doneH:+doneWeek.toFixed(1),keyMissed:[],elapsed:(Date.now()-new Date(wkNow.start+"T00:00:00"))/(7*864e5)}:null,
     dup:{ratioMedian:null},acts:acts.slice(-60),eftp};
   LIVE.adjust=adjustments(acts,eftp);
+  LIVE.loadSeries=(B?[{d:B.asof,ctl:B.ctl,atl:B.atl}]:[]).concat(days.map(x=>({d:x.d,ctl:+x.ctl.toFixed(1),atl:+x.atl.toFixed(1)})));
+  LIVE.weights=wk.filter(k=>well[k].weight).map(k=>({date:k,kg:well[k].weight}));LIVE.ftpLvl=ftpLvl;
+  {const best=lsGet("ironmax.best",{}),bs=Math.max(0,...acts.filter(a=>a.sp==="nat").map(a=>IronAnalyze.realSwimDistance(a)));best.run=Math.max(best.run||0,longRun,...acts.filter(a=>a.sp==="course").map(a=>(a.distance||0)/1000));best.ride=Math.max(best.ride||0,longRide);best.swim=Math.max(best.swim||0,bs,2775);lsSet("ironmax.best",best)}
   // Où tu en es vs le plan (recalculé à chaque actualisation)
   const tH=k=>Object.keys(k).reduce((a,x)=>a+k[x],0);const dTot=tH(doneH),pTot=tH(planH),vr=pTot?dTot/pTot:1;
   const st=(x,lo,hi)=>x>=hi?["up","En avance"]:x>=lo?["ok","Dans les temps"]:["warn","En retard"];
@@ -1168,7 +1186,8 @@ const Wr=(a,b,k)=>Wt(a,k)+"–"+Wt(b,k)+" W";
 const Pc=(v,k)=>paceKm((v+(k==="seuil"?(ADJ.seuil||0):0))*INP.vma)+"/km";
 const Pr=(a,b)=>paceKm(b*INP.vma)+"–"+paceKm(a*INP.vma)+"/km";
 function steps(k,p,min,phase){
-  const nut=min>=150?[["Nutrition","60–80 g de glucides/h · boire toutes les 15'"]]:[];
+  const np=nutriPlan({d:["long","brick","sim"].includes(k)?"velo":"course",min},phase);
+  const nut=np?[["Ravito",np.lines.join(" · ")]].concat(np.timing?[["",np.timing]]:[]):[];
   switch(k){
     case"vo2":return [["Échauffement","20' progressif dont 3×1' à 105 %"],["Corps de séance",p.sets+" à "+Wt(p.w,"vo2")+" W · récup "+p.rec+" à "+Wt(.5,"vo2")+" W"],["Retour au calme","10' souple"]];
     case"ss":case"thr":case"ef":case"im":
@@ -1177,7 +1196,7 @@ function steps(k,p,min,phase){
       return [["Échauffement","15' progressif Z1→Z2 + 3×1' à 100 rpm"],["Corps de séance",p.sets+" à "+Wt(p.w,k)+" W"+(p.rpm?" · "+p.rpm+" rpm":"")+" · récup "+p.rec+" à "+Wt(.55,k)+" W"],["Retour au calme","10' souple"]];
     case"tempo":
       return p.tempo?[["Échauffement","15' progressif"],["Z2","20' à "+Wr(.64,.70,"tempo")],["Tempo",p.tempo+" à "+Wt(p.w,"tempo")+" W"],["Retour au calme","10' souple"]]:[["Z2 facile",hm(min)+" à "+Wt(p.w,"tempo")+" W max · cadence libre"]];
-    case"long":case"brick":case"sim":{
+    case"long":case"brick":case"sim":{const phase=arguments[3];
       if(p.test==="FTP")return steps("test",p,min);
       const a=[["Endurance Z2",hm(min)+" à "+Wr(p.z2-.03,p.z2+.03,"long")]];
       if(p.blocks)a.push([k==="sim"?"Allure course":"Blocs",p.blocks+" à "+Wt(p.w,"long")+" W"+(p.w2?" puis "+Wt(p.w2,"long")+" W":"")]);
@@ -1188,7 +1207,7 @@ function steps(k,p,min,phase){
       return [["Échauffement","15' Z1–Z2 + 4 lignes droites"],["Corps de séance",p.sets+" à "+Pc(p.v,"seuil")+" · récup "+p.rec+" trot"],["Retour au calme","10' Z1"],["Plafond","FC moyenne par bloc ≤ 170 bpm"]];
     case"marathon":return [["Échauffement","15' Z2"],["Allure marathon",p.sets+" à "+Pc(p.v)+" · récup "+p.rec],["Retour au calme","10' Z1"]];
     case"longrun":if(p.race)return [["Course","3,8 km · 180 km · 42,2 km"],["Allures visées","Vélo ≈ "+Wt(.77,"long")+" W · marathon ≈ "+Pc(.66)]];
-      return [["Endurance",hm(min)+" à "+Pr(.62,.68)]].concat(p.blk?[["Bloc final",p.blk+" à "+Pc(/tempo/.test(p.blk)?.72:.66)]]:[]).concat(min>=100?[["Nutrition","30–45 g de glucides/h"]]:[]);
+      {const npr=nutriPlan({d:"course",min},phase);return [["Endurance",hm(min)+" à "+Pr(.62,.68)]].concat(p.blk?[["Bloc final",p.blk+" à "+Pc(/tempo/.test(p.blk)?.72:.66)]]:[]).concat(npr?[["Ravito",npr.lines.join(" · ")],["",npr.timing||""]]:[]);}
     case"z2run":return [["Footing Z2",hm(min)+" à "+Pr(.62,.68)]];
     case"nat":{const v=(PLAN.swim||{})[p.var]||["Natation",""];if(p.light)return [["Séance",v[0]+" en version courte, tout au ressenti facile"],["Total",(p.m||"").toLocaleString("fr-FR")+" m"]];
       return [["Séance",v[0]]].concat(v[1].split(" · ").map((x,i)=>[i===0?"Échauffement":"",x])).concat([["Total",(p.m||"").toLocaleString("fr-FR")+" m · ajuste le volume du bloc principal"],["Repère","4/10 facile · 6/10 modéré · 7–8/10 soutenu"]]);}
@@ -1326,6 +1345,114 @@ function vOrga(){
   <div class="dsplit" style="margin:12px 0 4px">${["velo","course","nat","muscu"].filter(k=>cnt[k]).map(k=>`<span>${D_IC[k]} ${cnt[k]} ${D_N[k].toLowerCase()}</span>`).join("")}<span>· par semaine</span></div>
   <div class="muted" style="font-size:12px;margin-bottom:6px">Place chaque séance où ça t'arrange : le programme suit.</div>${rows}
   <button class="btn" style="margin-top:12px" data-act="schedreset">Revenir à l'organisation conseillée</button></div>`;
+}
+
+/* ============ BILAN · TENDANCES · W/KG · CHECK-LIST · NUTRITION ============ */
+const addDays=(k,n)=>{const d=new Date(k+"T00:00:00");d.setDate(d.getDate()+n);return dkey(d)};
+const mondayOf=k=>{const d=new Date(k+"T00:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return dkey(d)};
+const SPC={velo:"#F5A524",course:"#E4002B",nat:"#4EA8FF",muscu:"#9AA3B2",mob:"#C77DFF"};
+function doneWeekH(start){
+  const B=DATA&&DATA.base,r={velo:0,course:0,nat:0,muscu:0,mob:0},end=addDays(start,7);
+  const bw=B&&(B.weeks||[]).find(w=>w.start===start);if(bw)Object.keys(r).forEach(k=>r[k]+=bw[k]||0);
+  ((LIVE&&LIVE.acts)||[]).forEach(a=>{if(a.date>=start&&a.date<end&&(!B||a.date>B.asof)&&r[a.sp]!=null)r[a.sp]+=a.moving_time/3600});
+  return r;
+}
+function plannedWeekH(start){const w=PLAN&&PLAN.weeks.find(x=>x.start===start);if(!w)return null;const r={velo:0,course:0,nat:0,muscu:0};weekSessions(w).filter(s=>!s.p.cancel).forEach(s=>{if(r[s.d]!=null)r[s.d]+=(s.min||0)/60});return r}
+const sumH=o=>o?["velo","course","nat","muscu"].reduce((a,k)=>a+(o[k]||0),0):0;
+/* --- Bilan de la semaine --- */
+function vBilan(){
+  const t=today(),cur=mondayOf(t),prevW=addDays(cur,-7);
+  const sunday=new Date().getDay()===0&&new Date().getHours()>=17,monday=new Date().getDay()===1;
+  if(UI.bw==null)UI.bw=(monday?"prev":"cur");
+  const start=UI.bw==="prev"?prevW:cur,end=addDays(start,7),pw=PLAN&&PLAN.weeks.find(x=>x.start===start);
+  const done=doneWeekH(start),plan=plannedWeekH(start);
+  let rows=["velo","course","nat","muscu"].map(k=>{const d=done[k],p=plan?plan[k]:null,r=p?d/p:null;return `<div class="brow"><span>${D_IC[k]} ${D_N[k]}</span><div class="trk" style="flex:1;margin:0 10px"><i style="width:${p?Math.min(100,r*100):0}%;background:${SPC[k]}"></i></div><b>${frn(d.toFixed(1))}${p!=null?" / "+frn(p.toFixed(1)):""} h</b></div>`}).join("");
+  // séances de la semaine
+  let ses=[],nDone=0,nPlan=0,warn=[],good=[],just=0;
+  if(pw){ses=weekSessions(pw).filter(s=>!s.p.cancel);ses.forEach(s=>{if(s.date>t)return;nPlan++;const d=doneOn(s.date,s.d);if(d.length){nDone++;d.forEach(x=>{if(x.verdict==="warn")warn.push(s.title);if(x.verdict==="up")good.push(s.title)})}})}
+  ((LIVE&&LIVE.acts)||[]).forEach(a=>{if(a.date>=start&&a.date<end&&JUSTIFY.has(feelOf(a.id)))just++});
+  const fs=(LIVE||DATA)&&(LIVE||DATA).fatigue.series||[];const fIn=fs.filter(p=>p.d>=start&&p.d<end);
+  const fTxt=fIn.length>1?`${fIn[0].v} → ${fIn[fIn.length-1].v}/100`:"—";
+  const nw=PLAN&&PLAN.weeks.find(x=>x.start===addDays(start,7));let next="";
+  if(nw){const ns=weekSessions(nw).filter(s=>!s.p.cancel&&(s.p.sets||s.p.tempo||s.p.blocks||s.p.test));next=`<div class="dl" style="margin-top:14px">Semaine suivante · S${nw.n}${isDL(nw)?" · décharge":""}<small>${frn(sumH(plannedWeekH(nw.start)).toFixed(1))} h prévues${nw.test?" · "+esc(nw.test):""}</small></div><div style="font-size:13px;margin-top:4px">${ns.slice(0,5).map(s=>`${D_IC[s.d]} ${DAYS[s.day]} ${esc(s.title)}${mainTarget(s.k,s.p)?" · "+esc(mainTarget(s.k,s.p)):""}`).join("<br>")}</div>`}
+  const tot=sumH(done),tp=plan?sumH(plan):null;
+  let tpDate=tp;if(pw&&start===mondayOf(t)){tpDate=weekSessions(pw).filter(s=>!s.p.cancel&&s.date<=t).reduce((a,s)=>a+(s.min||0)/60,0)}
+  const rr=tpDate?tot/tpDate:1,isCur=start===mondayOf(t);
+  const verdict=tp==null?"":(rr>=.9?(isCur?"Dans le plan jusqu'ici 👍":"Semaine dans le plan 👍"):rr>=.75?(isCur?"Un peu en dessous de ce qui était prévu à ce jour.":"Semaine un peu en dessous du plan."):(isCur?"Nettement en dessous de ce qui était prévu à ce jour.":"Semaine nettement en dessous du plan."))+(isCur&&tpDate!=null?` (${frn(tot.toFixed(1))} h faites / ${frn(tpDate.toFixed(1))} h prévues à ce jour)`:"");
+  return `<div class="dc"><div style="display:flex;justify-content:space-between;align-items:center"><div class="dl" style="color:var(--txt);font-size:16px;font-family:var(--disp);font-weight:800">${(sunday&&UI.bw==="cur")||UI.bw==="prev"?"Bilan de la semaine":"Semaine en cours"}<small>${pw?"S"+pw.n+" · ":""}${fdate(start)} → ${fdate(addDays(start,6))}</small></div>
+   <div class="seg" style="margin:0;padding:3px"><button class="${UI.bw==="prev"?"on":""}" data-act="bw" data-v="prev" style="padding:6px 8px;font-size:12px">Précédente</button><button class="${UI.bw==="cur"?"on":""}" data-act="bw" data-v="cur" style="padding:6px 8px;font-size:12px">En cours</button></div></div>
+   <div class="big" style="font-size:40px;margin:10px 0 2px">${frn(tot.toFixed(1))} h<small>${tp!=null?" / "+frn(tp.toFixed(1))+" h prévues":""}</small></div><div class="muted" style="font-size:13px">${verdict}${done.mob?" · mobilité "+hm(done.mob*60):""}</div>
+   <div style="margin-top:10px">${rows}</div>
+   <ul class="facts"><li><span>Séances faites</span><b>${nDone} / ${nPlan}</b></li><li><span>Fatigue sur la semaine</span><b>${fTxt}</b></li>${just?`<li><span>Séances justifiées</span><b>${just}</b></li>`:""}</ul>
+   ${good.length?`<div class="hint" style="color:#3DDC84">💪 Avec de la marge : ${esc(good.join(", "))}</div>`:""}${warn.length?`<div class="hint" style="color:#F5A524">⚠️ À surveiller : ${esc(warn.join(", "))}</div>`:""}${next}</div>`;
+}
+/* --- Tendances --- */
+function volChart(){
+  const cur=mondayOf(today()),weeks=[];for(let i=11;i>=0;i--)weeks.push(addDays(cur,-7*i));
+  const data=weeks.map(s=>({s,d:doneWeekH(s),p:plannedWeekH(s)}));
+  const mx=Math.max(8,...data.map(x=>Math.max(sumH(x.d)+(x.d.mob||0),x.p?sumH(x.p):0)))*1.1;
+  const W=330,H=170,pl=24,pb=18,bw=(W-pl-4)/12;const Y=v=>H-pb-(H-pb-8)*v/mx;
+  let o=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;[0,5,10,15].filter(v=>v<mx).forEach(v=>o+=`<line x1="${pl}" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pl-4}" y="${Y(v)+3}" text-anchor="end">${v}h</text>`);
+  data.forEach((x,i)=>{let acc=0;const X=pl+i*bw+2;["velo","course","nat","muscu","mob"].forEach(k=>{const v=x.d[k]||0;if(!v)return;o+=`<rect x="${X}" y="${Y(acc+v)}" width="${bw-4}" height="${Y(acc)-Y(acc+v)}" fill="${SPC[k]}" rx="1.5"/>`;acc+=v});
+    if(x.p){const pv=sumH(x.p);o+=`<line x1="${X-1}" x2="${X+bw-3}" y1="${Y(pv)}" y2="${Y(pv)}" stroke="var(--txt)" stroke-width="1.6" stroke-dasharray="3 2"/>`}
+    if(i%2===0)o+=`<text x="${X+bw/2-2}" y="${H-5}" text-anchor="middle">${new Date(x.s+"T00:00:00").getDate()}/${new Date(x.s+"T00:00:00").getMonth()+1}</text>`});
+  return o+`</svg><div class="legend2">${["velo","course","nat","muscu","mob"].map(k=>`<span><i style="background:${SPC[k]}"></i>${k==="mob"?"Mobilité":D_N[k]}</span>`).join("")}<span><i style="background:none;border-top:2px dashed var(--txt);height:0;width:12px"></i>Prévu</span></div>`;
+}
+function loadChart(){
+  const s=(LIVE&&LIVE.loadSeries)||[];if(s.length<3)return `<div class="hint">La courbe de charge se remplit à chaque actualisation (charge de fond 63, charge récente 59 au 11 nov.).</div>`;
+  const W=330,H=150,pl=24,pb=18,mx=Math.max(...s.map(p=>Math.max(p.ctl,p.atl)))*1.15,mn=0;const X=i=>pl+i*(W-pl-4)/(s.length-1),Y=v=>H-pb-(H-pb-8)*(v-mn)/(mx-mn);
+  const line=(f,c,d)=>`<polyline points="${s.map((p,i)=>X(i).toFixed(1)+","+Y(p[f]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="2.2" ${d?'stroke-dasharray="4 3"':""}/>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}">${[25,50,75,100].filter(v=>v<mx).map(v=>`<line x1="${pl}" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pl-4}" y="${Y(v)+3}" text-anchor="end">${v}</text>`).join("")}${line("ctl","#4EA8FF")}${line("atl","#E4002B",1)}<text x="${pl}" y="${H-4}">${fdate(s[0].d)}</text><text x="${W-4}" y="${H-4}" text-anchor="end">${fdate(s[s.length-1].d)}</text></svg><div class="legend2"><span><i style="background:#4EA8FF"></i>Charge de fond</span><span><i style="background:#E4002B"></i>Charge récente</span></div>`;
+}
+/* --- Poids & W/kg --- */
+function weightSeries(){const B=DATA&&DATA.base;const pts=((B&&B.weight)||[]).map(x=>({d:x.date,kg:x.kg}));INH.filter(h=>h.k==="weight").forEach(h=>pts.push({d:h.d,kg:+h.v}));((LIVE&&LIVE.weights)||[]).forEach(x=>pts.push({d:x.date,kg:x.kg}));const m={};pts.forEach(p=>m[p.d]=p.kg);return Object.keys(m).sort().map(d=>({d,kg:m[d]}))}
+function vWkg(){
+  const ws=weightSeries(),kg=ws.length?ws[ws.length-1].kg:INP.weight,ftp=(LIVE&&LIVE.ftpLvl)||((DATA&&DATA.base&&DATA.base.ftpEst)||INP.ftp),wkg=ftp/kg,target=280/81;
+  let ch="";if(ws.length>=2){const W=330,H=120,pl=26,pb=16,mn=Math.min(79,...ws.map(p=>p.kg))-1,mx=Math.max(85,...ws.map(p=>p.kg))+1;const t0=new Date(ws[0].d).getTime(),t1=Math.max(new Date(ws[ws.length-1].d).getTime(),t0+864e5);const X=d=>pl+(new Date(d).getTime()-t0)/(t1-t0)*(W-pl-6),Y=v=>H-pb-(H-pb-6)*(v-mn)/(mx-mn);
+    ch=`<svg class="chart" viewBox="0 0 ${W} ${H}"><rect x="${pl}" y="${Y(82)}" width="${W-pl}" height="${Y(80)-Y(82)}" fill="#3DDC84" opacity=".12"/><text x="${W-4}" y="${Y(82)-3}" text-anchor="end" style="fill:#3DDC84">cible 80–82 kg</text><polyline points="${ws.map(p=>X(p.d).toFixed(1)+","+Y(p.kg).toFixed(1)).join(" ")}" fill="none" stroke="var(--txt)" stroke-width="2"/>${ws.map(p=>`<circle cx="${X(p.d)}" cy="${Y(p.kg)}" r="2.5" fill="var(--txt)"/>`).join("")}<text x="${pl-4}" y="${Y(mx-1)+3}" text-anchor="end">${Math.round(mx-1)}</text><text x="${pl-4}" y="${Y(mn+1)+3}" text-anchor="end">${Math.round(mn+1)}</text></svg>`}
+  return `<div class="dc"><div class="dl">Poids et W/kg<small>FTP estimée ${Math.round(ftp)} W · objectif 280 W à 80–82 kg</small></div>
+  <div class="row" style="margin-top:8px"><div style="flex:1"><div class="big" style="font-size:36px;margin:0">${frn(wkg.toFixed(2))}<small>W/kg</small></div><div class="muted" style="font-size:12px">objectif ${frn(target.toFixed(2))} W/kg</div></div><div style="flex:1"><div class="big" style="font-size:36px;margin:0">${frn(kg)}<small>kg</small></div><div class="muted" style="font-size:12px">${ws.length?"pesée du "+fdate(ws[ws.length-1].d):""}</div></div></div>
+  <div class="trk" style="margin-top:10px"><i style="width:${Math.min(100,wkg/target*100)}%;background:${wkg/target>=.97?"#3DDC84":wkg/target>=.9?"#A3D94B":"#F5A524"}"></i></div>${ch}
+  <div class="row" style="margin-top:10px"><input class="inp" id="wIn" placeholder="kg" inputmode="decimal" style="flex:1;text-align:left"><button class="btn" style="background:var(--acc);color:#fff" data-act="weighin">Ajouter une pesée</button></div></div>`;
+}
+/* --- Check-list prêt pour l'Ironman --- */
+const READY=[["Vélo","pos","Position aéro validée (étude posturale ou essais)","2027-01-31"],["Vélo","flat","Changer une chambre à air en moins de 10 min","2027-03-31"],["Vélo","ride5","Sortie de 5 h à vélo","2027-04-30","ride",5],["Vélo","ride6","180 km ou 6 h à vélo au moins une fois","2027-05-31","ride",6],["Vélo","nutbike","Nutrition de course testée sur 5 h (80–90 g/h, sans souci)","2027-05-31"],["Vélo","tyres","Pneus de course montés et rodés (≥ 200 km)","2027-06-13"],
+ ["Course","run25","Sortie longue de 25 km","2027-04-15","run",25],["Course","run30","Sortie longue de 30 km","2027-05-30","run",30],["Course","brick","Enchaînement 4 h vélo + 1 h course à allure IM","2027-05-23"],["Course","shoes","Chaussures de course choisies et rodées (< 300 km)","2027-06-06"],
+ ["Natation","swim38","3,8 km en continu en piscine","2027-03-31","swim",3800],["Natation","ow3","3 km en eau libre en combinaison","2027-06-06"],["Natation","sight","Départ groupé et sighting travaillés","2027-06-06"],
+ ["Logistique","hotel","Hébergement et déplacement réservés","2027-03-31"],["Logistique","plan","Plan de course écrit (allures, FC, nutrition)","2027-06-13"],["Logistique","trans","Transitions T1 / T2 répétées","2027-06-13"],["Logistique","recon","Parcours étudié (dénivelé, ravitos, vent)","2027-06-13"],["Logistique","bag","Liste matériel et sacs de transition prêts","2027-06-20"]];
+let RDY=lsGet("ironmax.ready",{});
+function readyState(){const b=lsGet("ironmax.best",{});return READY.map(r=>{const auto=r[4]&&((r[4]==="ride"&&(b.ride||0)>=r[5])||(r[4]==="run"&&(b.run||0)>=r[5])||(r[4]==="swim"&&(b.swim||0)>=r[5]));return {r,done:!!RDY[r[1]]||auto,auto}})}
+function vReady(){
+  const st=readyState(),n=st.filter(x=>x.done).length,t=today();
+  const cats=["Vélo","Course","Natation","Logistique"].map(c=>`<div class="dl" style="margin-top:12px">${c}</div>`+st.filter(x=>x.r[0]===c).map(x=>{const late=!x.done&&x.r[3]<t;return `<button class="ck${x.done?" on":""}" data-act="rdy" data-v="${x.r[1]}"${x.auto?" disabled":""}><span class="box">${x.done?"✓":""}</span><span class="ct">${esc(x.r[2])}${x.auto?' <i class="tag2">auto</i>':""}</span><span class="cd${late?" late":""}">${x.done?"":"avant "+fdate(x.r[3])}</span></button>`}).join("")).join("");
+  return `<div class="dc"><div class="dl" style="color:var(--txt);font-size:16px;font-family:var(--disp);font-weight:800">Prêt pour l'Ironman<small>${n} / ${st.length} validés · cochés automatiquement quand tes séances le prouvent</small></div><div class="trk" style="margin-top:8px"><i style="width:${n/st.length*100}%;background:var(--acc)"></i></div>${cats}</div>`;
+}
+/* --- Nutrition des sorties longues --- */
+const FOOD=[["drink","Boisson 2:1 (bidon 500 ml)",60,"drink"],["gel30","Gel 30 g (2:1)",30,"gel"],["gelcaf","Gel 30 g + caféine",30,"caf"],["gel45","Gel 45 g",45,"gel"],["elec","Électrolytes (pastille par bidon d'eau)",0,"elec"],["pde","Pain d'épices (tranche)",20,"solid"],["barre","Barre énergétique",25,"solid"],["banane","Banane",25,"solid"],["compote","Compote (gourde)",13,"soft"],["bonbons","Bonbons (une poignée)",20,"soft"]];
+let STOCK=lsGet("ironmax.food",{drink:{on:1,g:60},gel30:{on:1,g:30},gelcaf:{on:1,g:30},gel45:{on:1,g:45},elec:{on:1,g:0}});
+const fOn=id=>STOCK[id]&&STOCK[id].on,fG=id=>{const f=FOOD.find(x=>x[0]===id);return STOCK[id]&&STOCK[id].g!=null?+STOCK[id].g:f[2]};
+function carbTarget(phase,sport){const b={"Base 1":60,"Base 2":70,"Build":80,"Spécifique":90,"Affûtage":90}[phase]||70,r={"Base 1":40,"Base 2":45,"Build":50,"Spécifique":60,"Affûtage":60}[phase]||45;return sport==="course"?r:b}
+function nutriPlan(s,phase){
+  const bike=s.d==="velo",min=s.min||0;if(!((bike&&min>=120)||(!bike&&s.d==="course"&&min>=90)))return null;
+  if(!FOOD.some(f=>fOn(f[0])))return {lines:["Coche ton stock dans Réglages → Mon ravitaillement."],gph:0};
+  const gph=carbTarget(phase,s.d),hEff=Math.max(.5,min/60-.33);let need=Math.round(gph*hEff);const out=[];let got=0;
+  if(bike){const bid=Math.max(1,Math.round(min/60*1.2));
+    const nd=fOn("drink")&&fG("drink")>0?Math.min(bid,Math.max(1,Math.floor(need*.6/fG("drink")))):0,nw=bid-nd;
+    if(nd){const g=fG("drink")*nd;out.push(`${nd} bidon${nd>1?"s":""} de boisson 2:1 (${Math.round(g)} g)`);got+=g}
+    if(nw>0)out.push(`${nw} bidon${nw>1?"s":""} d'eau${fOn("elec")?" + électrolytes":""}`);}
+  if(fOn("gelcaf")&&min>=150&&got<need){out.push(`1 gel caféine vers ${hm(min*.65)}`);got+=fG("gelcaf")}
+  const solids=bike?["pde","barre","banane","compote","bonbons"]:["compote","bonbons"];
+  let solidBudget=bike?(need-got)*.4:(need-got)*.3;
+  solids.forEach(id=>{if(!fOn(id)||solidBudget<=5||fG(id)<=0)return;const n=Math.max(1,Math.floor(solidBudget/fG(id)/ (bike?1:1)));const lbl=FOOD.find(f=>f[0]===id)[1];out.push(`${n} × ${lbl.toLowerCase()} (${n*fG(id)} g)`);got+=n*fG(id);solidBudget-=n*fG(id)});
+  let rem=need-got;
+  if(rem>10){const g45=fOn("gel45")?fG("gel45"):0,g30=fOn("gel30")?fG("gel30"):0;let n45=0,n30=0;
+    if(g45&&g30){n45=Math.floor(rem/g45);const r2=rem-n45*g45;if(r2>10)n30=Math.ceil(r2/g30)}else if(g45)n45=Math.ceil(rem/g45);else if(g30)n30=Math.ceil(rem/g30);
+    if(n45){out.push(`${n45} × gel 45 g (${n45*g45} g)`);got+=n45*g45}if(n30){out.push(`${n30} × gel 30 g (${n30*g30} g)`);got+=n30*g30}}
+  if(!bike&&fOn("elec"))out.push("Électrolytes avant le départ si chaleur");
+  return {gph,total:Math.round(got),need,lines:out,timing:`Un apport toutes les 20–25 min dès la 20e minute · ≈ ${Math.round(got/hEff)} g/h (cible ${gph} g/h)`};
+}
+function vStock(){
+  return `<h2>Mon ravitaillement</h2><div class="card" style="padding:4px 18px"><div class="muted" style="font-size:12px;padding-top:10px">Coche ce que tu as sous la main : le plan de ravito des sorties longues s'en sert. Ajuste les grammes de glucides si besoin.</div>${FOOD.map(f=>`<div class="set"><label style="display:flex;align-items:center;gap:10px;flex:1"><input type="checkbox" data-food="${f[0]}"${fOn(f[0])?" checked":""} style="width:20px;height:20px;accent-color:var(--acc)"><span>${esc(f[1])}</span></label>${f[3]==="elec"?"":`<input class="inp" style="width:64px" data-foodg="${f[0]}" value="${fG(f[0])}" inputmode="numeric"><span class="muted" style="font-size:12px;margin-left:4px">g</span>`}</div>`).join("")}</div>`;
 }
 
 /* ============ INTRO ============ */
