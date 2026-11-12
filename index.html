@@ -569,7 +569,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.23 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.24 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -978,7 +978,8 @@ function zwText(s){
   const k=s.k,p=s.p,P=x=>Math.round(Wt(x,k)/INP.ftp*100),PL=x=>Math.round(Wt(x,"long")/INP.ftp*100);
   const rpm=p.rpm?" "+String(p.rpm).replace(/[–—]/g,"-")+"rpm":(k==="ef"?" 65-70rpm":"");
   const out=[];let used=0;const blk=(txt,m)=>{out.push(txt);used+=m};
-  const warm=()=>blk(`Échauffement\n- 9m ramp ${P(.45)}-${P(.70)}% 90rpm\n3x\n- 1m ${P(.75)}% 100rpm\n- 1m ${P(.55)}%`,15);
+  // échauffement court (10') quand la séance est courte, pour tenir la durée prévue
+  const warm=(short)=>short?blk(`Échauffement\n- 10m ramp ${P(.45)}-${P(.72)}% 90rpm`,10):blk(`Échauffement\n- 9m ramp ${P(.45)}-${P(.70)}% 90rpm\n3x\n- 1m ${P(.75)}% 100rpm\n- 1m ${P(.55)}%`,15);
   const z2fill=(lo,hi,total)=>{const m=Math.round(total-used-10);if(m>=5)blk(`Endurance\n- ${m}m ${lo}-${hi}%`,m)};
   const cool=()=>blk(`Retour au calme\n- 10m ramp ${P(.60)}-${P(.45)}%`,10);
   const min=s.min||60;
@@ -991,7 +992,7 @@ function zwText(s){
   if(["vo2","ss","thr","ef","im"].includes(k)){
     const st=zSets(p.sets);
     if(!st){blk(`Endurance\n- 10m ramp ${P(.45)}-${P(.62)}%\n- ${Math.max(5,min-10)}m ${P(.62)}-${P(.70)}%`,min);return out.join("\n\n")}
-    warm();const rec=zMin(p.rec)||4,rw=P(k==="vo2"?.5:.55);
+    const rec=zMin(p.rec)||4,rw=P(k==="vo2"?.5:.55);warm(15+st.n*(st.d+rec)+10>min);
     if(p.ou){const cyc=Math.max(1,Math.round(st.d/5));
       for(let i=0;i<st.n;i++){blk(`Bloc ${i+1} : sur-sous\n${cyc}x\n- 3m ${P(p.ou[0])}%\n- 2m ${P(p.ou[1])}%`,cyc*5);if(i<st.n-1)blk(`Récup\n- ${rec}m ${rw}% 90rpm`,rec)}}
     else blk(`Corps de séance\n${st.n}x\n- ${st.d}m ${P(p.w)}%${rpm}\n- ${rec}m ${rw}% 90rpm`,st.n*(st.d+rec));
@@ -1063,7 +1064,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.23",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.24",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
