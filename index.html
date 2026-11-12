@@ -563,7 +563,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.19 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.20 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -783,6 +783,21 @@ function mobilityWeek(){
   return {n,min};
 }
 const QUOTES=["Chaque séance régulière vaut mieux qu'un exploit isolé.","Le diesel chauffe doucement, puis il ne s'arrête plus.","La forme se construit à l'entraînement, elle se révèle le jour J.","Petit à petit, la ligne d'arrivée se rapproche.","Ce qui se fait aujourd'hui se ressent en juin.","Récupérer fait partie de l'entraînement.","Une décharge bien faite, c'est de la vitesse en réserve."];
+/* Séances du jour : faites (par sport, dans l'ordre) / restantes */
+function splitToday(list,date){
+  const used={},done=[],left=[];
+  list.forEach(s=>{const n=doneOn(date,s.d).length;used[s.d]=used[s.d]||0;if(used[s.d]<n){used[s.d]++;done.push(s)}else left.push(s)});
+  return {done,left};
+}
+/* Une séance compte dans le "prévu à ce jour" si son jour est passé, si elle est faite,
+   ou si son créneau est terminé (matin 12h, midi 14h, soir 21h). */
+const SLOT_END={matin:12,midi:14,soir:21};
+function dueSessions(list,t){
+  const h=new Date().getHours(),byDay={};
+  list.forEach(s=>{(byDay[s.date]=byDay[s.date]||[]).push(s)});
+  return list.filter(s=>{if(s.date<t)return true;if(s.date>t)return false;
+    const {done}=splitToday(byDay[s.date],s.date);return done.includes(s)||h>=(SLOT_END[s.slot]||21)});
+}
 function heroBanner(D){
   const now=new Date(),hrs=now.getHours(),hello=hrs<12?"Bonjour":hrs<18?"Bon après-midi":"Bonsoir";
   const y=new Date(now);y.setDate(y.getDate()-1);const yk=dkey(y),tk=dkey(now);
@@ -793,8 +808,11 @@ function heroBanner(D){
   // programme du jour
   let todayS=[];try{const w=PLAN&&PLAN.weeks.find(x=>{const e=new Date(x.start+"T00:00:00");e.setDate(e.getDate()+7);return x.start<=tk&&dkey(e)>tk});if(w)todayS=weekSessions(w).filter(s=>s.date===tk&&!s.p.cancel)}catch(e){}
   const todayDone=["velo","course","nat","muscu"].some(s=>doneOn(tk,s).length);
-  if(todayS.length&&!todayDone)lines.push("Aujourd'hui : "+todayS.map(s=>`${s.title}${mainTarget(s.k,s.p)?" ("+mainTarget(s.k,s.p)+")":""}`).join(" + ")+".");
-  else if(todayDone)lines.push("Séance du jour faite, place à la récup 😌");
+  const {left:todayLeft,done:todayDoneS}=splitToday(todayS,tk);
+  const lbl=s=>`${s.title}${mainTarget(s.k,s.p)?" ("+mainTarget(s.k,s.p)+")":""}`;
+  if(todayLeft.length&&!todayDoneS.length)lines.push("Aujourd'hui : "+todayLeft.map(lbl).join(" + ")+".");
+  else if(todayLeft.length)lines.push(todayDoneS.map(s=>s.title).join(" + ")+" ✓ · reste "+(todayLeft.length>1?"":(SLOT_N[todayLeft[0].slot]||"").toLowerCase()+" ")+": "+todayLeft.map(lbl).join(" + ")+".");
+  else if(todayDone)lines.push("Séances du jour faites, place à la récup 😌");
   else lines.push("Pas de séance prévue aujourd'hui : repos ou mobilité.");
   // actualité
   const f=D.fatigue.v;
@@ -956,7 +974,8 @@ function actLoad(a){
   if(sp==="velo"&&wap)return h*Math.pow(wap/INP.ftp,2)*100;
   if(sp==="course"&&a.distance>500){const v=a.distance/a.moving_time,thr=INP.vma*.88/3.6;return h*Math.pow(v/thr,2)*100}
   if(sp==="nat"&&a.distance>100){const pace=a.moving_time/(a.distance/100),css=mmss(INP.css)||115;return h*Math.pow(css/pace,3)*100}
-  if(sp==="muscu"||sp==="mob")return a.moving_time/60*(a.icu_rpe||(sp==="mob"?2:5))/6;
+  if(sp==="mob")return a.moving_time/60*(a.icu_rpe||2)/6;
+  if(sp==="muscu"){if(a.icu_rpe)return a.moving_time/60*a.icu_rpe/6;if(a.average_heartrate)return h*Math.pow(Math.max(0,a.average_heartrate-INP.fcrest)/(lthr-INP.fcrest),2)*100;return a.moving_time/60*3/6}
   if(a.average_heartrate)return h*Math.pow(Math.max(0,a.average_heartrate-INP.fcrest)/(lthr-INP.fcrest),2)*100;
   return a.icu_training_load||0;
 }
@@ -979,7 +998,7 @@ function dedupe(acts){
   }
   return acts.filter(a=>!drop.has(a.id));
 }
-const EV=8;
+const EV=9;
 function maybeRecompute(){if(DATA&&PLAN&&lsGet(LSK.raw,null)&&(!LIVE||LIVE.ev!==EV)){recompute();render()}}
 function recompute(){
   const raw=lsGet(LSK.raw,null);if(!raw)return;
@@ -1045,7 +1064,7 @@ function recompute(){
   const planScore=k=>{if(!planH[k])return 18;const r=doneH[k]/planH[k];return clamp(r<=1.1?20*Math.min(1,r):20-(r-1.1)*20,0,20)};
   const names={nat:"Natation",velo:"Vélo",course:"Course"};
   const disc=["nat","velo","course"].map(k=>{const p=planScore(k),e=effScore(k),t=traj[k];return {k:k==="nat"?"natation":k,n:names[k],v:+(.4*p+.3*e+.3*t).toFixed(1),plan:+p.toFixed(1),eff:+e.toFixed(1),traj:+t.toFixed(1),
-    txt:`${(doneH[k]).toFixed(1)} h faites / ${(planH[k]).toFixed(1)} h prévues${gains[k]!=null?" · efficacité "+(gains[k]>=0?"+":"")+gains[k].toFixed(1)+" %":""}`}});
+    txt:`${frn((doneH[k]).toFixed(1))} h faites / ${frn((planH[k]).toFixed(1))} h prévues${gains[k]!=null?" · efficacité "+(gains[k]>=0?"+":"")+frn(gains[k].toFixed(1))+" %":""}`}});
   const wsum=disc.reduce((a,d)=>a+(planH[d.k==="natation"?"nat":d.k]||1),0);
   const global=disc.reduce((a,d)=>a+d.v*(planH[d.k==="natation"?"nat":d.k]||1),0)/wsum;
   // cap Ironman
@@ -1369,14 +1388,14 @@ function vBilan(){
   let rows=["velo","course","nat","muscu"].map(k=>{const d=done[k],p=plan?plan[k]:null,r=p?d/p:null;return `<div class="brow"><span>${D_IC[k]} ${D_N[k]}</span><div class="trk" style="flex:1;margin:0 10px"><i style="width:${p?Math.min(100,r*100):0}%;background:${SPC[k]}"></i></div><b>${frn(d.toFixed(1))}${p!=null?" / "+frn(p.toFixed(1)):""} h</b></div>`}).join("");
   // séances de la semaine
   let ses=[],nDone=0,nPlan=0,warn=[],good=[],just=0;
-  if(pw){ses=weekSessions(pw).filter(s=>!s.p.cancel);ses.forEach(s=>{if(s.date>t)return;nPlan++;const d=doneOn(s.date,s.d);if(d.length){nDone++;d.forEach(x=>{if(x.verdict==="warn")warn.push(s.title);if(x.verdict==="up")good.push(s.title)})}})}
+  if(pw){ses=weekSessions(pw).filter(s=>!s.p.cancel);const due=dueSessions(ses,t);ses.forEach(s=>{if(!due.includes(s))return;nPlan++;const d=doneOn(s.date,s.d);if(d.length){nDone++;d.forEach(x=>{if(x.verdict==="warn")warn.push(s.title);if(x.verdict==="up")good.push(s.title)})}})}
   ((LIVE&&LIVE.acts)||[]).forEach(a=>{if(a.date>=start&&a.date<end&&JUSTIFY.has(feelOf(a.id)))just++});
   const fs=(LIVE||DATA)&&(LIVE||DATA).fatigue.series||[];const fIn=fs.filter(p=>p.d>=start&&p.d<end);
   const fTxt=fIn.length>1?`${fIn[0].v} → ${fIn[fIn.length-1].v}/100`:"—";
   const nw=PLAN&&PLAN.weeks.find(x=>x.start===addDays(start,7));let next="";
   if(nw){const ns=weekSessions(nw).filter(s=>!s.p.cancel&&(s.p.sets||s.p.tempo||s.p.blocks||s.p.test));next=`<div class="dl" style="margin-top:14px">Semaine suivante · S${nw.n}${isDL(nw)?" · décharge":""}<small>${frn(sumH(plannedWeekH(nw.start)).toFixed(1))} h prévues${nw.test?" · "+esc(nw.test):""}</small></div><div style="font-size:13px;margin-top:4px">${ns.slice(0,5).map(s=>`${D_IC[s.d]} ${DAYS[s.day]} ${esc(s.title)}${mainTarget(s.k,s.p)?" · "+esc(mainTarget(s.k,s.p)):""}`).join("<br>")}</div>`}
   const tot=sumH(done),tp=plan?sumH(plan):null;
-  let tpDate=tp;if(pw&&start===mondayOf(t)){tpDate=weekSessions(pw).filter(s=>!s.p.cancel&&s.date<=t).reduce((a,s)=>a+(s.min||0)/60,0)}
+  let tpDate=tp;if(pw&&start===mondayOf(t)){tpDate=dueSessions(weekSessions(pw).filter(s=>!s.p.cancel),t).reduce((a,s)=>a+(s.min||0)/60,0)}
   const rr=tpDate?tot/tpDate:1,isCur=start===mondayOf(t);
   const verdict=tp==null?"":(rr>=.9?(isCur?"Dans le plan jusqu'ici 👍":"Semaine dans le plan 👍"):rr>=.75?(isCur?"Un peu en dessous de ce qui était prévu à ce jour.":"Semaine un peu en dessous du plan."):(isCur?"Nettement en dessous de ce qui était prévu à ce jour.":"Semaine nettement en dessous du plan."))+(isCur&&tpDate!=null?` (${frn(tot.toFixed(1))} h faites / ${frn(tpDate.toFixed(1))} h prévues à ce jour)`:"");
   return `<div class="dc"><div style="display:flex;justify-content:space-between;align-items:center"><div class="dl" style="color:var(--txt);font-size:16px;font-family:var(--disp);font-weight:800">${(sunday&&UI.bw==="cur")||UI.bw==="prev"?"Bilan de la semaine":"Semaine en cours"}<small>${pw?"S"+pw.n+" · ":""}${fdate(start)} → ${fdate(addDays(start,6))}</small></div>
