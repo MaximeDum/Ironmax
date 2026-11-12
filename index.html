@@ -553,7 +553,8 @@ function vReglages(){
   return `<h2>Connexion Intervals.icu</h2><div class="card"><div class="muted" style="font-size:13px">Intervals.icu → Settings → Developer Settings. La clé reste uniquement sur ce téléphone.</div>
   <input class="inp wide" id="cfgA" placeholder="Athlete ID (ex. i123456)" value="${esc(CFG.athlete)}" autocapitalize="off" autocorrect="off">
   <input class="inp wide" id="cfgK" placeholder="API key" value="${esc(CFG.key)}" type="password" autocapitalize="off" autocorrect="off">
-  <div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="savecfg">Enregistrer et actualiser</button>${CFG.key?'<button class="btn red" data-act="delcfg">Effacer</button>':""}</div></div>
+  <div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="savecfg">Enregistrer et actualiser</button>${CFG.key?'<button class="btn red" data-act="delcfg">Effacer</button>':""}</div>
+  <div class="row" style="margin-top:12px;align-items:center"><div style="flex:1;font-size:13.5px"><b>Séances vélo vers Zwift</b><div class="muted" style="font-size:12px">À chaque actualisation, Ironmax met les séances vélo de la semaine dans ton calendrier Intervals (et celles de la semaine suivante dès le samedi). Intervals les envoie à Zwift. Garde la même FTP dans Ironmax, Intervals et Zwift.</div></div><button class="btn${zwAuto()?"":" red"}" data-act="zwauto">${zwAuto()?"Auto ✓":"Désactivé"}</button></div></div>
   ${vOrga()}
   <h2>Mes seuils</h2><div class="card" style="padding:4px 18px">${IN("ftp","FTP","W · après un test vélo")}${IN("vma","VMA","km/h · test 6' ou demi-Cooper")}${IN("fcmax","FC max","bpm","numeric")}${IN("fcrest","FC de repos","bpm","numeric")}${IN("fcnight","FC de nuit de base","bpm","numeric")}${IN("css","Allure natation de référence","min:s / 100 m · facultatif","text")}${IN("best5k","Meilleur 5 km récent","min:s","text")}${IN("weight","Poids","kg")}${IN("ctlTarget","Charge de fond visée","CTL Ironman","numeric")}
   <button class="go" style="margin:12px 0 14px" data-act="saveinp">Enregistrer les seuils</button>${hist?'<div style="padding-bottom:12px"><div class="dl" style="margin-bottom:4px">Historique</div>'+hist+'</div>':""}</div>
@@ -563,7 +564,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.20 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.21 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -689,6 +690,9 @@ document.addEventListener("click",ev=>{
     case"adjapply":applyAdj(v);render();break;
     case"adjdismiss":dismissAdj(v);break;
     case"adjreset":ADJ={};lsSet(LSK.adj,ADJ);render();toast("Ajustements remis à zéro");break;
+    case"zwpush":{const w=PLAN.weeks.find(x=>x.n===+v);if(!w||UI.zwBusy)break;UI.zwBusy=w.n;render();ZWERR="";
+      zwPushWeek(w,false).then(n=>toast("Zwift : "+n+" séance"+(n>1?"s":"")+" envoyée"+(n>1?"s":"")+" à Intervals")).catch(e=>{ZWERR=e.message||"échec";toast(ZWERR)}).finally(()=>{UI.zwBusy=null;render()});break}
+    case"zwauto":lsSet(LSZA,!zwAuto());render();break;
     case"savecfg":CFG={athlete:$("#cfgA").value.trim(),key:$("#cfgK").value.trim()};lsSet(LSK.cfg,CFG);UI.tab="dash";render();refreshData();break;
     case"delcfg":CFG={athlete:"",key:""};lsSet(LSK.cfg,CFG);localStorage.removeItem(LSK.raw);localStorage.removeItem(LSK.live);LIVE=null;render();toast("Connexion effacée");break;
     case"saveinp":{let n=0;document.querySelectorAll("[data-inp]").forEach(el=>{const k=el.dataset.inp;let val=el.value.trim().replace(",",".");if(!["css","best5k"].includes(k)){val=+val;if(!isFinite(val)||val<=0)return}else if(!isFinite(mmss(val)))return;if(String(INP[k])!==String(val)){setInput(k,val);n++}});render();toast(n?n+" seuil(s) mis à jour · charges recalculées":"Aucun changement");break}
@@ -952,6 +956,99 @@ function feelPopup(id,fromQueue){
   UI.feelSel=cur.f;UI.feelFromQ=!!fromQueue;$("#ov").classList.add("show");
 }
 function nextFeel(){if(FEELQ.length){feelPopup(FEELQ[0],true)}else closeSheet()}
+
+/* ============ ZWIFT, via le calendrier Intervals.icu ============
+   Ironmax écrit les séances vélo de la semaine dans le calendrier Intervals (séances prévues).
+   Intervals les envoie ensuite tout seul à Zwift (7 jours à l'avance), dans Workouts → Custom → Intervals.icu.
+   Cibles en % de FTP : Zwift les applique avec ta FTP Zwift (garde la même FTP partout). */
+const LSZ="ironmax.zw",LSZA="ironmax.zwauto";let ZW=lsGet(LSZ,{}),ZWERR="";
+const zwAuto=()=>lsGet(LSZA,true)!==false;
+const SLOT_H={matin:"07:00",midi:"12:15",soir:"18:30"};
+const zMin=t=>{t=String(t||"");let m=t.match(/(\d+)\s*h\s*(\d+)?/);if(m)return +m[1]*60+(+m[2]||0);m=t.match(/(\d+)\s*'/);return m?+m[1]:0};
+const zSets=t=>{const m=String(t||"").match(/(\d+)\s*[×x]\s*(\d+)\s*'/);return m?{n:+m[1],d:+m[2]}:null};
+function zwText(s){
+  const k=s.k,p=s.p,P=x=>Math.round(Wt(x,k)/INP.ftp*100),PL=x=>Math.round(Wt(x,"long")/INP.ftp*100);
+  const rpm=p.rpm?" "+String(p.rpm).replace(/[–—]/g,"-")+"rpm":(k==="ef"?" 65-70rpm":"");
+  const out=[];let used=0;const blk=(txt,m)=>{out.push(txt);used+=m};
+  const warm=()=>blk(`Échauffement\n- 9m ramp ${P(.45)}-${P(.70)}% 90rpm\n3x\n- 1m ${P(.75)}% 100rpm\n- 1m ${P(.55)}%`,15);
+  const z2fill=(lo,hi,total)=>{const m=Math.round(total-used-10);if(m>=5)blk(`Endurance\n- ${m}m ${lo}-${hi}%`,m)};
+  const cool=()=>blk(`Retour au calme\n- 10m ramp ${P(.60)}-${P(.45)}%`,10);
+  const min=s.min||60;
+  if(p.test==="FTP"){
+    blk(`Échauffement\n- 14m ramp ${P(.45)}-${P(.75)}% 90rpm\n3x\n- 1m ${P(1.10)}%\n- 1m ${P(.50)}%`,20);
+    blk(`Effort libre\n- À fond 5m ${P(1.10)}%\n- 10m ${P(.50)}%`,15);
+    blk(`Test : mode libre (ERG off), à fond\n- 20m ${P(1)}%`,20);cool();
+    return out.join("\n\n");
+  }
+  if(["vo2","ss","thr","ef","im"].includes(k)){
+    const st=zSets(p.sets);
+    if(!st){blk(`Endurance\n- 10m ramp ${P(.45)}-${P(.62)}%\n- ${Math.max(5,min-10)}m ${P(.62)}-${P(.70)}%`,min);return out.join("\n\n")}
+    warm();const rec=zMin(p.rec)||4,rw=P(k==="vo2"?.5:.55);
+    if(p.ou){const cyc=Math.max(1,Math.round(st.d/5));
+      for(let i=0;i<st.n;i++){blk(`Bloc ${i+1} : sur-sous\n${cyc}x\n- 3m ${P(p.ou[0])}%\n- 2m ${P(p.ou[1])}%`,cyc*5);if(i<st.n-1)blk(`Récup\n- ${rec}m ${rw}% 90rpm`,rec)}}
+    else blk(`Corps de séance\n${st.n}x\n- ${st.d}m ${P(p.w)}%${rpm}\n- ${rec}m ${rw}% 90rpm`,st.n*(st.d+rec));
+    z2fill(P(.62),P(.70),min);cool();return out.join("\n\n");
+  }
+  if(k==="tempo"){
+    if(!p.tempo){blk(`Z2 facile\n- 10m ramp ${P(.45)}-${P(p.w-.05)}%\n- ${Math.max(5,min-10)}m ${P(p.w-.07)}-${P(p.w)}%`,min);return out.join("\n\n")}
+    warm();blk(`Z2\n- 20m ${P(.64)}-${P(.70)}%`,20);
+    const st=zSets(p.tempo);
+    if(st)blk(`Tempo\n${st.n}x\n- ${st.d}m ${P(p.w)}%\n- 5m ${P(.65)}%`,st.n*(st.d+5));else{const m=zMin(p.tempo)||30;blk(`Tempo\n- ${m}m ${P(p.w)}%`,m)}
+    z2fill(P(.64),P(.70),min);cool();return out.join("\n\n");
+  }
+  if(["long","brick","sim"].includes(k)){
+    const bike=Math.max(30,min-zMin(p.brick)),lo=PL(p.z2-.03),hi=PL(p.z2+.03);
+    blk(`Échauffement\n- 15m ramp ${P(.45)}-${lo}% 90rpm`,15);
+    const bt=String(p.blocks||""),st=zSets(bt),two=bt.match(/(\d+)\s*'\s*puis\s*(\d+)\s*'/);
+    let blocks=[];
+    if(st)for(let i=0;i<st.n;i++)blocks.push([st.d,PL(p.w)]);
+    else if(two)blocks=[[+two[1],PL(p.w)],[+two[2],PL(p.w2||p.w)]];
+    else if(bt){const m=zMin(bt);if(m)blocks=[[m,PL(p.w)]]}
+    const bTot=blocks.reduce((a,b)=>a+b[0],0)+Math.max(0,blocks.length-1)*10;
+    const lead=Math.round(bike-15-bTot-10);if(lead>=5)blk(`Endurance Z2\n- ${lead}m ${lo}-${hi}%`,lead);
+    blocks.forEach((b,i)=>{blk(`Bloc ${i+1}\n- ${b[0]}m ${b[1]}%`,b[0]);if(i<blocks.length-1)blk(`Z2\n- 10m ${lo}-${hi}%`,10)});
+    blk(`Fin souple\n- 10m ${P(.55)}%`,10);
+    if(p.brick)out.push(`Enchaînement : ${p.brick} de course dès la descente du vélo`);
+    return out.join("\n\n");
+  }
+  return `- ${min}m ${P(.62)}-${P(.70)}%`;
+}
+function zwEvents(w){
+  const t=today(),list=weekSessions(w).filter(s=>s.d==="velo"&&!s.p.cancel&&s.date>=t);
+  const byDay={};list.forEach(s=>{(byDay[s.date]=byDay[s.date]||[]).push(s)});
+  return list.filter(s=>s.date>t||!splitToday(weekSessions(w).filter(x=>x.date===s.date&&!x.p.cancel),s.date).done.includes(s))
+    .map(s=>({category:"WORKOUT",type:"Ride",indoor:true,start_date_local:s.date+"T"+(SLOT_H[s.slot]||"18:30")+":00",
+      name:"Ironmax · "+s.title,description:zwText(s),external_id:"ironmax-"+s.date+"-"+s.slot+"-"+s.uid}));
+}
+const zhash=str=>{let h=0;for(let i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))|0;return h};
+async function apiSend(method,path,body){
+  const r=await fetch("https://intervals.icu/api/v1/athlete/"+encodeURIComponent(CFG.athlete)+path,{method,headers:{Authorization:"Basic "+btoa("API_KEY:"+CFG.key),"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(r.status===401||r.status===403)throw new Error("Intervals.icu refuse l'écriture du calendrier ("+r.status+")");
+  if(!r.ok)throw new Error("Intervals.icu a répondu "+r.status);return r.json().catch(()=>null);
+}
+async function zwPushWeek(w,ifChanged){
+  const evs=zwEvents(w),h=zhash(JSON.stringify(evs)+INP.ftp);
+  if(ifChanged&&ZW[w.n]&&ZW[w.n].h===h)return null;
+  const t=today(),from=w.start>t?w.start:t,to=addDays(w.start,6);
+  const ex=await apiGet("/events?oldest="+from+"&newest="+to+"&category=WORKOUT");
+  const mine=(ex||[]).filter(e=>/^ironmax-/.test(e.external_id||"")||/^Ironmax · /.test(e.name||""));
+  if(mine.length)await apiSend("PUT","/events/bulk-delete",mine.map(e=>({id:e.id})));
+  if(evs.length)await apiSend("POST","/events/bulk",evs);
+  ZW[w.n]={h,at:Date.now(),n:evs.length};lsSet(LSZ,ZW);return evs.length;
+}
+/* Semaine en cours, plus la suivante à partir du samedi (Intervals envoie 7 jours à Zwift). */
+async function zwAutoPush(){
+  if(!zwAuto()||!PLAN||!CFG.key)return;const t=today();
+  const cur=PLAN.weeks.find(w=>w.start<=t&&addDays(w.start,7)>t);if(!cur)return;
+  const ws=[cur];const dow=new Date().getDay();if(dow===6||dow===0){const nx=PLAN.weeks.find(w=>w.start===addDays(cur.start,7));if(nx)ws.push(nx)}
+  let n=0,any=false;ZWERR="";
+  for(const w of ws){try{const r=await zwPushWeek(w,true);if(r!=null){any=true;n+=r}}catch(e){ZWERR=e.message||"échec de l'envoi"}}
+  if(any)toast("Zwift : "+n+" séance"+(n>1?"s":"")+" vélo envoyée"+(n>1?"s":""));
+}
+function zwStatus(w){
+  const z=ZW[w.n];if(!z)return "Pas encore envoyée";
+  const d=new Date(z.at);return z.n+" séance"+(z.n>1?"s":"")+" envoyée"+(z.n>1?"s":"")+" le "+d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+" à "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+(z.h!==zhash(JSON.stringify(zwEvents(w))+INP.ftp)?" · modifiée depuis, à renvoyer":"");
+}
 async function refreshData(){
   if(!CFG.athlete||!CFG.key){UI.tab="reglages";render();toast("Renseigne d'abord ta connexion Intervals.icu");return}
   if(REFRESH.busy)return;REFRESH={busy:true,err:""};render();
@@ -959,7 +1056,7 @@ async function refreshData(){
     const d=new Date();const old=new Date(d);old.setDate(old.getDate()-150);const ow=new Date(d);ow.setDate(ow.getDate()-70);
     const [acts,well]=await Promise.all([apiGet("/activities?oldest="+dkey(old)+"&newest="+dkey(d)+"&fields="+FIELDS),apiGet("/wellness?oldest="+dkey(ow)+"&newest="+dkey(d))]);
     lsSet(LSK.raw,{acts,well,at:Date.now()});recompute();
-    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))));recompute();queueNewSessions((LIVE&&LIVE.acts)||[]);toast("Données actualisées");if(FEELQ.length)setTimeout(nextFeel,300);
+    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))));recompute();queueNewSessions((LIVE&&LIVE.acts)||[]);toast("Données actualisées");zwAutoPush().then(()=>render());if(FEELQ.length)setTimeout(nextFeel,300);
   }catch(e){REFRESH.err=(e&&e.message&&!/Failed to fetch|Load failed|NetworkError/.test(e.message))?e.message:"Connexion impossible (réseau ou accès refusé)"}
   REFRESH.busy=false;render();
 }
@@ -998,12 +1095,20 @@ function dedupe(acts){
   }
   return acts.filter(a=>!drop.has(a.id));
 }
-const EV=9;
-function maybeRecompute(){if(DATA&&PLAN&&lsGet(LSK.raw,null)&&(!LIVE||LIVE.ev!==EV)){recompute();render()}}
+const EV=10;
+function maybeRecompute(){if(DATA&&PLAN&&(lsGet(LSK.raw,null)||(DATA.extra&&DATA.extra.length))&&(!LIVE||LIVE.ev!==EV||LIVE.xk!==extraKey())){recompute();render()}}
+/* Séances ajoutées à la main dans data.json (relevées sur Strava) : elles comptent tant qu'Intervals
+   n'a pas la même séance (même sport, départ à ±20 min). */
+function withExtra(list){
+  const ex=((DATA&&DATA.extra)||[]).filter(e=>e&&e.start_date_local);
+  const t=a=>new Date(a.start_date_local).getTime();
+  return list.concat(ex.filter(e=>!list.some(a=>sportOfA(a)===sportOfA(e)&&Math.abs(t(a)-t(e))<20*60e3)).map(e=>Object.assign({extra:true},e)));
+}
+const extraKey=()=>((DATA&&DATA.extra)||[]).map(e=>e.id).join(",");
 function recompute(){
-  const raw=lsGet(LSK.raw,null);if(!raw)return;
+  const raw=lsGet(LSK.raw,null)||(DATA&&DATA.extra&&DATA.extra.length?{acts:[],well:[]}:null);if(!raw)return;
   const B=(DATA&&DATA.base)||null;
-  const acts=dedupe((raw.acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))).map(a=>Object.assign(a,{load:actLoad(a)}));
+  const acts=dedupe(withExtra(raw.acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))).map(a=>Object.assign(a,{load:actLoad(a)}));
   const well={};(raw.well||[]).forEach(w=>{if(w&&w.id)well[w.id]=w});
   const today=dkey(new Date());
   // CTL/ATL quotidiens
@@ -1027,9 +1132,19 @@ function recompute(){
     if(sc){parts.push(clamp((85-sc)/25*100,0,100));w.push(.15)}
     if(!w.length)return null;const ws=w.reduce((a,b)=>a+b,0);return parts.reduce((a,p,i)=>a+p*w[i],0)/ws;
   }
-  const rawF=days.map(x=>{const lp=clamp((x.atl/Math.max(1,x.ctl)-.8)/.7*100,0,100);const rp=recovAt(x.d);return rp==null?lp:.65*lp+.35*rp});
-  const fat=days.map((x,i)=>({d:x.d,v:Math.round((rawF[Math.max(0,i-2)]+rawF[Math.max(0,i-1)]+rawF[i])/3)}));
+  // récup du socle (sommeil, HRV, FC nuit) tant qu'Intervals n'a pas de nuits
+  const recovBase=()=>{const S=B&&B.sleep;if(!S)return null;const p=[],w=[];
+    if(S.hrv&&S.hrvBase){p.push(clamp((1-S.hrv/S.hrvBase)/.2*100,0,100));w.push(.4)}
+    if(S.secs){p.push(clamp((7.5*3600-S.secs)/(1.5*3600)*100,0,100));w.push(.25)}
+    if(S.rhr){p.push(clamp((S.rhr-INP.fcnight)/6*100,0,100));w.push(.2)}
+    if(S.score){p.push(clamp((85-S.score)/25*100,0,100));w.push(.15)}
+    const ws=w.reduce((a,b)=>a+b,0);return ws?p.reduce((a,x,i)=>a+x*w[i],0)/ws:null};
+  const rawF=days.map(x=>{const lp=clamp((x.atl/Math.max(1,x.ctl)-.8)/.7*100,0,100);let rp=recovAt(x.d);if(rp==null)rp=recovBase();return rp==null?lp:.65*lp+.35*rp});
   const snapF=(B&&DATA.fatigue&&DATA.fatigue.series)||[];
+  // lissage sur 3 jours : les jours d'avant le premier calcul sont pris dans la série du socle
+  const prevF=snapF.filter(p=>!B||p.d<=B.asof).map(p=>p.v);
+  const rawAt=i=>i>=0?rawF[i]:(prevF.length?prevF[Math.max(0,prevF.length+i)]:rawF[0]);
+  const fat=days.map((x,i)=>({d:x.d,v:Math.round((rawAt(i-2)+rawAt(i-1)+rawF[i])/3)}));
   const fser=snapF.filter(p=>!B||p.d<=B.asof).concat(fat).slice(-50);const fnow=fser.length?fser[fser.length-1].v:0;
   let highDays=0;for(let i=fser.length-1;i>=0&&fser[i].v>=40;i--)highDays++;
   const lastW=wk.filter(k=>k<=today).slice(-7).map(k=>well[k]);
@@ -1044,10 +1159,10 @@ function recompute(){
   const winEff=win.filter(a=>!JUSTIFY.has(feelOf(a.id)));
   const doneH=useB?Object.assign({},B.doneH):{velo:0,course:0,nat:0,muscu:0};win.forEach(a=>{if(doneH[a.sp]!=null)doneH[a.sp]+=a.moving_time/3600});
   const planH=useB?Object.assign({},B.plannedH):{velo:0,course:0,nat:0,muscu:0};
-  if(PLAN&&useB){PLAN.weeks.forEach(w=>{try{weekSessions(w).forEach(s=>{if(s.date>B.asof&&s.date<=today&&!s.p.cancel&&planH[s.d]!=null)planH[s.d]+=(s.min||0)/60})}catch(e){}})}
+  if(PLAN&&useB){PLAN.weeks.forEach(w=>{try{dueSessions(weekSessions(w).filter(s=>!s.p.cancel),today).forEach(s=>{if(s.date>B.asof&&planH[s.d]!=null)planH[s.d]+=(s.min||0)/60})}catch(e){}})}
   else if(PLAN){if(PLAN.past[blk.n]&&blk.from<PLAN.weeks[0].start)Object.keys(planH).forEach(k=>planH[k]+=PLAN.past[blk.n].plannedH[k]);
     PLAN.weeks.forEach(w=>{if(w.start<blk.from||w.start>today)return;let ws=null;try{ws=PLAN.blocks[0].tpl?weekSessions(w):null}catch(e){}
-      if(ws){ws.forEach(s=>{if(s.date<=today&&planH[s.d]!=null)planH[s.d]+=(s.min||0)/60})}else{const frac=Math.min(1,(new Date(today+"T23:59:59")-new Date(w.start+"T00:00:00"))/(7*864e5));Object.keys(planH).forEach(k=>planH[k]+=w.disc[k]*frac)}})}
+      if(ws){dueSessions(ws,today).forEach(s=>{if(planH[s.d]!=null)planH[s.d]+=(s.min||0)/60})}else{const frac=Math.min(1,(new Date(today+"T23:59:59")-new Date(w.start+"T00:00:00"))/(7*864e5));Object.keys(planH).forEach(k=>planH[k]+=w.disc[k]*frac)}})}
   const weeksIn=Math.max(1,(new Date(today)-new Date(blk.from))/(7*864e5));
   const ef=(list,f)=>{const v=list.map(f).filter(x=>x&&isFinite(x));if(v.length<4)return null;const n=Math.min(3,Math.floor(v.length/2));const a=v.slice(0,n).reduce((p,c)=>p+c,0)/n,b=v.slice(-n).reduce((p,c)=>p+c,0)/n;return (b/a-1)*100};
   const z2b=winEff.filter(a=>a.sp==="velo"&&a.average_heartrate&&(a.icu_weighted_avg_watts||a.average_watts)&&(a.icu_weighted_avg_watts||a.average_watts)<.8*INP.ftp&&a.moving_time>2400).sort((a,b)=>a.date<b.date?-1:1);
@@ -1122,7 +1237,7 @@ function recompute(){
   const wkNow=PLAN&&PLAN.weeks.find(w=>{const e=new Date(w.start+"T00:00:00");e.setDate(e.getDate()+7);return w.start<=today&&dkey(e)>today});
   const doneWeek=wkNow?actsN.filter(a=>a.date>=wkNow.start&&a.sp!=="mob").reduce((s,a)=>s+a.moving_time/3600,0)+(B&&B.week&&B.week.start===wkNow.start?B.week.h:0):null;
   const eftp=Math.max(0,...acts.filter(a=>a.icu_eftp&&a.date>=dkey(new Date(Date.now()-30*864e5))).map(a=>a.icu_eftp));
-  LIVE={ev:EV,asof:today,at:Date.now(),source:(B?"Socle au "+fdate(B.asof)+" + ":"")+"Intervals.icu · actualisé le "+new Date().toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}),
+  LIVE={ev:EV,xk:extraKey(),asof:today,at:Date.now(),source:(B?"Socle au "+fdate(B.asof)+" + ":"")+(lsGet(LSK.raw,null)?"Intervals.icu · actualisé le ":"séances ajoutées par Claude · calcul du ")+new Date().toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}),
     block:{name:blk.n,start:blk.from,work:!(wkNow&&wkNow.deload)},
     note:{global:+global2.toFixed(1),disc},
     fatigue:{v:fnow,series:fser,atl:Math.round(L.atl),ctl:Math.round(L.ctl),form:Math.round(L.ctl-L.atl),sleep:avgW("sleepSecs")?hm(avgW("sleepSecs")/60):"—",sleepScore:avgW("sleepScore")?Math.round(avgW("sleepScore")):"—",hrv:avgW("hrv")?Math.round(avgW("hrv")):"—",hrvBase:(useBS||hrvKeys.length<5)&&BS?BS.hrvBase:hrvKeys.length?Math.round(hrvKeys.slice(-28).reduce((a,k)=>a+well[k].hrv,0)/Math.min(28,hrvKeys.length)):"—",sleepSrc:useBS?"socle du 11 nov. ("+nightsN+" nuit"+(nightsN>1?"s":"")+" Intervals)":nightsN+" nuits Intervals",ans:null,ansLow3:false,highDays,rhr:avgW("restingHR")?Math.round(avgW("restingHR")):"—"},
@@ -1287,7 +1402,7 @@ function doneOn(date,sport){
   const out=[];
   ((DATA&&DATA.sessions)||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push(s)});
   if(!out.length&&DATA&&DATA.base&&date<=DATA.base.asof)(DATA.base.done||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push({date,sport,title:s.title,comment:""})});
-  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{const an=ANA[a.id],fl=feelLabel(a.id);out.push({date,sport,title:a.name,metrics:autoComment(a),comment:(an?an.comment:"")+(fl?" · Ressenti : "+fl:""),verdict:JUSTIFY.has(feelOf(a.id))?"ok":an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs})});
+  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{const an=ANA[a.id],fl=feelLabel(a.id);out.push({date,sport,title:a.name,metrics:autoComment(a),comment:(an?an.comment:(a.note||""))+(fl?" · Ressenti : "+fl:""),verdict:JUSTIFY.has(feelOf(a.id))?"ok":an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs})});
   return out;
 }
 function autoComment(a){
@@ -1327,6 +1442,7 @@ function vProgramme(){
   return `<div class="dc" style="border-top:3px solid ${PH_C[w.phase]}">
     <div class="wnav"><button data-act="pw" data-v="${i>0?PLAN.weeks[i-1].n:w.n}">‹</button><div><b>Semaine ${w.n}${isDL(w)?' <span class="dlb">Décharge</span>':""}</b><small>${fdate(w.start)} → ${fdate(dkey(end))} · ${w.phase}</small></div><button data-act="pw" data-v="${i<PLAN.weeks.length-1?PLAN.weeks[i+1].n:w.n}">›</button></div>
     ${w!==cur?`<button class="btn" style="width:100%;margin-top:8px" data-act="pw" data-v="${cur.n}">Revenir à cette semaine</button>`:""}
+    ${CFG.key&&addDays(w.start,6)>=t&&ses.some(s=>s.d==="velo"&&!s.p.cancel)?`<button class="btn" style="width:100%;margin-top:8px" data-act="zwpush" data-v="${w.n}">${UI.zwBusy===w.n?"Envoi…":"🚴 Envoyer les séances vélo vers Zwift"}</button><div class="muted" style="font-size:11.5px;text-align:center;margin-top:4px">${esc(zwStatus(w))}${ZWERR?" · "+esc(ZWERR):""}</div>`:""}
     ${WKED[w.n]&&((WKED[w.n].added||[]).length||(WKED[w.n].removed||[]).length||Object.keys(WKED[w.n].moved||{}).length)?`<button class="btn" style="width:100%;margin-top:8px" data-act="wkreset" data-v="${w.n}">Annuler mes modifications de la semaine</button>`:""}
     ${(w.note&&!(w.deload&&!isDL(w)&&/^Décharge$/.test(w.note)))||w.test?`<div class="wnote">${w.test?'<b>'+esc(w.test)+'</b> · ':""}${esc((w.deload&&!isDL(w))?w.note.replace(/Décharge · |Décharge/,"").trim():w.note||"")}</div>`:""}
     <div class="dsplit" style="margin-top:10px"><span><b>${frn((Object.values(hh).reduce((a,b)=>a+b,0)).toFixed(1))} h</b></span>${["velo","course","nat","muscu"].filter(k=>cnt[k]).map(k=>`<span>${D_IC[k]} ${cnt[k]} · ${frn(hh[k].toFixed(1))} h</span>`).join("")}</div>

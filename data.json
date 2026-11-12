@@ -738,5 +738,19 @@
     "kg": 84
    }
   ]
- }
+ },
+ "extra": [
+  {
+   "id": "s20956358973",
+   "start_date_local": "2026-11-12T07:33:21",
+   "type": "WeightTraining",
+   "name": "Muscu B légère",
+   "source": "STRAVA (ajouté par Claude)",
+   "moving_time": 3270,
+   "elapsed_time": 3270,
+   "average_heartrate": 97.9,
+   "max_heartrate": 132,
+   "note": "Muscu B en deload : 55 min au lieu de 40, FC 98 (max 132). Coût cardiaque très bas, cohérent avec un deload. Pour un deload, raccourcis aussi la séance, pas seulement les séries."
+  }
+ ]
 }
