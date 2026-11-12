@@ -570,7 +570,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.27 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.28 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -700,6 +700,8 @@ document.addEventListener("click",ev=>{
       zwPushWeek(w,false).then(n=>toast("Zwift : "+n+" séance"+(n>1?"s":"")+" envoyée"+(n>1?"s":"")+" à Intervals")).catch(e=>{ZWERR=e.message||"échec";toast(ZWERR)}).finally(()=>{UI.zwBusy=null;render()});break}
     case"ghsave":{const r=($("#ghrepo").value||"").trim(),t=($("#ghtok").value||"").trim();GH.repo=r||GH.repo;if(t&&!/^•+$/.test(t))GH.token=t;GH.err="";lsSet(LSG,GH);toast("Enregistré");ghPush(true);break}
     case"ghpush":ghPush(true);break;
+    case"light":{const [wn,uid]=v.split("|");toggleFlag(+wn,uid,"light");break}
+    case"indoor":{const [wn,uid]=v.split("|");toggleFlag(+wn,uid,"indoor");break}
     case"ghrestore":{if(!GH.token){toast("Enregistre d'abord le jeton GitHub");break}
       if(UI.ghConfirm!==1){UI.ghConfirm=1;render();break}
       UI.ghConfirm=0;toast("Restauration…");ghRestore().catch(e=>{toast(e.message||"échec");render()});break}
@@ -843,6 +845,76 @@ function heroBanner(D){
   const q=QUOTES[Math.floor(Date.now()/864e5)%QUOTES.length];
   return `<div class="hero"><div class="hh">${hello} Maxime 👋</div>${lines.map(l=>`<div class="hl">${esc(l)}</div>`).join("")}<div class="hq">« ${esc(q)} » · J-${daysTo("2027-06-27")}</div></div>`;
 }
+
+/* ============ FEU DU JOUR ============
+   Vert : séance comme prévue. Orange : version allégée conseillée. Rouge : repos ou Z2 très facile.
+   Sources : fatigue accumulée, HRV et sommeil de la nuit, FC de repos, ressentis des 2 derniers jours. */
+function dayLight(){
+  const D=LIVE||DATA;if(!D||!D.fatigue)return null;const f=D.fatigue,t=today();
+  const raw=lsGet(LSK.raw,null),wl=((raw&&raw.well)||[]).filter(x=>x.id<=t&&(x.hrv||x.sleepSecs)).sort((a,b)=>a.id<b.id?-1:1).pop();
+  const B=DATA&&DATA.base&&DATA.base.sleep;
+  const hrv=wl?wl.hrv:B&&B.hrv,base=f.hrvBase||(B&&B.hrvBase),sl=wl?wl.sleepSecs:B&&B.secs,rhr=wl?wl.restingHR:B&&B.rhr;
+  let lvl=0;const why=[],ok=[];const up=(l,txt)=>{lvl=Math.max(lvl,l);why.push(txt)};
+  if(f.v>=60)up(2,`fatigue accumulée élevée (${f.v}/100)`);else if(f.v>=40)up(1,`fatigue accumulée modérée (${f.v}/100)`);else ok.push(`fatigue ${f.v}/100`);
+  const r=hrv&&base?hrv/base:null;
+  if(r!=null){if(r<.75)up(2,`HRV très basse (${hrv} ms, base ${base})`);else if(r<.87)up(1,`HRV basse (${hrv} ms, base ${base})`);else ok.push(`HRV ${hrv} ms (base ${base})`)}
+  if(sl){const h=sl/3600,txt=hm(sl/60);if(h<5)up(2,`nuit très courte (${txt})`);else if(h<6.3)up(1,`nuit courte (${txt})`);else ok.push(`sommeil ${txt}`)}
+  if(r!=null&&r<.87&&sl&&sl<6*3600)up(2,"HRV basse et nuit courte en même temps");
+  if(rhr&&rhr>=INP.fcrest+6)up(1,`FC de repos haute (${rhr} bpm)`);
+  const lim=dkey(new Date(Date.now()-2*864e5));
+  ((LIVE&&LIVE.acts)||[]).filter(a=>a.date>=lim).forEach(a=>{const k=feelOf(a.id);if(k==="sick")up(2,"tu étais malade récemment");else if(["sleep","stress","load"].includes(k))up(1,"ressenti « fatigué » récent")});
+  const night=wl?(wl.id===t?"cette nuit":"dernière nuit synchronisée : "+fdate(wl.id)):"nuit du socle";
+  return {lvl,why,ok,night};
+}
+function vLight(){
+  if(!PLAN)return"";const L=dayLight();if(!L)return"";const t=today();
+  const w=PLAN.weeks.find(x=>x.start<=t&&addDays(x.start,7)>t);if(!w)return"";
+  const all=weekSessions(w).filter(s=>s.date===t&&!s.p.cancel),left=splitToday(all,t).left;
+  if(!left.length)return"";
+  const col=["#3DDC84","#F5A524","#E4002B"][L.lvl],ttl=["Feu vert : séance comme prévue","Feu orange : version allégée conseillée","Feu rouge : repos ou Z2 très facile"][L.lvl];
+  const txt=L.lvl?"Pourquoi : "+L.why.join(", ")+".":"Tout est au vert : "+L.ok.join(", ")+".";
+  const rows=left.map(s=>`<div class="row" style="align-items:center;margin-top:8px;gap:8px"><span style="flex:1;font-size:13.5px">${D_IC[s.d]} ${esc(s.title)}${s.lt&&!/allég/i.test(s.title)?' <span class="muted">· allégée</span>':""}</span>${s.lt?`<button class="btn" data-act="light" data-v="${w.n}|${s.uid}">Version normale</button>`:L.lvl?`<button class="btn" style="border-color:${col};color:${col}" data-act="light" data-v="${w.n}|${s.uid}">Alléger</button>`:""}</div>`).join("");
+  return `<div class="dc" style="border-left:4px solid ${col}"><div class="row" style="align-items:center;gap:10px"><span style="width:14px;height:14px;border-radius:50%;background:${col};box-shadow:0 0 10px ${col};flex-shrink:0"></span><b style="font-size:15px">${ttl}</b></div>
+  <div class="muted" style="font-size:12.5px;margin-top:6px">${esc(txt)} <span style="opacity:.8">(${esc(L.night)})</span></div>${rows}
+  ${L.lvl===2?'<div class="muted" style="font-size:12px;margin-top:8px">Tu peux aussi la déplacer avec ⋯ dans Programme.</div>':""}</div>`;
+}
+/* ============ MÉTÉO DE LA SORTIE LONGUE (Open-Meteo, Conflans-Sainte-Honorine) ============ */
+const LSM="ironmax.meteo";let METEO,METEOBUSY=false;const meteoGet=()=>{if(METEO===undefined)METEO=lsGet(LSM,null);return METEO};
+function nextLongRide(){
+  if(!PLAN)return null;const t=today(),lim=addDays(t,3);
+  for(const w of PLAN.weeks){if(w.start>lim)break;if(addDays(w.start,7)<=t)continue;
+    const s=weekSessions(w).find(x=>x.d==="velo"&&["long","brick","sim"].includes(x.k)&&!x.p.cancel&&x.date>=t&&x.date<=lim&&!splitToday([x],x.date).done.length);if(s)return {w,s}}
+  return null;
+}
+async function loadMeteo(){
+  if(METEOBUSY||(meteoGet()&&Date.now()-METEO.at<2*3600e3))return;METEOBUSY=true;
+  try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=49.00&longitude=2.10&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m&timezone=Europe%2FParis&forecast_days=7");
+    if(r.ok){METEO={at:Date.now(),h:(await r.json()).hourly};lsSet(LSM,METEO);render()}}catch(e){}finally{METEOBUSY=false}
+}
+function meteoFor(s){
+  const M=meteoGet();if(!M||!M.h)return null;const H=M.h,start=({matin:8,midi:12,soir:17})[s.slot]||8,dur=Math.max(1,Math.ceil((s.min||120)/60));
+  const idx=[];H.time.forEach((t,i)=>{if(t.slice(0,10)===s.date){const hh=+t.slice(11,13);if(hh>=start&&hh<start+dur)idx.push(i)}});if(!idx.length)return null;
+  const pick=k=>idx.map(i=>H[k][i]).filter(v=>v!=null),mx=a=>Math.max(...a),mn=a=>Math.min(...a),avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  const m={t0:mn(pick("temperature_2m")),t1:mx(pick("temperature_2m")),pp:mx(pick("precipitation_probability")),mm:pick("precipitation").reduce((a,b)=>a+b,0),wind:avg(pick("wind_speed_10m")),gust:mx(pick("wind_gusts_10m")),from:start,to:start+dur};
+  m.v=(m.mm>=1||m.pp>=60||m.gust>=55||m.t0<=1)?2:(m.pp>=30||m.gust>=40||m.t0<=4)?1:0;return m;
+}
+function vMeteo(){
+  const nx=nextLongRide();if(!nx)return"";loadMeteo();const {w,s}=nx,m=meteoFor(s);
+  const verdict=m?[["Dehors 👍","#3DDC84"],["Dehors possible, à surveiller","#F5A524"],["Plutôt sur Zwift","#E4002B"]][m.v]:null;
+  const r1=v=>Math.round(v);
+  const det=m?`${m.from}h–${m.to}h : ${r1(m.t0)}→${r1(m.t1)} °C · pluie ${r1(m.pp)} % (${frn(m.mm.toFixed(1))} mm) · vent ${r1(m.wind)} km/h, rafales ${r1(m.gust)}`:"Prévisions en cours de chargement (réseau nécessaire).";
+  return `<div class="dc"><div class="dl" style="color:var(--txt)">🌦️ ${esc(s.title)} · ${DAYS[s.day]} ${fdate(s.date)}<small>${hm(s.min)} · météo à Conflans</small></div>
+  ${verdict?`<div style="margin-top:8px;font-weight:700;color:${verdict[1]}">${verdict[0]}</div>`:""}<div class="muted" style="font-size:12.5px;margin-top:4px">${det}</div>
+  <label class="row" style="align-items:center;gap:10px;margin-top:12px;cursor:pointer"><input type="checkbox" data-act="indoor" data-v="${w.n}|${s.uid}"${s.indoor?" checked":""} style="width:22px;height:22px;accent-color:var(--acc)"><span style="font-size:14px"><b>À faire sur Zwift</b><br><span class="muted" style="font-size:12px">coché : la séance part dans Zwift via Intervals</span></span></label></div>`;
+}
+function toggleFlag(wn,uid,kind){
+  const ed=WKED[wn]=WKED[wn]||{};
+  if(kind==="light"){ed.light=ed.light||[];const i=ed.light.indexOf(uid);if(i>=0)ed.light.splice(i,1);else ed.light.push(uid)}
+  else{ed.indoor=ed.indoor||{};ed.indoor[uid]=!ed.indoor[uid]}
+  saveWked();render();
+  const w=PLAN.weeks.find(x=>x.n===+wn);
+  if(CFG.key&&w&&weekSessions(w).some(s=>s.uid===uid&&s.d==="velo"&&(kind==="indoor"||s.indoor||!["long","brick","sim"].includes(s.k))))zwPushWeek(w,false).then(n=>toast("Zwift mis à jour ("+n+" séance"+(n>1?"s":"")+")")).catch(e=>toast(e.message||"Zwift : échec"));
+}
 function vDash(){
   if(!DATA&&!LIVE)return DERR?`<div class="card"><div class="empty">Données indisponibles hors ligne pour l'instant. Rouvre l'appli avec du réseau.</div></div>`:`<div class="card"><div class="empty">Chargement…</div></div>`;
   const D=LIVE||DATA,f=D.fatigue,C=D.cap,P=D.physio;
@@ -860,7 +932,7 @@ function vDash(){
   const hero=heroBanner(D);
   const mobW=mobilityWeek();
   const dow=new Date().getDay(),bil=(dow===0&&new Date().getHours()>=17)||dow===1?`<button class="dc" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px" data-act="gobilan"><span style="font-size:22px">📊</span><span style="flex:1"><b>Bilan de la semaine disponible</b><br><span class="muted" style="font-size:12px">Volume, séances clés, fatigue et semaine suivante</span></span><span class="muted">›</span></button>`:"";
-  return `${hero}${bil}${top}${msgs}${adj}${lastH}
+  return `${hero}${vLight()}${vMeteo()}${bil}${top}${msgs}${adj}${lastH}
   <div class="dc"><div class="dl">Fatigue accumulée<small>indice 0–100 · charge + sommeil et HRV</small></div><div class="big">${f.v}<small>/ 100 · ${fz}</small></div>
     <div class="gauge"><span style="width:20%;background:#2E7D5B"></span><span style="width:20%;background:#B59A2A"></span><span style="width:20%;background:#D9711C"></span><span style="width:40%;background:var(--acc)"></span><b style="left:${f.v}%"></b></div>
     <div class="gsc"><span style="width:20%">Faible</span><span style="width:20%">Modérée</span><span style="width:20%">Élevée</span><span style="width:40%">Très élevée</span></div>
@@ -1034,9 +1106,9 @@ function zwText(s){
   return `- ${min}m ${P(.62)}-${P(.70)}%`;
 }
 function zwEvents(w){
-  const t=today(),list=weekSessions(w).filter(s=>s.d==="velo"&&!s.p.cancel&&s.date>=t);
+  const t=today(),list=weekSessions(w).filter(s=>s.d==="velo"&&!s.p.cancel&&s.date>=t&&(!["long","brick","sim"].includes(s.k)||s.indoor));
   const byDay={};list.forEach(s=>{(byDay[s.date]=byDay[s.date]||[]).push(s)});
-  return list.filter(s=>s.date>t||!splitToday(weekSessions(w).filter(x=>x.date===s.date&&!x.p.cancel),s.date).done.includes(s))
+  return list.filter(s=>s.date>t||!splitToday(weekSessions(w).filter(x=>x.date===s.date&&!x.p.cancel),s.date).done.some(x=>x.uid===s.uid))
     .map(s=>({category:"WORKOUT",type:"Ride",indoor:true,start_date_local:s.date+"T"+(SLOT_H[s.slot]||"18:30")+":00",
       name:"Ironmax · "+s.title,description:zwText(s),external_id:"ironmax-"+s.date+"-"+s.slot+"-"+s.uid}));
 }
@@ -1075,7 +1147,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.27",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.28",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1454,7 +1526,8 @@ function weekSessions(w){
   const ed=WKED[w.n]||{},rm=ed.removed||[],mv=ed.moved||{};
   const dateOf=day=>{const d=new Date(w.start+"T00:00:00");d.setDate(d.getDate()+day);return dkey(d)};
   const dl=isDL(w),src=dl?(w.sd||w.s):w.s,auto=dl&&!w.sd;
-  const base=src.filter(s0=>!rm.includes(s0.id)).map(s00=>{const s0=auto?deloadify(s00,(tpl[s00.id]||{}).k):s00;const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];let pl=place(b.n,t);if(mv[s.id])pl=mv[s.id];return Object.assign({},s,{uid:s.id,k:s.kk||t.k,d:t.d,title:s.l||(t.l+(s.dl&&/muscu/.test(t.k)?" (légère)":"")),day:pl.day,slot:pl.slot,date:dateOf(pl.day),moved:!!mv[s.id]})});
+  const lt=ed.light||[],ind=ed.indoor||{};
+  const base=src.filter(s0=>!rm.includes(s0.id)).map(s00=>{let s0=auto?deloadify(s00,(tpl[s00.id]||{}).k):s00;if(lt.includes(s00.id))s0=Object.assign(deloadify(s0,(tpl[s00.id]||{}).k),{lt:1});s0=Object.assign({},s0,{indoor:!!ind[s00.id]});const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];let pl=place(b.n,t);if(mv[s.id])pl=mv[s.id];return Object.assign({},s,{uid:s.id,k:s.kk||t.k,d:t.d,title:s.l||(t.l+(s.dl&&/muscu/.test(t.k)?" (légère)":"")),day:pl.day,slot:pl.slot,date:dateOf(pl.day),moved:!!mv[s.id]})});
   const add=(ed.added||[]).map(a=>Object.assign({},a,{date:dateOf(a.day),added:true}));
   return base.concat(add).sort((a,c)=>a.day-c.day||SLOTS.indexOf(a.slot)-SLOTS.indexOf(c.slot));
 }
@@ -1487,7 +1560,7 @@ function vProgramme(){
     if(!list.length)days+=`<div class="rest">Repos</div>`;
     list.forEach(s=>{const done=doneOn(s.date,s.d);const open=UI.openSes===w.n+"-"+s.uid;
       const miss=!done.length&&LIVE&&s.date<t&&!s.p.cancel;
-      days+=`<div class="sx${open?" open":""}${miss?" miss":""}" data-act="ses" data-v="${w.n}-${s.uid}"><span class="slot">${SLOT_N[s.slot]}</span><span class="ic">${D_IC[s.d]}</span><span class="ti"${s.p.cancel?' style="opacity:.5;text-decoration:line-through"':""}><b>${esc(s.title)}${s.added?' <i class="tag2">ajoutée</i>':s.moved?' <i class="tag2">déplacée</i>':""}</b><small>${s.min?hm(s.min):""}${mainTarget(s.k,s.p)?" · "+esc(mainTarget(s.k,s.p)):""}${miss?" · non faite":""}</small></span>${done.length?'<span class="ok">✓</span>':""}<span class="more" data-act="smore" data-v="${w.n}|${s.uid}">⋯</span></div>`;
+      days+=`<div class="sx${open?" open":""}${miss?" miss":""}" data-act="ses" data-v="${w.n}-${s.uid}"><span class="slot">${SLOT_N[s.slot]}</span><span class="ic">${D_IC[s.d]}</span><span class="ti"${s.p.cancel?' style="opacity:.5;text-decoration:line-through"':""}><b>${esc(s.title)}${s.indoor?' <small style="color:var(--mut);font-weight:600">· Zwift</small>':""}${s.lt&&!/allég/i.test(s.title)?' <small style="color:#F5A524;font-weight:600">· allégée</small>':""}${s.added?' <i class="tag2">ajoutée</i>':s.moved?' <i class="tag2">déplacée</i>':""}</b><small>${s.min?hm(s.min):""}${mainTarget(s.k,s.p)?" · "+esc(mainTarget(s.k,s.p)):""}${miss?" · non faite":""}</small></span>${done.length?'<span class="ok">✓</span>':""}<span class="more" data-act="smore" data-v="${w.n}|${s.uid}">⋯</span></div>`;
       if(open)days+=`<div class="sdet">${steps(s.k,s.p,s.min,w.phase).map(r=>`<div class="srow"><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join("")}</div>`;
       done.forEach(x=>{const bike=s.d==="velo";const reps=(x.reps||[]).map((r,i)=>`<tr><td>R${i+1}</td><td>${toMMSS(r[0])}</td><td>${bike?Math.round(r[1])+" W":paceKm(r[1]*3.6)}</td><td>${r[2]} bpm</td><td>${x.recs&&x.recs[i]?"−"+x.recs[i][1]+" bpm/1'":""}</td></tr>`).join("");
         days+=`<div class="cm${x.verdict==="warn"?" w":""}"><b>${esc(x.title||"Séance faite")}</b>${x.metrics?'<div class="muted" style="font-size:12px">'+esc(x.metrics)+'</div>':""}${x.comment?`<div style="margin-top:4px">${esc(x.comment)}</div>`:""}${reps?`<table class="rt"><tr><th></th><th>Durée</th><th>${bike?"Puiss.":"Allure"}</th><th>FC moy.</th><th>Récup</th></tr>${reps}</table>`:""}</div>`});
@@ -1517,6 +1590,7 @@ function sheetSession(wn,uid){
   const w=PLAN.weeks.find(x=>x.n===+wn);const s=weekSessions(w).find(x=>x.uid===uid);if(!s)return;
   $("#sheet").innerHTML=`<div class="grab"></div><h3 style="font-family:var(--disp);font-weight:800;font-size:21px;margin:4px 0 2px">${D_IC[s.d]} ${esc(s.title)}</h3><div class="muted" style="font-size:13px">${DAYS[s.day]} ${fdate(s.date)} · ${SLOT_N[s.slot]}</div>
   <div class="dl" style="margin-top:16px">Déplacer</div><div class="row" style="margin-top:6px"><select id="mvD" class="sel">${DAYS.map((d,i)=>`<option value="${i}"${i===s.day?" selected":""}>${d}</option>`).join("")}</select><select id="mvS" class="sel">${SLOTS.map(x=>`<option value="${x}"${x===s.slot?" selected":""}>${SLOT_N[x]}</option>`).join("")}</select><button class="btn" style="background:var(--acc);color:#fff" data-act="smove" data-v="${wn}|${uid}">Déplacer</button></div>
+  ${s.d==="velo"&&["long","brick","sim"].includes(s.k)?`<label class="row" style="align-items:center;gap:10px;margin-top:16px;cursor:pointer"><input type="checkbox" data-act="indoor" data-v="${wn}|${uid}"${s.indoor?" checked":""} style="width:22px;height:22px;accent-color:var(--acc)"><span><b>À faire sur Zwift</b><br><span class="muted" style="font-size:12px">coché : envoyée dans Zwift via Intervals</span></span></label>`:""}
   <button class="go" style="background:var(--card2);color:var(--pain);margin-top:16px" data-act="sdel" data-v="${wn}|${uid}">Supprimer cette séance</button>
   ${s.moved?`<button class="btn" style="width:100%;margin-top:10px" data-act="sreset" data-v="${wn}|${uid}">Remettre à sa place d'origine</button>`:""}`;
   $("#ov").classList.add("show");
