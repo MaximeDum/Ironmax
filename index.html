@@ -569,7 +569,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.22 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.23 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -909,10 +909,11 @@ function planTarget(s){
   if(bike||s.d==="course")return {sport:s.d,n:0,target:0};
   return null;
 }
+const AV=2; // version de l'analyse : une séance analysée avec une version plus ancienne est ré-analysée
 async function analyzeRecent(acts){
   const since=dkey(new Date(Date.now()-21*864e5));
   for(const a of acts){
-    if(a.date<since||ANA[a.id])continue;
+    if(a.date<since||(ANA[a.id]&&(ANA[a.id].sport==="nat"||ANA[a.id].av===AV)))continue;
     if(a.sp==="nat"){const ps=plannedFor(a.date,"nat");if(!ps)continue;const feel=ps.p.light?"facile":({"1":"facile","2":"modere","3":"facile","4":"soutenu"})[ps.p.var]||(ps.k==="ow"?"modere":"modere");
       const r=IronAnalyze.analyzeSwim({m:ps.p.m,feel},{distance:a.distance,moving_time:a.moving_time,hr:a.average_heartrate,description:a.description},{fcmax:INP.fcmax,fcrest:INP.fcrest});
       ANA[a.id]={title:ps.title,comment:r.comment,verdict:r.verdict,sum:r.sum,sport:"nat",date:a.date};continue}
@@ -925,7 +926,7 @@ async function analyzeRecent(acts){
         if(s2.heartrate&&s2.time){const off=a.hrOffset||0,tt=st.time||[];let j=0;st.heartrate=tt.map(t=>{const target=t+off;while(j<s2.time.length-1&&s2.time[j+1]<=target)j++;return s2.heartrate[j]})}}catch(e){}}
       if(!st.heartrate)continue;
       const res=IronAnalyze.analyze(plan,{time:st.time,hr:st.heartrate,watts:a.sp==="velo"?st.watts:null,speed:a.sp==="course"?st.velocity_smooth:null},{fcmax:INP.fcmax,fcrest:INP.fcrest});
-      ANA[a.id]={title:ps.title,comment:res.comment,verdict:res.verdict,reps:res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr)]),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date};
+      ANA[a.id]={title:ps.title,comment:res.comment,verdict:res.verdict,reps:res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr)]),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV};
     }catch(e){}
   }
   const keys=Object.keys(ANA).sort((x,y)=>(ANA[x].date<ANA[y].date?1:-1));keys.slice(80).forEach(k=>delete ANA[k]);lsSet("ironmax.ana",ANA);
@@ -1062,7 +1063,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.22",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.23",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1093,16 +1094,20 @@ async function refreshData(){
 }
 
 /* ============ CALCULS (cf. doc de méthode) ============ */
-const sportOfA=a=>/mobilit|physical\s*therap|physioth|kin[ée]|stretch|yoga|pilates/i.test((a.name||"")+" "+(a.type||""))?"mob":sportOf(a.type||"");
+const sportOfA=a=>{const t=(a.name||"")+" "+(a.type||"");
+  if(/mobilit|physical\s*therap|physioth|kin[ée]|stretch|yoga|pilates/i.test(t))return "mob";
+  // séance Polar « Entraînement » (type Workout) : c'est ta mobilité, sauf si le nom dit muscu / renfo
+  if(/^Workout$/i.test(a.type||"")&&!/muscu|renfo|force|gainage|weight/i.test(a.name||""))return "mob";
+  return sportOf(a.type||"")};
 const sportOf=t=>/Ride|Cycl|Bike/i.test(t)?"velo":/Run/i.test(t)?"course":/Swim/i.test(t)?"nat":/Weight|Strength|Workout|Crossfit/i.test(t)?"muscu":/Yoga|Pilates|Stretch|Mobility/i.test(t)?"mob":"autre";
 function actLoad(a){
-  const h=(a.moving_time||0)/3600,sp=sportOf(a.type||"");if(!h)return 0;
+  const h=(a.moving_time||0)/3600,sp=sportOfA(a);if(!h)return 0;
   const R=INP.fcmax-INP.fcrest,lthr=INP.fcrest+.85*R;
   const wap=a.icu_weighted_avg_watts||a.average_watts;
   if(sp==="velo"&&wap)return h*Math.pow(wap/INP.ftp,2)*100;
   if(sp==="course"&&a.distance>500){const v=a.distance/a.moving_time,thr=INP.vma*.88/3.6;return h*Math.pow(v/thr,2)*100}
   if(sp==="nat"&&a.distance>100){const pace=a.moving_time/(a.distance/100),css=mmss(INP.css)||115;return h*Math.pow(css/pace,3)*100}
-  if(sp==="mob")return a.moving_time/60*(a.icu_rpe||2)/6;
+  if(sp==="mob"){if(a.icu_rpe)return a.moving_time/60*a.icu_rpe/6;if(a.average_heartrate)return h*Math.pow(Math.max(0,a.average_heartrate-INP.fcrest)/(lthr-INP.fcrest),2)*100;return a.moving_time/60*2/6}
   if(sp==="muscu"){if(a.icu_rpe)return a.moving_time/60*a.icu_rpe/6;if(a.average_heartrate)return h*Math.pow(Math.max(0,a.average_heartrate-INP.fcrest)/(lthr-INP.fcrest),2)*100;return a.moving_time/60*3/6}
   if(a.average_heartrate)return h*Math.pow(Math.max(0,a.average_heartrate-INP.fcrest)/(lthr-INP.fcrest),2)*100;
   return a.icu_training_load||0;
@@ -1126,7 +1131,7 @@ function dedupe(acts){
   }
   return acts.filter(a=>!drop.has(a.id));
 }
-const EV=10;
+const EV=11;
 function maybeRecompute(){if(DATA&&PLAN&&(lsGet(LSK.raw,null)||(DATA.extra&&DATA.extra.length))&&(!LIVE||LIVE.ev!==EV||LIVE.xk!==extraKey())){recompute();render()}}
 /* Séances ajoutées à la main dans data.json (relevées sur Strava) : elles comptent tant qu'Intervals
    n'a pas la même séance (même sport, départ à ±20 min). */
@@ -1440,7 +1445,7 @@ function autoComment(a){
   const m=[hm(a.moving_time/60)];const W=a.icu_weighted_avg_watts||a.average_watts;
   if(W)m.push(W+" W (NP)");if(a.sp==="course"&&a.distance)m.push(paceKm(a.distance/a.moving_time*3.6)+"/km");
   if(a.sp==="nat"&&a.distance)m.push(toMMSS(a.moving_time/(a.distance/100))+"/100 m");
-  if(a.average_heartrate)m.push(Math.round(a.average_heartrate)+" bpm");if(a.decoupling!=null)m.push("dérive "+a.decoupling.toFixed(1)+" %");
+  if(a.average_heartrate)m.push(Math.round(a.average_heartrate)+" bpm");if(a.decoupling!=null)m.push("dérive "+frn(a.decoupling.toFixed(1))+" %");
   m.push("charge "+Math.round(a.load||0));return m.join(" · ");
 }
 function vProgramme(){

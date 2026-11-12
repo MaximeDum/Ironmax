@@ -103,10 +103,14 @@
     if (drift > 7) warn.push("dérive cardiaque marquée");
     if (res.recs.length) {
       const tz = res.recs.map(x => x.tz).filter(x => x != null);
-      bits.push(`récup : FC −${Math.round(drop)} bpm en 1'` + (tz.length ? `, sous ${z1} bpm en ${fmtT(mean(tz))}` : `, jamais sous ${z1} bpm`) + ` (${drop >= 30 ? "rapide" : drop >= 20 ? "correcte" : "lente"})`);
-      if (drop < 20) warn.push("récupération cardiaque lente");
+      // La vitesse de récup ne veut dire quelque chose qu'après des répétitions dures (FC ≥ 80 % de la réserve).
+      // Après de la force, du sweet spot ou du tempo, avec une récup pédalée, une baisse de 10 à 15 bpm est normale.
+      const hard = mean(res.reps.map(x => x.hr)) >= prof.fcrest + 0.8 * R;
+      bits.push(`récup : FC −${Math.round(drop)} bpm en 1'` + (tz.length ? `, sous ${z1} bpm en ${fmtT(mean(tz))}` : `, jamais sous ${z1} bpm`) + (hard ? ` (${drop >= 30 ? "rapide" : drop >= 20 ? "correcte" : "lente"})` : ""));
+      if (hard && drop < 20) warn.push("récupération cardiaque lente");
+      res.sum.hard = hard;
     }
-    res.verdict = warn.length ? "warn" : (pct > 103 || (drift < 2 && drop >= 30)) ? "up" : "ok";
+    res.verdict = warn.length ? "warn" : (pct > 103 || (drift < 2 && (!res.sum.hard || drop >= 30))) ? "up" : "ok";
     const concl = warn.length ? `À surveiller : ${warn.join(", ")}.` : res.verdict === "up" ? "Séance maîtrisée avec de la marge : la cible pourra monter si ça se confirme." : "Séance maîtrisée.";
     res.comment = bits.join(" · ") + ". " + concl;
     return res;
