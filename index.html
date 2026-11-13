@@ -570,7 +570,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.38 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.39 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -806,9 +806,9 @@ function capChart(C){
 function mobilityWeek(){
   const now=new Date(),mon=new Date(now);mon.setHours(0,0,0,0);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));const m=dkey(mon);
   let n=0,min=0;
-  ((LIVE&&LIVE.acts)||[]).forEach(a=>{if(a.sp==="mob"&&a.date>=m){n++;min+=a.moving_time/60}});
+  let last=null;((LIVE&&LIVE.acts)||[]).forEach(a=>{if(a.sp==="mob"&&a.date>=m){n++;min+=a.moving_time/60;if(!last||a.start_date_local>last.start_date_local)last=a}});
   const B=DATA&&DATA.base;if(B&&B.mobWeek&&B.mobWeek.start===m&&!(LIVE&&LIVE.acts&&LIVE.acts.some(a=>a.sp==="mob"&&a.date<=B.asof&&a.date>=m))){n+=B.mobWeek.n;min+=B.mobWeek.min}
-  return {n,min};
+  return {n,min,last};
 }
 const QUOTES=["Chaque séance régulière vaut mieux qu'un exploit isolé.","Le diesel chauffe doucement, puis il ne s'arrête plus.","La forme se construit à l'entraînement, elle se révèle le jour J.","Petit à petit, la ligne d'arrivée se rapproche.","Ce qui se fait aujourd'hui se ressent en juin.","Récupérer fait partie de l'entraînement.","Une décharge bien faite, c'est de la vitesse en réserve."];
 /* Séances du jour : faites (par sport, dans l'ordre) / restantes */
@@ -846,6 +846,9 @@ function heroBanner(D,extra){
   else if(todayLeft.length)lines.push(todayDoneS.map(s=>s.title).join(" + ")+" ✓ · reste "+(todayLeft.length>1?"":(SLOT_N[todayLeft[0].slot]||"").toLowerCase()+" ")+": "+todayLeft.map(lbl).join(" + ")+".");
   else if(todayDone)lines.push("Séances du jour faites, place à la récup 😌");
   else lines.push("Pas de séance prévue aujourd'hui : repos ou mobilité.");
+  // mobilité Polar faite aujourd'hui
+  const mobT=((LIVE&&LIVE.acts)||[]).filter(a=>a.sp==="mob"&&a.date===tk);
+  if(mobT.length)lines.push(`Mobilité faite ${hrs>=17?"ce soir":"aujourd'hui"} ✓ (${hm(mobT.reduce((x,a)=>x+a.moving_time/60,0))})`);
   // actualité
   const f=D.fatigue.v;
   if(f>=60)lines.push("Fatigue très élevée : écoute ton corps, on allège.");
@@ -959,7 +962,7 @@ function vDash(){
   <div class="dc"><div class="dl">Cap sur l'Ironman<small>du tri M du 31 mai (0 %) à l'objectif minimum du 27 juin (100 %)</small></div><div class="big">${C.v} %<small>· attendu ${C.expNow!=null?C.expNow:Math.round(C.v-C.vsTraj)} % (${C.vsTraj>=0?"+":""}${frn(C.vsTraj)} pt)</small></div>
     <div class="splits"><div><span>Nage</span><b>${C.est.swim}</b></div><div><span>T1+T2</span><b>${C.est.t}</b></div><div><span>Vélo</span><b>${C.est.bike}</b></div><div><span>Marathon</span><b>${C.est.run}</b></div><div><span>Estimé</span><b>${C.est.total}</b></div></div>
     ${capChart(C)}<div class="f muted" style="font-size:11.5px"><span style="color:var(--acc)">━</span> réel  <span>╌</span> niveau à avoir à chaque date pour être prêt le jour J · <span style="color:var(--txt)">▏</span> repère sur les barres = attendu aujourd'hui</div>${parts}</div>
-  <div class="dc" style="display:flex;align-items:center;gap:12px"><span style="font-size:24px">🧘</span><div style="flex:1"><div class="dl" style="color:var(--txt)">Mobilité cette semaine<small>${mobW.n} séance${mobW.n>1?"s":""} · ${hm(mobW.min)} · objectif 3 séances</small></div><div class="trk" style="margin-top:6px"><i style="width:${Math.min(100,mobW.n/3*100)}%;background:${mobW.n>=3?"#3DDC84":"#F5A524"}"></i></div></div></div>
+  <div class="dc" style="display:flex;align-items:center;gap:12px"><span style="font-size:24px">🧘</span><div style="flex:1"><div class="dl" style="color:var(--txt)">Mobilité cette semaine<small>${mobW.n} séance${mobW.n>1?"s":""} · ${hm(mobW.min)} · objectif 3 séances${mobW.last?" · dernière : "+(mobW.last.date===today()?"aujourd'hui":fdate(mobW.last.date))+" ("+hm(mobW.last.moving_time/60)+")":""}</small></div><div class="trk" style="margin-top:6px"><i style="width:${Math.min(100,mobW.n/3*100)}%;background:${mobW.n>=3?"#3DDC84":"#F5A524"}"></i></div></div></div>
   <div class="tiles"><div class="tile"><span>FTP (test)</span><b>${P.ftp}<small>W</small></b><em>${frn(P.wkg)} W/kg · estimée ${P.ftpEst}</em></div><div class="tile"><span>VMA</span><b>${frn(P.vma)}<small>km/h</small></b><em>seuil ≈ ${paceKm(P.vma*.88)}/km</em></div><div class="tile"><span>VO2max</span><b>~${P.vo2}</b><em>estimée</em></div></div>
   ${D.vsPlan?`<div class="dc"><div class="dl">Où tu en es vs le plan</div>${vp}</div>`:""}
   <div class="src">${esc(D.source)}<br>Données au ${fdate(D.asof)}</div>`;
@@ -1281,7 +1284,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.38",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.39",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
