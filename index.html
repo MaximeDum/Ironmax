@@ -570,7 +570,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.35 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.36 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -679,7 +679,9 @@ document.addEventListener("click",ev=>{
     case"feelok":{const note=($("#feelNote")||{}).value||"";if((UI.feelSel||"ok")==="ok"&&!note)delete FEEL[v];else FEEL[v]={f:UI.feelSel||"ok",note:note.trim(),at:Date.now()};lsSet("ironmax.feel",FEEL);FEELQ=FEELQ.filter(x=>String(x)!==String(v));recompute();render();if(UI.feelFromQ)nextFeel();else closeSheet();break}
     case"feelskip":FEELQ=FEELQ.filter(x=>String(x)!==String(v));if(UI.feelFromQ)nextFeel();else closeSheet();break;
     case"feeledit":feelPopup(v,false);break;
-    case"nightpick":UI.nightSel=v;document.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("sel",x.dataset.v===v));break;
+    case"nightpick":UI.nightSel=v;document.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("sel",x.dataset.v===v));{const el=$("#nightAct");if(el)el.innerHTML=nightActHTML(v)}break;
+    case"nightdo":nightDo(v);break;
+    case"nightdo2":{const [k,a]=v.split("|");UI.nightSel=k;nightDo(a);break}
     case"nightok":{if(!UI.nightSel){toast("Choisis une réponse (ou Passer)");break}const N=nightGet();N[today()]={k:UI.nightSel,note:(($("#nightNote")||{}).value||"").trim(),at:Date.now()};lsSet("ironmax.night",N);recompute();render();closeSheet();ghPush(false);break}
     case"nightskip":closeSheet();ghPush(false);break;
     case"night":UI.nightAsked=1;nightPopup();break;
@@ -1070,24 +1072,64 @@ function nightWell(d){const raw=lsGet(LSK.raw,null);return ((raw&&raw.well)||[])
 /* Ligne d'état de la nuit : reçue ou pas encore (Polar → Intervals peut prendre du temps le matin). */
 function nightLine(t){
   const w=nightWell(t),na=nightGet()[t];
-  if(w){const f=(LIVE||DATA||{}).fatigue||{},bits=[];if(w.sleepSecs)bits.push(hm(w.sleepSecs/60));if(w.hrv)bits.push("HRV "+Math.round(w.hrv)+(f.hrvBase?" (base "+Math.round(f.hrvBase)+")":""));
+  if(w){const E=nightEval(w),bits=[];if(w.sleepSecs)bits.push(hm(w.sleepSecs/60)+(w.sleepScore?" (score "+Math.round(w.sleepScore)+")":""));bits.push("SNA "+E.ansTxt.split(" (")[0]);
     const ans=na?(NIGHTS.find(n=>n[0]===na.k)||[,""])[1].split(" (")[0]:"";
-    return `<div class="hm info"><i style="background:#3DDC84"></i><div>Nuit reçue ✓ · ${esc(bits.join(" · "))}${ans?" · "+esc(ans):""} <button class="bt" style="margin-left:4px" data-act="night">${na?"modifier":"ton ressenti"}</button></div></div>`}
+    const col=E.ans==null?"#8a8f98":(Math.max(E.sl||0,E.ans)===0?"#3DDC84":Math.max(E.sl||0,E.ans)>=2?"#F5A524":"#4EA8FF");
+    const pend=na&&!na.done&&nightActions(na.k).A.length?`<div style="margin-top:4px">${nightActions(na.k).A.map(a=>`<button class="bt" style="margin:0 6px 4px 0" data-act="nightdo2" data-v="${na.k}|${a[0]}">${a[1]}</button>`).join("")}</div>`:"";
+    return `<div class="hm info"><i style="background:${col}"></i><div><b>${esc(E.title)}</b> · ${esc(bits.join(" · "))}${ans?" · "+esc(ans):""}${E.ans==null?" · SNA arrive en général un peu après le sommeil, réessaie ⟳":""} <button class="bt" style="margin-left:4px" data-act="night">${na?"modifier":"ton ressenti"}</button>${pend}</div></div>`}
   const raw=lsGet(LSK.raw,null),last=((raw&&raw.well)||[]).filter(x=>x.sleepSecs||x.hrv).map(x=>x.id).sort().pop();
   return `<div class="hm"><i></i><div class="muted">Nuit pas encore reçue${last?" (dernière : "+fdate(last)+")":""}. Polar l'envoie à Intervals après ta synchro de la montre : réessaie ⟳ un peu plus tard.</div></div>`;
 }
-function needNight(){const t=today();return !!nightWell(t)&&!nightGet()[t]}
+/* Qualité de la nuit = sommeil (score Polar, durée) ET statut SNA (HRV de la nuit vs ta base). Le moins bon des deux l'emporte. */
+function nightEval(w){
+  const f=(LIVE||DATA||{}).fatigue||{},base=f.hrvBase,h=w.sleepSecs?w.sleepSecs/3600:null,sc=w.sleepScore||null;
+  const sl=sc!=null?(sc>=75&&(h==null||h>=6.5)?0:sc>=60&&(h==null||h>=5.5)?1:2):h!=null?(h>=7?0:h>=6?1:2):null;
+  const r=w.hrv&&base?w.hrv/base:null,ans=r==null?null:r>=.93?0:r>=.87?1:r>=.75?2:3;
+  const ansTxt=r==null?"en attente":["normal","un peu bas","bas","très bas"][ans]+" ("+Math.round(w.hrv)+" ms, base "+Math.round(base)+")";
+  const slTxt=sl==null?"—":["bon","moyen","mauvais"][sl];
+  let title;
+  if(ans==null)title=sl===0?"Sommeil bon · statut SNA pas encore reçu":sl===1?"Sommeil moyen · statut SNA pas encore reçu":"Sommeil mauvais · statut SNA pas encore reçu";
+  else{const worst=Math.max(sl||0,ans>=2?ans:ans);title=worst===0?"Bonne nuit, bien récupéré":(sl===0&&ans>=2)?"Bon sommeil mais SNA bas : récupération incomplète":(sl>=1&&ans<=1)?"Sommeil moyen, mais SNA correct":worst>=3||(sl===2&&ans>=2)?"Mauvaise récupération":"Récupération moyenne"}
+  return {title,sl,ans,slTxt,ansTxt,r,h,sc};
+}
+function needNight(){const t=today(),w=nightWell(t);if(!w||nightGet()[t])return false;return !!w.hrv||new Date().getHours()>=10}
+/* Actions simples proposées selon ta réponse */
+function nightActions(k){
+  const t=today(),pw=PLAN&&PLAN.weeks.find(x=>x.start<=t&&addDays(x.start,7)>t),left=pw?splitToday(weekSessions(pw).filter(s=>s.date===t&&!s.p.cancel),t).left:[];
+  const hasS=left.length>0,dl=pw&&isDL(pw);const A=[];let tip="";
+  if(k==="good")tip="Rien à changer : séance comme prévue.";
+  if(k==="tired"){if(hasS){A.push(["light","Alléger la séance du jour"]);A.push(["keep","Garder telle quelle"])}tip="Si ça dure 2 jours ou plus, allège la semaine.";}
+  if(k==="training"){if(hasS){A.push(["light","Alléger la séance du jour"]);A.push(["rest","Repos + mobilité à la place"])}if(pw&&!dl)A.push(["deload","Passer la semaine en décharge"]);tip="Fatigue d'entraînement : on réduit la charge aujourd'hui. Si ça dure 2 jours ou plus, passe la semaine en décharge.";}
+  if(k==="sick"){if(hasS)A.push(["rest","Repos aujourd'hui"]);A.push(["lighttom","Alléger aussi demain"]);tip="Symptômes seulement au-dessus du cou (nez, gorge) : 30' très facile possible. Fièvre, courbatures ou poitrine : repos complet, puis reprise progressive (1 jour facile par jour malade).";}
+  if(k==="other"){if(hasS){A.push(["light","Alléger la séance du jour"]);A.push(["keep","Garder telle quelle"])}tip="Cause extérieure : la nuit compte moins dans le feu du jour.";}
+  return {A,tip,left,pw};
+}
+function nightActHTML(k){if(!k)return"";const {A,tip}=nightActions(k);
+  return `<div style="margin-top:10px">${A.map(a=>`<button class="bt" style="margin:0 6px 6px 0;font-size:13px;padding:7px 12px" data-act="nightdo" data-v="${a[0]}">${a[1]}</button>`).join("")}</div>${tip?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(tip)}</div>`:""}`}
+function nightDo(act){
+  const t=today(),{left,pw}=nightActions(UI.nightSel||((nightGet()[t]||{}).k));
+  if(act==="light"&&pw){const e=WKED[pw.n]=WKED[pw.n]||{};e.light=e.light||[];left.forEach(s=>{if(!e.light.includes(s.uid))e.light.push(s.uid)});saveWked()}
+  if(act==="rest"&&pw){const e=WKED[pw.n]=WKED[pw.n]||{};left.forEach(s=>{if((e.added||[]).some(x=>x.uid===s.uid))e.added=e.added.filter(x=>x.uid!==s.uid);else (e.removed=e.removed||[]).push(s.uid)});saveWked()}
+  if(act==="lighttom"){const d=addDays(t,1),w2=PLAN.weeks.find(x=>x.start<=d&&addDays(x.start,7)>d);if(w2){const e=WKED[w2.n]=WKED[w2.n]||{};e.light=e.light||[];weekSessions(w2).filter(s=>s.date===d).forEach(s=>{if(!e.light.includes(s.uid))e.light.push(s.uid)});saveWked()}}
+  if(act==="deload"&&pw){if(pw.deload)delete DLO[pw.n];else DLO[pw.n]=true;lsSet("ironmax.deload",DLO)}
+  const N=nightGet();N[t]=Object.assign(N[t]||{},{k:UI.nightSel||(N[t]||{}).k,note:(($("#nightNote")||{}).value||(N[t]||{}).note||"").trim(),at:Date.now(),done:act});lsSet("ironmax.night",N);
+  if(lsGet(LSK.raw,null))recompute();render();closeSheet();ghPush(false);
+  toast({light:"Séance du jour allégée",rest:"Repos noté pour aujourd'hui",lighttom:"Demain allégé",deload:"Semaine passée en décharge",keep:"On garde le programme"}[act]||"Noté");
+  if(CFG.key&&pw&&["light","rest","deload"].includes(act))zwPushWeek(pw,false).catch(()=>{});
+}
 function nightPopup(){
   const t=today(),w=nightWell(t);if(!w){closeSheet();return}
   const f=(LIVE||DATA||{}).fatigue||{},base=f.hrvBase,cur=nightGet()[t]||{};
-  const kv=[];if(w.sleepSecs)kv.push(["Sommeil",hm(w.sleepSecs/60)]);if(w.sleepScore)kv.push(["Score",String(Math.round(w.sleepScore))]);
+  const kv=[];if(w.sleepSecs)kv.push(["Durée",hm(w.sleepSecs/60)]);if(w.sleepScore)kv.push(["Score",String(Math.round(w.sleepScore))]);
   if(w.hrv)kv.push(["HRV",Math.round(w.hrv)+" ms"+(base?" (base "+Math.round(base)+")":"")]);if(w.restingHR)kv.push(["FC repos",w.restingHR+" bpm"]);
-  const r=w.hrv&&base?w.hrv/base:1,h=(w.sleepSecs||7.5*3600)/3600,q=(r<.75||h<5||(r<.87&&h<6))?"Mauvaise nuit":(r<.87||h<6.3)?"Nuit moyenne":"Bonne nuit";
+  const ks=kv.map(x=>x[0]);
+  const E=nightEval(w),q=E.title;kv.push(["Sommeil",E.slTxt]);kv.push(["Statut SNA",E.ansTxt.split(" (")[0]]);
   $("#sheet").innerHTML=`<div class="grab"></div><div class="muted" style="font-size:12px">Ta nuit · ${fdate(t)}</div>
-  <h3 style="font-family:var(--disp);font-weight:800;font-size:21px;margin:2px 0">🌙 ${q}</h3>
+  <h3 style="font-family:var(--disp);font-weight:800;font-size:20px;margin:2px 0">🌙 ${esc(q)}</h3>
   <div class="kv">${kv.map(x=>`<div><small>${x[0]}</small><b>${esc(x[1])}</b></div>`).join("")}</div>
   <div class="dl" style="margin-top:16px">Comment tu te sens ce matin ?</div>
   <div class="feels">${NIGHTS.map(n=>`<button class="fchip${cur.k===n[0]?" sel":""}" data-act="nightpick" data-v="${n[0]}">${n[1]}</button>`).join("")}</div>
+  <div id="nightAct">${nightActHTML(cur.k)}</div>
   <input class="inp wide" id="nightNote" placeholder="Un mot (facultatif)" value="${esc(cur.note||"")}">
   <div class="muted" style="font-size:12px;margin-top:8px">« En forme » ou « autre facteur » : une nuit courte ou une HRV basse comptent moins dans le feu du jour et la fatigue, parce que ce n'est pas l'entraînement.</div>
   <div class="row" style="margin-top:12px"><button class="btn" style="flex:1" data-act="nightskip">Passer</button><button class="btn" style="flex:2;background:var(--acc);color:#fff" data-act="nightok">Valider</button></div>`;
@@ -1194,7 +1236,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.35",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.36",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
