@@ -570,7 +570,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.33 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.34 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -882,12 +882,10 @@ function vLight(compact){
   if(!PLAN)return"";const L=dayLight();if(!L)return"";const t=today();
   const w=PLAN.weeks.find(x=>x.start<=t&&addDays(x.start,7)>t);if(!w)return"";
   const all=weekSessions(w).filter(s=>s.date===t&&!s.p.cancel),left=splitToday(all,t).left;
-  if(!left.length){if(!compact||!nightWell(t))return"";const na=nightGet()[t];
-    return `<div class="lt"><span style="font-size:15px">🌙</span><div style="flex:1;font-size:13px">${na?"Nuit : "+esc((NIGHTS.find(n=>n[0]===na.k)||[,""])[1].split(" (")[0]):"Comment s'est passée ta nuit ?"} <button class="bt" style="margin-left:6px" data-act="night">${na?"modifier":"répondre"}</button></div></div>`}
+  if(!left.length)return compact&&CFG.key?nightLine(t):"";
   const col=["#3DDC84","#F5A524","#E4002B"][L.lvl],ttl=["Feu vert : séance comme prévue","Feu orange : version allégée conseillée","Feu rouge : repos ou Z2 très facile"][L.lvl];
   if(compact){const btn=left.filter(s=>s.lt||L.lvl).map(s=>`<button class="bt" style="margin:6px 6px 0 0${s.lt?"":";border-color:"+col+";color:"+col}" data-act="light" data-v="${w.n}|${s.uid}">${s.lt?"Remettre "+esc(s.title.replace(/ allégée/i,""))+" normale":"Alléger "+esc(s.title)}</button>`).join("");
-    const na=nightGet()[t],nl=na?(NIGHTS.find(n=>n[0]===na.k)||[,""])[1].split(" (")[0]:"",nb=nightWell(t)?`<button class="bt" style="margin:6px 6px 0 0" data-act="night">${na?"Nuit : "+esc(nl)+" · modifier":"🌙 Comment tu te sens ?"}</button>`:"";
-    return `<div class="lt"><span class="dot" style="background:${col};box-shadow:0 0 8px ${col}"></span><div style="flex:1"><b style="font-size:14px">${ttl}</b><div class="muted" style="font-size:12px;margin-top:2px">${esc(L.lvl?L.why.join(", "):L.ok.join(" · "))}</div>${btn}${nb}</div></div>`}
+    return (CFG.key?nightLine(t):"")+`<div class="lt"><span class="dot" style="background:${col};box-shadow:0 0 8px ${col}"></span><div style="flex:1"><b style="font-size:14px">${ttl}</b><div class="muted" style="font-size:12px;margin-top:2px">${esc(L.lvl?L.why.join(", "):L.ok.join(" · "))}${nightWell(t)?"":" · nuit pas encore reçue"}</div>${btn}</div></div>`}
   const txt=L.lvl?"Pourquoi : "+L.why.join(", ")+".":"Tout est au vert : "+L.ok.join(", ")+".";
   const rows=left.map(s=>`<div class="row" style="align-items:center;margin-top:8px;gap:8px"><span style="flex:1;font-size:13.5px">${D_IC[s.d]} ${esc(s.title)}${s.lt&&!/allég/i.test(s.title)?' <span class="muted">· allégée</span>':""}</span>${s.lt?`<button class="btn" data-act="light" data-v="${w.n}|${s.uid}">Version normale</button>`:L.lvl?`<button class="btn" style="border-color:${col};color:${col}" data-act="light" data-v="${w.n}|${s.uid}">Alléger</button>`:""}</div>`).join("");
   return `<div class="dc" style="border-left:4px solid ${col}"><div class="row" style="align-items:center;gap:10px"><span style="width:14px;height:14px;border-radius:50%;background:${col};box-shadow:0 0 10px ${col};flex-shrink:0"></span><b style="font-size:15px">${ttl}</b></div>
@@ -1069,6 +1067,15 @@ function feelPopup(id,fromQueue){
 const NIGHTS=[["good","😀 En forme ce matin"],["tired","🥱 Fatigué au réveil"],["training","🏋️ Fatigue de l'entraînement"],["sick","🤒 Malade"],["other","🌙 Autre facteur (stress, couché tard, soirée, réveils…)"]];
 let NIGHT;const nightGet=()=>{if(NIGHT===undefined)NIGHT=lsGet("ironmax.night",{})||{};return NIGHT};
 function nightWell(d){const raw=lsGet(LSK.raw,null);return ((raw&&raw.well)||[]).find(x=>x.id===d&&(x.sleepSecs||x.hrv))||null}
+/* Ligne d'état de la nuit : reçue ou pas encore (Polar → Intervals peut prendre du temps le matin). */
+function nightLine(t){
+  const w=nightWell(t),na=nightGet()[t];
+  if(w){const f=(LIVE||DATA||{}).fatigue||{},bits=[];if(w.sleepSecs)bits.push(hm(w.sleepSecs/60));if(w.hrv)bits.push("HRV "+Math.round(w.hrv)+(f.hrvBase?" (base "+Math.round(f.hrvBase)+")":""));
+    const ans=na?(NIGHTS.find(n=>n[0]===na.k)||[,""])[1].split(" (")[0]:"";
+    return `<div class="hm info"><i style="background:#3DDC84"></i><div>Nuit reçue ✓ · ${esc(bits.join(" · "))}${ans?" · "+esc(ans):""} <button class="bt" style="margin-left:4px" data-act="night">${na?"modifier":"ton ressenti"}</button></div></div>`}
+  const raw=lsGet(LSK.raw,null),last=((raw&&raw.well)||[]).filter(x=>x.sleepSecs||x.hrv).map(x=>x.id).sort().pop();
+  return `<div class="hm"><i></i><div class="muted">Nuit pas encore reçue${last?" (dernière : "+fdate(last)+")":""}. Polar l'envoie à Intervals après ta synchro de la montre : réessaie ⟳ un peu plus tard.</div></div>`;
+}
 function needNight(){const t=today();return !!nightWell(t)&&!nightGet()[t]}
 function nightPopup(){
   const t=today(),w=nightWell(t);if(!w){closeSheet();return}
@@ -1187,7 +1194,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.33",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.34",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
