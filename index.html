@@ -570,7 +570,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.31 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.32 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -679,6 +679,10 @@ document.addEventListener("click",ev=>{
     case"feelok":{const note=($("#feelNote")||{}).value||"";if((UI.feelSel||"ok")==="ok"&&!note)delete FEEL[v];else FEEL[v]={f:UI.feelSel||"ok",note:note.trim(),at:Date.now()};lsSet("ironmax.feel",FEEL);FEELQ=FEELQ.filter(x=>String(x)!==String(v));recompute();render();if(UI.feelFromQ)nextFeel();else closeSheet();break}
     case"feelskip":FEELQ=FEELQ.filter(x=>String(x)!==String(v));if(UI.feelFromQ)nextFeel();else closeSheet();break;
     case"feeledit":feelPopup(v,false);break;
+    case"nightpick":UI.nightSel=v;document.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("sel",x.dataset.v===v));break;
+    case"nightok":{if(!UI.nightSel){toast("Choisis une réponse (ou Passer)");break}const N=nightGet();N[today()]={k:UI.nightSel,note:(($("#nightNote")||{}).value||"").trim(),at:Date.now()};lsSet("ironmax.night",N);recompute();render();closeSheet();ghPush(false);break}
+    case"nightskip":closeSheet();ghPush(false);break;
+    case"night":UI.nightAsked=1;nightPopup();break;
     case"pw":UI.pw=+v;UI.openSes=null;render();window.scrollTo(0,0);break;
     case"ses":UI.openSes=UI.openSes===v?null:v;render();break;
     case"smore":{const [wn,uid]=v.split("|");sheetSession(wn,uid);break}
@@ -859,12 +863,16 @@ function dayLight(){
   const B=DATA&&DATA.base&&DATA.base.sleep;
   const hrv=wl?wl.hrv:B&&B.hrv,base=f.hrvBase||(B&&B.hrvBase),sl=wl?wl.sleepSecs:B&&B.secs,rhr=wl?wl.restingHR:B&&B.rhr;
   let lvl=0;const why=[],ok=[];const up=(l,txt)=>{lvl=Math.max(lvl,l);why.push(txt)};
+  // facteurs liés à la nuit : comptés à part, puis atténués si tu dis que ce n'est pas l'entraînement
+  const nAns=(nightGet()[t]||{}).k,soft=nAns==="good"||nAns==="other";let nl=0;const nw=[];const upN=(l,txt)=>{nl=Math.max(nl,l);nw.push(txt)};
   if(f.v>=60)up(2,`fatigue accumulée élevée (${f.v}/100)`);else if(f.v>=40)up(1,`fatigue accumulée modérée (${f.v}/100)`);else ok.push(`fatigue ${f.v}/100`);
   const r=hrv&&base?hrv/base:null;
-  if(r!=null){if(r<.75)up(2,`HRV très basse (${hrv} ms, base ${base})`);else if(r<.87)up(1,`HRV basse (${hrv} ms, base ${base})`);else ok.push(`HRV ${hrv} ms (base ${base})`)}
-  if(sl){const h=sl/3600,txt=hm(sl/60);if(h<5)up(2,`nuit très courte (${txt})`);else if(h<6.3)up(1,`nuit courte (${txt})`);else ok.push(`sommeil ${txt}`)}
-  if(r!=null&&r<.87&&sl&&sl<6*3600)up(2,"HRV basse et nuit courte en même temps");
-  if(rhr&&rhr>=INP.fcrest+6)up(1,`FC de repos haute (${rhr} bpm)`);
+  if(r!=null){if(r<.75)upN(2,`HRV très basse (${hrv} ms, base ${base})`);else if(r<.87)upN(1,`HRV basse (${hrv} ms, base ${base})`);else ok.push(`HRV ${hrv} ms (base ${base})`)}
+  if(sl){const h=sl/3600,txt=hm(sl/60);if(h<5)upN(2,`nuit très courte (${txt})`);else if(h<6.3)upN(1,`nuit courte (${txt})`);else ok.push(`sommeil ${txt}`)}
+  if(r!=null&&r<.87&&sl&&sl<6*3600)upN(2,"HRV basse et nuit courte en même temps");
+  if(rhr&&rhr>=INP.fcrest+6)upN(1,`FC de repos haute (${rhr} bpm)`);
+  if(nl){if(soft){const l=nl-1;if(l>0)up(l,nw.join(", ")+(nAns==="good"?" (mais tu te sens en forme)":" (cause extérieure)"));else ok.push(nAns==="good"?"nuit moyenne mais tu te sens en forme":"nuit moyenne, cause extérieure")}else{lvl=Math.max(lvl,nl);why.push(...nw)}}
+  if(nAns==="sick")up(2,"tu te sens malade");else if(nAns==="training")up(1,"fatigue de l'entraînement ressentie au réveil");else if(nAns==="tired")up(1,"fatigué au réveil");
   const lim=dkey(new Date(Date.now()-2*864e5));
   ((LIVE&&LIVE.acts)||[]).filter(a=>a.date>=lim).forEach(a=>{const k=feelOf(a.id);if(k==="sick")up(2,"tu étais malade récemment");else if(["sleep","stress","load"].includes(k))up(1,"ressenti « fatigué » récent")});
   const night=wl?(wl.id===t?"cette nuit":"dernière nuit synchronisée : "+fdate(wl.id)):"nuit du socle";
@@ -874,10 +882,12 @@ function vLight(compact){
   if(!PLAN)return"";const L=dayLight();if(!L)return"";const t=today();
   const w=PLAN.weeks.find(x=>x.start<=t&&addDays(x.start,7)>t);if(!w)return"";
   const all=weekSessions(w).filter(s=>s.date===t&&!s.p.cancel),left=splitToday(all,t).left;
-  if(!left.length)return"";
+  if(!left.length){if(!compact||!nightWell(t))return"";const na=nightGet()[t];
+    return `<div class="lt"><span style="font-size:15px">🌙</span><div style="flex:1;font-size:13px">${na?"Nuit : "+esc((NIGHTS.find(n=>n[0]===na.k)||[,""])[1].split(" (")[0]):"Comment s'est passée ta nuit ?"} <button class="bt" style="margin-left:6px" data-act="night">${na?"modifier":"répondre"}</button></div></div>`}
   const col=["#3DDC84","#F5A524","#E4002B"][L.lvl],ttl=["Feu vert : séance comme prévue","Feu orange : version allégée conseillée","Feu rouge : repos ou Z2 très facile"][L.lvl];
   if(compact){const btn=left.filter(s=>s.lt||L.lvl).map(s=>`<button class="bt" style="margin:6px 6px 0 0${s.lt?"":";border-color:"+col+";color:"+col}" data-act="light" data-v="${w.n}|${s.uid}">${s.lt?"Remettre "+esc(s.title.replace(/ allégée/i,""))+" normale":"Alléger "+esc(s.title)}</button>`).join("");
-    return `<div class="lt"><span class="dot" style="background:${col};box-shadow:0 0 8px ${col}"></span><div style="flex:1"><b style="font-size:14px">${ttl}</b><div class="muted" style="font-size:12px;margin-top:2px">${esc(L.lvl?L.why.join(", "):L.ok.join(" · "))}</div>${btn}</div></div>`}
+    const na=nightGet()[t],nl=na?(NIGHTS.find(n=>n[0]===na.k)||[,""])[1].split(" (")[0]:"",nb=nightWell(t)?`<button class="bt" style="margin:6px 6px 0 0" data-act="night">${na?"Nuit : "+esc(nl)+" · modifier":"🌙 Comment tu te sens ?"}</button>`:"";
+    return `<div class="lt"><span class="dot" style="background:${col};box-shadow:0 0 8px ${col}"></span><div style="flex:1"><b style="font-size:14px">${ttl}</b><div class="muted" style="font-size:12px;margin-top:2px">${esc(L.lvl?L.why.join(", "):L.ok.join(" · "))}</div>${btn}${nb}</div></div>`}
   const txt=L.lvl?"Pourquoi : "+L.why.join(", ")+".":"Tout est au vert : "+L.ok.join(", ")+".";
   const rows=left.map(s=>`<div class="row" style="align-items:center;margin-top:8px;gap:8px"><span style="flex:1;font-size:13.5px">${D_IC[s.d]} ${esc(s.title)}${s.lt&&!/allég/i.test(s.title)?' <span class="muted">· allégée</span>':""}</span>${s.lt?`<button class="btn" data-act="light" data-v="${w.n}|${s.uid}">Version normale</button>`:L.lvl?`<button class="btn" style="border-color:${col};color:${col}" data-act="light" data-v="${w.n}|${s.uid}">Alléger</button>`:""}</div>`).join("");
   return `<div class="dc" style="border-left:4px solid ${col}"><div class="row" style="align-items:center;gap:10px"><span style="width:14px;height:14px;border-radius:50%;background:${col};box-shadow:0 0 10px ${col};flex-shrink:0"></span><b style="font-size:15px">${ttl}</b></div>
@@ -1052,7 +1062,31 @@ function feelPopup(id,fromQueue){
   <div class="row" style="margin-top:12px"><button class="btn" style="flex:1" data-act="feelskip" data-v="${a.id}">Passer</button><button class="btn" style="flex:2;background:var(--acc);color:#fff" data-act="feelok" data-v="${a.id}">Valider</button></div>`;
   UI.feelSel=cur.f;UI.feelFromQ=!!fromQueue;$("#ov").classList.add("show");
 }
-function nextFeel(){if(FEELQ.length){feelPopup(FEELQ[0],true)}else{closeSheet();ghPush(false)}}
+
+/* ============ RESSENTI DE LA NUIT ============
+   Après l'actualisation du matin, on demande comment tu te sens : une mauvaise nuit n'est pas forcément de la fatigue d'entraînement.
+   En forme / autre facteur : HRV et sommeil comptent moins (feu du jour et fatigue). Entraînement, fatigué ou malade : ils comptent pleinement. */
+const NIGHTS=[["good","😀 En forme ce matin"],["tired","🥱 Fatigué au réveil"],["training","🏋️ Fatigue de l'entraînement"],["sick","🤒 Malade"],["other","🌙 Autre facteur (stress, couché tard, soirée, réveils…)"]];
+let NIGHT;const nightGet=()=>{if(NIGHT===undefined)NIGHT=lsGet("ironmax.night",{})||{};return NIGHT};
+function nightWell(d){const raw=lsGet(LSK.raw,null);return ((raw&&raw.well)||[]).find(x=>x.id===d&&(x.sleepSecs||x.hrv))||null}
+function needNight(){const t=today();return !!nightWell(t)&&!nightGet()[t]}
+function nightPopup(){
+  const t=today(),w=nightWell(t);if(!w){closeSheet();return}
+  const f=(LIVE||DATA||{}).fatigue||{},base=f.hrvBase,cur=nightGet()[t]||{};
+  const kv=[];if(w.sleepSecs)kv.push(["Sommeil",hm(w.sleepSecs/60)]);if(w.sleepScore)kv.push(["Score",String(Math.round(w.sleepScore))]);
+  if(w.hrv)kv.push(["HRV",Math.round(w.hrv)+" ms"+(base?" (base "+Math.round(base)+")":"")]);if(w.restingHR)kv.push(["FC repos",w.restingHR+" bpm"]);
+  const r=w.hrv&&base?w.hrv/base:1,h=(w.sleepSecs||7.5*3600)/3600,q=(r<.75||h<5||(r<.87&&h<6))?"Mauvaise nuit":(r<.87||h<6.3)?"Nuit moyenne":"Bonne nuit";
+  $("#sheet").innerHTML=`<div class="grab"></div><div class="muted" style="font-size:12px">Ta nuit · ${fdate(t)}</div>
+  <h3 style="font-family:var(--disp);font-weight:800;font-size:21px;margin:2px 0">🌙 ${q}</h3>
+  <div class="kv">${kv.map(x=>`<div><small>${x[0]}</small><b>${esc(x[1])}</b></div>`).join("")}</div>
+  <div class="dl" style="margin-top:16px">Comment tu te sens ce matin ?</div>
+  <div class="feels">${NIGHTS.map(n=>`<button class="fchip${cur.k===n[0]?" sel":""}" data-act="nightpick" data-v="${n[0]}">${n[1]}</button>`).join("")}</div>
+  <input class="inp wide" id="nightNote" placeholder="Un mot (facultatif)" value="${esc(cur.note||"")}">
+  <div class="muted" style="font-size:12px;margin-top:8px">« En forme » ou « autre facteur » : une nuit courte ou une HRV basse comptent moins dans le feu du jour et la fatigue, parce que ce n'est pas l'entraînement.</div>
+  <div class="row" style="margin-top:12px"><button class="btn" style="flex:1" data-act="nightskip">Passer</button><button class="btn" style="flex:2;background:var(--acc);color:#fff" data-act="nightok">Valider</button></div>`;
+  UI.nightSel=cur.k||null;$("#ov").classList.add("show");
+}
+function nextFeel(){if(FEELQ.length){feelPopup(FEELQ[0],true)}else if(needNight()&&!UI.nightAsked){UI.nightAsked=1;nightPopup()}else{closeSheet();ghPush(false)}}
 
 /* ============ ZWIFT, via le calendrier Intervals.icu ============
    Ironmax écrit les séances vélo de la semaine dans le calendrier Intervals (séances prévues).
@@ -1153,11 +1187,11 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.31",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.32",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
-    zwift:L("ironmax.zw"),seen:L("ironmax.seen"),ready:L("ironmax.ready"),best:L("ironmax.best"),food:L("ironmax.food"),mobilite:L("delie.v1")};
+    zwift:L("ironmax.zw"),night:L("ironmax.night"),seen:L("ironmax.seen"),ready:L("ironmax.ready"),best:L("ironmax.best"),food:L("ironmax.food"),mobilite:L("delie.v1")};
 }
 async function ghPush(manual){
   if(!GH.token||!GH.repo||GHBUSY)return;GHBUSY=true;GH.err="";
@@ -1179,7 +1213,7 @@ async function ghRestore(){
   const put=(k,v)=>{if(v!=null)localStorage.setItem(k,JSON.stringify(v))};
   put(LSK.inp,d.inputs);put(LSK.adj,d.adjust);put(LSK.raw,d.intervals);put(LSK.caph,d.capHist);put("ironmax.ana",d.analyses);put("ironmax.feel",d.feel);
   const pg=d.programme||{};put("ironmax.wkedit",pg.edits);put("ironmax.sched",pg.sched);put("ironmax.deload",pg.deload);
-  put("ironmax.zw",d.zwift);put("ironmax.seen",d.seen);put("ironmax.ready",d.ready);put("ironmax.best",d.best);put("ironmax.food",d.food);put("delie.v1",d.mobilite);
+  put("ironmax.zw",d.zwift);put("ironmax.night",d.night);put("ironmax.seen",d.seen);put("ironmax.ready",d.ready);put("ironmax.best",d.best);put("ironmax.food",d.food);put("delie.v1",d.mobilite);
   if(d.athlete&&!CFG.athlete){CFG.athlete=d.athlete;lsSet(LSK.cfg,CFG)}
   localStorage.removeItem(LSK.live);location.reload();
 }
@@ -1190,7 +1224,7 @@ async function refreshData(){
     const d=new Date();const old=new Date(d);old.setDate(old.getDate()-150);const ow=new Date(d);ow.setDate(ow.getDate()-70);
     const [acts,well]=await Promise.all([apiGet("/activities?oldest="+dkey(old)+"&newest="+dkey(d)+"&fields="+FIELDS),apiGet("/wellness?oldest="+dkey(ow)+"&newest="+dkey(d))]);
     lsSet(LSK.raw,{acts,well,at:Date.now()});recompute();
-    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))));recompute();queueNewSessions((LIVE&&LIVE.acts)||[]);toast("Données actualisées");zwAutoPush().then(()=>{render();ghPush(false)});if(FEELQ.length)setTimeout(nextFeel,300);
+    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))));recompute();queueNewSessions((LIVE&&LIVE.acts)||[]);toast("Données actualisées");zwAutoPush().then(()=>{render();ghPush(false)});UI.nightAsked=0;if(FEELQ.length||needNight())setTimeout(nextFeel,300);
   }catch(e){REFRESH.err=(e&&e.message&&!/Failed to fetch|Load failed|NetworkError/.test(e.message))?e.message:"Connexion impossible (réseau ou accès refusé)"}
   REFRESH.busy=false;render();
 }
@@ -1277,7 +1311,7 @@ function recompute(){
     if(S.rhr){p.push(clamp((S.rhr-INP.fcnight)/6*100,0,100));w.push(.2)}
     if(S.score){p.push(clamp((85-S.score)/25*100,0,100));w.push(.15)}
     const ws=w.reduce((a,b)=>a+b,0);return ws?p.reduce((a,x,i)=>a+x*w[i],0)/ws:null};
-  const rawF=days.map(x=>{const lp=clamp((x.atl/Math.max(1,x.ctl)-.8)/.7*100,0,100);let rp=recovAt(x.d);if(rp==null)rp=recovBase();return rp==null?lp:.65*lp+.35*rp});
+  const NG=nightGet();const rawF=days.map(x=>{const lp=clamp((x.atl/Math.max(1,x.ctl)-.8)/.7*100,0,100);let rp=recovAt(x.d);if(rp==null)rp=recovBase();const na=(NG[x.d]||{}).k;if(rp!=null&&(na==="good"||na==="other"))rp*=.5;return rp==null?lp:.65*lp+.35*rp});
   const snapF=(B&&DATA.fatigue&&DATA.fatigue.series)||[];
   // lissage sur 3 jours : les jours d'avant le premier calcul sont pris dans la série du socle
   const prevF=snapF.filter(p=>!B||p.d<=B.asof).map(p=>p.v);
