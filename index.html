@@ -570,7 +570,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.37 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.38 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -991,11 +991,25 @@ async function apiGet(path){
   return r.json();
 }
 let ANA=lsGet("ironmax.ana",{});
-function plannedFor(date,sport){
+function plannedFor(date,sport,act){
   if(!PLAN||!PLAN.blocks[0].tpl)return null;
   const w=PLAN.weeks.find(x=>{const e=new Date(x.start+"T00:00:00");e.setDate(e.getDate()+7);return x.start<=date&&dkey(e)>date});if(!w)return null;
   const c=weekSessions(w).filter(s=>s.date===date&&s.d===sport&&!s.p.cancel);if(!c.length)return null;
+  // plusieurs séances du même sport ce jour-là : on associe dans l'ordre (1re activité ↔ 1re séance prévue…)
+  const acts=act&&LIVE&&LIVE.acts?LIVE.acts.filter(x=>x.date===date&&x.sp===sport&&(x.moving_time||0)>=600).sort((x,y)=>x.start_date_local<y.start_date_local?-1:1):[];
+  if(act&&acts.length>1){const ord={matin:0,midi:1,soir:2};c.sort((x,y)=>(ord[x.slot]||0)-(ord[y.slot]||0));const i=acts.findIndex(x=>x.id===act.id);return i>=0&&i<c.length?c[i]:null}
   const score=s=>(s.p.sets||s.p.tempo||s.p.blocks?2:0)+(s.p.test?3:0);c.sort((a,b)=>score(b)-score(a));return c[0];
+}
+/* Séance hors programme : lecture simple de l'intensité et de la dérive cardiaque */
+function freeAnalysis(a){
+  const bike=a.sp==="velo",W=a.icu_weighted_avg_watts||a.average_watts,v=a.distance&&a.moving_time?a.distance/a.moving_time*3.6:null;
+  const IF=bike&&W?W/INP.ftp:(!bike&&v?Math.pow(v/(INP.vma*.88),1):null);
+  const kind=IF==null?"séance":IF<.76?"endurance":IF<.9?"tempo / sweet spot":"intensité haute (seuil et +)";
+  const d=a.decoupling,bits=[`Hors programme · ${kind}`+(IF!=null&&bike?` (IF ${frn(IF.toFixed(2))})`:"")];let verdict="ok";
+  if(kind==="endurance"&&d!=null&&(a.moving_time||0)>=2400){if(d<5)bits.push(`dérive ${frn(d.toFixed(1))} % : endurance bien tenue`);else if(d<8)bits.push(`dérive ${frn(d.toFixed(1))} % : un peu élevée`);else{bits.push(`dérive ${frn(d.toFixed(1))} % : élevée (chaleur, fatigue ou allure trop haute)`);verdict="warn"}}
+  if(IF!=null&&IF>=.9)bits.push("séance dure en plus du plan : elle compte dans la fatigue");
+  else bits.push("comptée dans la charge et la fatigue");
+  return {title:"Hors programme",comment:bits.join(" · ")+".",verdict,sum:{},sport:a.sp,date:a.date,av:AV,free:1};
 }
 function planTarget(s){
   if(!s||s.p.test)return null;const p=s.p,k=s.k,bike=s.d==="velo";
@@ -1017,7 +1031,7 @@ async function analyzeRecent(acts){
       const r=IronAnalyze.analyzeSwim({m:ps.p.m,feel},{distance:a.distance,moving_time:a.moving_time,hr:a.average_heartrate,description:a.description},{fcmax:INP.fcmax,fcrest:INP.fcrest});
       ANA[a.id]={title:ps.title,comment:r.comment,verdict:r.verdict,sum:r.sum,sport:"nat",date:a.date};continue}
     if(!(a.sp==="velo"||a.sp==="course")||(a.moving_time||0)<1200)continue;
-    const ps=plannedFor(a.date,a.sp),plan=planTarget(ps);if(!plan)continue;
+    const ps=plannedFor(a.date,a.sp,a);if(!ps){ANA[a.id]=freeAnalysis(a);continue}const plan=planTarget(ps);if(!plan)continue;
     try{
       const raw=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.id)+"/streams.json?types=time,watts,heartrate,velocity_smooth");
       const st={};(Array.isArray(raw)?raw:Object.keys(raw).map(k=>({type:k,data:raw[k]}))).forEach(x=>st[x.type]=x.data);
@@ -1053,14 +1067,14 @@ function queueNewSessions(acts){
 }
 function feelPopup(id,fromQueue){
   const a=(LIVE&&LIVE.acts||[]).find(x=>String(x.id)===String(id));if(!a){nextFeel();return}
-  const an=ANA[a.id],ps=plannedFor(a.date,a.sp),cur=FEEL[a.id]||{f:"ok",note:""};
+  const an=ANA[a.id],ps=plannedFor(a.date,a.sp,a),cur=FEEL[a.id]||{f:"ok",note:""};
   const W=a.icu_weighted_avg_watts||a.average_watts;
   const kv=[["Durée",hm(a.moving_time/60)]];
   if(a.distance&&a.sp!=="muscu")kv.push(["Distance",a.sp==="nat"?Math.round(a.distance)+" m":(a.distance/1000).toFixed(1).replace(".",",")+" km"]);
   if(W)kv.push(["Puissance",W+" W (NP)"]);if(a.sp==="course"&&a.distance)kv.push(["Allure",paceKm(a.distance/a.moving_time*3.6)+"/km"]);
   if(a.average_heartrate)kv.push(["FC moy.",Math.round(a.average_heartrate)+" bpm"]);kv.push(["Charge",String(Math.round(a.load||0))]);
   $("#sheet").innerHTML=`<div class="grab"></div><div class="muted" style="font-size:12px">${fromQueue&&FEELQ.length>1?"Nouvelle séance · encore "+(FEELQ.length-1)+" ensuite":"Ta séance"}</div>
-  <h3 style="font-family:var(--disp);font-weight:800;font-size:21px;margin:2px 0">${D_IC[a.sp]||"•"} ${esc(a.name||"Séance")}</h3><div class="muted" style="font-size:13px">${fdate(a.date)}${ps?" · prévu : "+esc(ps.title):""}</div>
+  <h3 style="font-family:var(--disp);font-weight:800;font-size:21px;margin:2px 0">${D_IC[a.sp]||"•"} ${esc(a.name||"Séance")}</h3><div class="muted" style="font-size:13px">${fdate(a.date)}${ps?" · prévu : "+esc(ps.title):" · hors programme"}</div>
   <div class="kv">${kv.map(x=>`<div><small>${x[0]}</small><b>${esc(x[1])}</b></div>`).join("")}</div>
   ${an&&an.comment?`<div class="lc" style="margin-top:10px">${esc(an.comment)}</div>`:""}
   <div class="dl" style="margin-top:16px">Ressenti <small>sans choix = correct</small></div>
@@ -1267,7 +1281,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.37",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.38",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
