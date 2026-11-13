@@ -570,7 +570,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.36 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.37 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -681,6 +681,7 @@ document.addEventListener("click",ev=>{
     case"feeledit":feelPopup(v,false);break;
     case"nightpick":UI.nightSel=v;document.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("sel",x.dataset.v===v));{const el=$("#nightAct");if(el)el.innerHTML=nightActHTML(v)}break;
     case"nightdo":nightDo(v);break;
+    case"sc":{const [wn,uid,a]=v.split("|");sessionChoice(wn,uid,a);break}
     case"nightdo2":{const [k,a]=v.split("|");UI.nightSel=k;nightDo(a);break}
     case"nightok":{if(!UI.nightSel){toast("Choisis une réponse (ou Passer)");break}const N=nightGet();N[today()]={k:UI.nightSel,note:(($("#nightNote")||{}).value||"").trim(),at:Date.now()};lsSet("ironmax.night",N);recompute();render();closeSheet();ghPush(false);break}
     case"nightskip":closeSheet();ghPush(false);break;
@@ -886,7 +887,7 @@ function vLight(compact){
   const all=weekSessions(w).filter(s=>s.date===t&&!s.p.cancel),left=splitToday(all,t).left;
   if(!left.length)return compact&&CFG.key?nightLine(t):"";
   const col=["#3DDC84","#F5A524","#E4002B"][L.lvl],ttl=["Feu vert : séance comme prévue","Feu orange : version allégée conseillée","Feu rouge : repos ou Z2 très facile"][L.lvl];
-  if(compact){const btn=left.filter(s=>s.lt||L.lvl).map(s=>`<button class="bt" style="margin:6px 6px 0 0${s.lt?"":";border-color:"+col+";color:"+col}" data-act="light" data-v="${w.n}|${s.uid}">${s.lt?"Remettre "+esc(s.title.replace(/ allégée/i,""))+" normale":"Alléger "+esc(s.title)}</button>`).join("");
+  if(compact){const btn=todayChoices();
     return (CFG.key?nightLine(t):"")+`<div class="lt"><span class="dot" style="background:${col};box-shadow:0 0 8px ${col}"></span><div style="flex:1"><b style="font-size:14px">${ttl}</b><div class="muted" style="font-size:12px;margin-top:2px">${esc(L.lvl?L.why.join(", "):L.ok.join(" · "))}${nightWell(t)?"":" · nuit pas encore reçue"}</div>${btn}</div></div>`}
   const txt=L.lvl?"Pourquoi : "+L.why.join(", ")+".":"Tout est au vert : "+L.ok.join(", ")+".";
   const rows=left.map(s=>`<div class="row" style="align-items:center;margin-top:8px;gap:8px"><span style="flex:1;font-size:13.5px">${D_IC[s.d]} ${esc(s.title)}${s.lt&&!/allég/i.test(s.title)?' <span class="muted">· allégée</span>':""}</span>${s.lt?`<button class="btn" data-act="light" data-v="${w.n}|${s.uid}">Version normale</button>`:L.lvl?`<button class="btn" style="border-color:${col};color:${col}" data-act="light" data-v="${w.n}|${s.uid}">Alléger</button>`:""}</div>`).join("");
@@ -943,7 +944,7 @@ function vDash(){
   const pc=v=>v>=85?"#3DDC84":v>=65?"#A3D94B":v>=45?"#F5A524":v>=25?"#FF7A3D":"#E4002B";
   const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px;color:${pc(p.v)}">${p.v} %${p.e!=null?`<small class="muted" style="font-size:11px;font-weight:500"> · attendu ${p.e} %</small>`:""}</b></div><div class="trk" style="position:relative;overflow:visible"><i style="width:${p.v}%;background:${pc(p.v)}"></i>${p.e!=null?`<span class="emk" style="left:${p.e}%"></span>`:""}</div></div>`).join("");
   const vp=(D.vsPlan||[]).map(r=>r.delta!==undefined?`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="vg"><div><small>Attendu aujourd'hui</small><b>${esc(r.exp)}</b></div><div><small>Réel</small><b>${esc(r.real)}</b></div><div><small>Écart</small><b class="${r.s}">${esc(r.delta||"—")}</b></div></div>${r.goal?`<div class="x">Objectif final : ${esc(r.goal)}</div>`:""}</div>`:`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
-  const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).filter(a=>a.sp!=="mob").slice(0,2).map(a=>{const an=ANA[a.id],j=JUSTIFY.has(feelOf(a.id));return {id:a.id,date:a.date,sport:a.sp,title:a.name,metrics:autoComment(a),comment:an?an.comment:"",verdict:j?"just":an&&an.verdict,feel:feelLabel(a.id)}}):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,2);
+  const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).filter(a=>a.sp!=="mob").slice(0,2).map(a=>{const an=ANA[a.id],j=isJustified(a),nc=nightCtx(a.date);return {id:a.id,date:a.date,sport:a.sp,title:a.name,metrics:autoComment(a),comment:(an?an.comment:"")+(nc?(an&&an.comment?" · ":"")+"🌙 "+nc.txt+(j&&!JUSTIFY.has(feelOf(a.id))?" : séance lue avec indulgence.":"."):""),verdict:j?"just":an&&an.verdict,feel:feelLabel(a.id)}}):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,2);
   const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.verdict==="just"?"Justifiée":x.verdict==="warn"?"À surveiller":x.verdict==="up"?"Marge":"Maîtrisée"}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc ${x.verdict||""}">${esc(x.comment)}</div>`:""}${x.id!=null?`<button class="feelb" data-act="feeledit" data-v="${x.id}">${x.feel?esc(x.feel):"＋ Ressenti"}</button>`:""}</div>`).join("")}</div>`:"";
   const lightH=vLight(true),hero=heroBanner(D,(lightH||msgs)?`<div class="hsep"></div>${lightH}${msgs}`:"");
   const mobW=mobilityWeek();
@@ -1034,6 +1035,13 @@ async function apiGetAbs(url){const r=await fetch(url,{headers:{Authorization:"B
 let FEEL=lsGet("ironmax.feel",{}),SEEN=lsGet("ironmax.seen",null),FEELQ=[];
 const FEELS=[["ok","👍 Correct"],["easy","😎 Facile"],["hard","🥵 Dur"],["sick","🤒 Malade"],["sleep","😴 Fatigué · manque de sommeil"],["stress","🧠 Fatigué · stress / travail"],["load","🏋️ Fatigué · charge des jours précédents"],["pain","🩹 Douleur / gêne"],["cond","🌡️ Conditions (chaleur, matériel, terrain)"]];
 const JUSTIFY=new Set(["sick","sleep","stress","load","pain","cond"]);
+/* Contexte de la nuit pour le débrief : la séance d'un jour de mauvaise nuit (ou déclaré malade / fatigué) est lue avec indulgence. */
+function nightCtx(d){const w=nightWell(d),na=nightGet()[d];if(!w&&!na)return null;
+  const E=w?nightEval(w):null,bits=[];if(E){if(w.sleepSecs)bits.push("sommeil "+hm(w.sleepSecs/60));if(E.ans!=null)bits.push("SNA "+E.ansTxt.split(" (")[0])}
+  if(na)bits.push((NIGHTS.find(n=>n[0]===na.k)||[,""])[1].replace(/^\S+\s/,"").split(" (")[0].toLowerCase());
+  const poor=(E&&((E.sl||0)>=2||(E.ans||0)>=2))||(na&&["sick","tired","training","other"].includes(na.k));
+  return {txt:"Nuit : "+bits.join(", "),poor:!!poor}}
+function isJustified(a){if(JUSTIFY.has(feelOf(a.id)))return true;const an=ANA[a.id],c=nightCtx(a.date);return !!(an&&an.verdict==="warn"&&c&&c.poor)}
 const feelOf=id=>FEEL[id]&&FEEL[id].f||"ok";
 const feelLabel=id=>{const f=FEEL[id];if(!f||f.f==="ok")return "";const l=(FEELS.find(x=>x[0]===f.f)||["",""])[1];return l+(f.note?" · "+f.note:"")};
 function queueNewSessions(acts){
@@ -1075,7 +1083,7 @@ function nightLine(t){
   if(w){const E=nightEval(w),bits=[];if(w.sleepSecs)bits.push(hm(w.sleepSecs/60)+(w.sleepScore?" (score "+Math.round(w.sleepScore)+")":""));bits.push("SNA "+E.ansTxt.split(" (")[0]);
     const ans=na?(NIGHTS.find(n=>n[0]===na.k)||[,""])[1].split(" (")[0]:"";
     const col=E.ans==null?"#8a8f98":(Math.max(E.sl||0,E.ans)===0?"#3DDC84":Math.max(E.sl||0,E.ans)>=2?"#F5A524":"#4EA8FF");
-    const pend=na&&!na.done&&nightActions(na.k).A.length?`<div style="margin-top:4px">${nightActions(na.k).A.map(a=>`<button class="bt" style="margin:0 6px 4px 0" data-act="nightdo2" data-v="${na.k}|${a[0]}">${a[1]}</button>`).join("")}</div>`:"";
+    const pend="";
     return `<div class="hm info"><i style="background:${col}"></i><div><b>${esc(E.title)}</b> · ${esc(bits.join(" · "))}${ans?" · "+esc(ans):""}${E.ans==null?" · SNA arrive en général un peu après le sommeil, réessaie ⟳":""} <button class="bt" style="margin-left:4px" data-act="night">${na?"modifier":"ton ressenti"}</button>${pend}</div></div>`}
   const raw=lsGet(LSK.raw,null),last=((raw&&raw.well)||[]).filter(x=>x.sleepSecs||x.hrv).map(x=>x.id).sort().pop();
   return `<div class="hm"><i></i><div class="muted">Nuit pas encore reçue${last?" (dernière : "+fdate(last)+")":""}. Polar l'envoie à Intervals après ta synchro de la montre : réessaie ⟳ un peu plus tard.</div></div>`;
@@ -1093,19 +1101,42 @@ function nightEval(w){
   return {title,sl,ans,slTxt,ansTxt,r,h,sc};
 }
 function needNight(){const t=today(),w=nightWell(t);if(!w||nightGet()[t])return false;return !!w.hrv||new Date().getHours()>=10}
-/* Actions simples proposées selon ta réponse */
+/* Choix pour chaque séance du jour : toujours proposés, jamais imposés */
+function todayChoices(){
+  const t=today(),pw=PLAN&&PLAN.weeks.find(x=>x.start<=t&&addDays(x.start,7)>t);if(!pw)return"";
+  const left=splitToday(weekSessions(pw).filter(s=>s.date===t&&!s.p.cancel),t).left,ed=WKED[pw.n]||{},log=ed.removedLog||{};
+  const gone=(ed.removed||[]).filter(u=>log[u]&&log[u].date===t);
+  const chip=(s,a,l,on)=>`<button class="bt" style="margin:4px 6px 0 0${on?";border-color:var(--acc);color:var(--acc)":""}" data-act="sc" data-v="${pw.n}|${s.uid}|${a}">${l}</button>`;
+  return left.map(s=>`<div style="margin-top:8px"><div style="font-size:13px">${D_IC[s.d]||"•"} ${esc(s.title.replace(/ allégée/i,""))} <span class="muted">· ${hm(s.min)}${s.lt?" · allégée":s.sh?" · écourtée":""}</span></div>
+    ${chip(s,"keep","Garder",!s.lt&&!s.sh)}${chip(s,"light","Alléger",s.lt)}${chip(s,"short","Écourter",s.sh)}${chip(s,"del","Supprimer",false)}</div>`).join("")
+   +gone.map(u=>`<div class="muted" style="font-size:12.5px;margin-top:8px">${esc(log[u].title)} supprimée <button class="bt" style="margin-left:6px" data-act="sc" data-v="${pw.n}|${u}|restore">Rétablir</button></div>`).join("");
+}
+function sessionChoice(wn,uid,act){
+  const w=PLAN.weeks.find(x=>x.n===+wn);const e=WKED[wn]=WKED[wn]||{};e.light=e.light||[];e.short=e.short||[];
+  const rmv=(a,u)=>{const i=a.indexOf(u);if(i>=0)a.splice(i,1)};
+  if(act==="keep"){rmv(e.light,uid);rmv(e.short,uid)}
+  if(act==="light"){rmv(e.short,uid);if(!e.light.includes(uid))e.light.push(uid)}
+  if(act==="short"){rmv(e.light,uid);if(!e.short.includes(uid))e.short.push(uid)}
+  if(act==="del"){const s=w&&weekSessions(w).find(x=>x.uid===uid);if(s){if((e.added||[]).some(x=>x.uid===uid))e.added=e.added.filter(x=>x.uid!==uid);else{(e.removed=e.removed||[]).push(uid);(e.removedLog=e.removedLog||{})[uid]={title:s.title,date:s.date}}}}
+  if(act==="restore"){e.removed=(e.removed||[]).filter(u=>u!==uid);if(e.removedLog)delete e.removedLog[uid]}
+  saveWked();if(lsGet(LSK.raw,null))recompute();render();
+  const el=$("#nightAct");if(el)el.innerHTML=nightActHTML(UI.nightSel);
+  toast({keep:"On garde la séance",light:"Séance allégée",short:"Séance écourtée",del:"Séance supprimée",restore:"Séance rétablie"}[act]);
+  if(CFG.key&&w)zwPushWeek(w,false).catch(()=>{});
+}
+/* Conseils selon ta réponse (texte seulement) */
 function nightActions(k){
   const t=today(),pw=PLAN&&PLAN.weeks.find(x=>x.start<=t&&addDays(x.start,7)>t),left=pw?splitToday(weekSessions(pw).filter(s=>s.date===t&&!s.p.cancel),t).left:[];
   const hasS=left.length>0,dl=pw&&isDL(pw);const A=[];let tip="";
-  if(k==="good")tip="Rien à changer : séance comme prévue.";
-  if(k==="tired"){if(hasS){A.push(["light","Alléger la séance du jour"]);A.push(["keep","Garder telle quelle"])}tip="Si ça dure 2 jours ou plus, allège la semaine.";}
-  if(k==="training"){if(hasS){A.push(["light","Alléger la séance du jour"]);A.push(["rest","Repos + mobilité à la place"])}if(pw&&!dl)A.push(["deload","Passer la semaine en décharge"]);tip="Fatigue d'entraînement : on réduit la charge aujourd'hui. Si ça dure 2 jours ou plus, passe la semaine en décharge.";}
-  if(k==="sick"){if(hasS)A.push(["rest","Repos aujourd'hui"]);A.push(["lighttom","Alléger aussi demain"]);tip="Symptômes seulement au-dessus du cou (nez, gorge) : 30' très facile possible. Fièvre, courbatures ou poitrine : repos complet, puis reprise progressive (1 jour facile par jour malade).";}
-  if(k==="other"){if(hasS){A.push(["light","Alléger la séance du jour"]);A.push(["keep","Garder telle quelle"])}tip="Cause extérieure : la nuit compte moins dans le feu du jour.";}
+  if(k==="good")tip="Rien de particulier : séance comme prévue si tu le sens.";
+  if(k==="tired")tip="Piste : alléger ou écourter. Si ça dure 2 jours ou plus, pense à alléger la semaine.";
+  if(k==="training")tip="Piste : alléger ou écourter aujourd'hui. Si ça dure 2 jours ou plus, la semaine en décharge (bouton dans Programme) est une option.";
+  if(k==="sick")tip="Symptômes seulement au-dessus du cou (nez, gorge) : 30' très facile possible. Fièvre, courbatures ou poitrine : repos, puis reprise progressive (1 jour facile par jour malade).";
+  if(k==="other")tip="Cause extérieure : la nuit compte moins dans le feu du jour.";
   return {A,tip,left,pw};
 }
-function nightActHTML(k){if(!k)return"";const {A,tip}=nightActions(k);
-  return `<div style="margin-top:10px">${A.map(a=>`<button class="bt" style="margin:0 6px 6px 0;font-size:13px;padding:7px 12px" data-act="nightdo" data-v="${a[0]}">${a[1]}</button>`).join("")}</div>${tip?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(tip)}</div>`:""}`}
+function nightActHTML(k){const tip=k?nightActions(k).tip:"",ch=todayChoices();
+  return `${tip?`<div class="muted" style="font-size:12px;margin-top:10px">${esc(tip)}</div>`:""}${ch?`<div class="dl" style="margin-top:12px">Séance du jour <small>à toi de choisir</small></div>${ch}`:""}`}
 function nightDo(act){
   const t=today(),{left,pw}=nightActions(UI.nightSel||((nightGet()[t]||{}).k));
   if(act==="light"&&pw){const e=WKED[pw.n]=WKED[pw.n]||{};e.light=e.light||[];left.forEach(s=>{if(!e.light.includes(s.uid))e.light.push(s.uid)});saveWked()}
@@ -1236,7 +1267,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.36",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.37",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1377,7 +1408,7 @@ function recompute(){
   const blk=(PLAN&&PLAN.blocks.find(b=>b.from<=today&&b.to>=today))||{n:"Base 1",from:"2026-09-28"};
   const useB=B&&blk.from<=B.asof;
   const win=(useB?actsN:acts).filter(a=>a.date>=blk.from);
-  const winEff=win.filter(a=>!JUSTIFY.has(feelOf(a.id)));
+  const winEff=win.filter(a=>!isJustified(a));
   const doneH=useB?Object.assign({},B.doneH):{velo:0,course:0,nat:0,muscu:0};win.forEach(a=>{if(doneH[a.sp]!=null)doneH[a.sp]+=a.moving_time/3600});
   const planH=useB?Object.assign({},B.plannedH):{velo:0,course:0,nat:0,muscu:0};
   if(PLAN&&useB){PLAN.weeks.forEach(w=>{try{dueSessions(weekSessions(w).filter(s=>!s.p.cancel),today).forEach(s=>{if(s.date>B.asof&&planH[s.d]!=null)planH[s.d]+=(s.min||0)/60})}catch(e){}})}
@@ -1499,7 +1530,7 @@ function nextTest(){if(!PLAN)return null;const t=dkey(new Date());const w=PLAN.w
 /* ============ AJUSTEMENTS AUTOMATIQUES ============ */
 function adjustments(acts,eftp){
   const out=[],R=INP.fcmax-INP.fcrest,hrPct=a=>(a.average_heartrate-INP.fcrest)/R;
-  const recent=acts.filter(a=>a.date>=dkey(new Date(Date.now()-28*864e5))&&a.average_heartrate&&!JUSTIFY.has(feelOf(a.id))).sort((a,b)=>a.date<b.date?1:-1);
+  const recent=acts.filter(a=>a.date>=dkey(new Date(Date.now()-28*864e5))&&a.average_heartrate&&!isJustified(a)).sort((a,b)=>a.date<b.date?1:-1);
   const W=a=>a.icu_weighted_avg_watts||a.average_watts;
   const anaHR=a=>{const an=ANA[a.id];return an&&an.reps&&an.reps.length?Object.assign({},a,{average_heartrate:an.reps.reduce((s,r)=>s+r[2],0)/an.reps.length,decoupling:an.sum&&an.sum.drift!=null?an.sum.drift:a.decoupling}):a};
   const q=recent.filter(a=>a.sp==="velo"&&((ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length&&ANA[a.id].sum.pct>=95)||(W(a)&&W(a)/INP.ftp>=.82&&a.moving_time>=2700))).slice(0,3).map(anaHR);
@@ -1609,14 +1640,19 @@ function deloadify(s,k){
   else if(k==="z2run"){min=Math.round(min*.7)}
   return Object.assign({},s,{p,min,l,dl:1});
 }
+/* Écourter : même intensité, ~30 % de temps en moins (répétitions et blocs réduits d'un tiers). */
+function shortenify(s0){const p=Object.assign({},s0.p||{});
+  const cut=t=>String(t).replace(/(\d+)\s*([×x])/,(m,n,x)=>Math.max(1,Math.round(+n*.67))+x);
+  ["sets","tempo","blocks"].forEach(k=>{if(p[k]&&/\d+\s*[×x]/.test(p[k]))p[k]=cut(p[k])});
+  return Object.assign({},s0,{p,min:Math.max(20,Math.round((s0.min||60)*.7/5)*5),sh:1})}
 function weekSessions(w){
   const b=blockOf(w),tpl={};b.tpl.forEach(t=>tpl[t.id]=t);
   const vo2On=INP.ftp<265&&INH.some(h=>h.k==="ftp"&&h.d>=(PLAN.ftpTestDate||"9999"));
   const ed=WKED[w.n]||{},rm=ed.removed||[],mv=ed.moved||{};
   const dateOf=day=>{const d=new Date(w.start+"T00:00:00");d.setDate(d.getDate()+day);return dkey(d)};
   const dl=isDL(w),src=dl?(w.sd||w.s):w.s,auto=dl&&!w.sd;
-  const lt=ed.light||[],ind=ed.indoor||{};
-  const base=src.filter(s0=>!rm.includes(s0.id)).map(s00=>{let s0=auto?deloadify(s00,(tpl[s00.id]||{}).k):s00;if(lt.includes(s00.id))s0=Object.assign(deloadify(s0,(tpl[s00.id]||{}).k),{lt:1});s0=Object.assign({},s0,{indoor:!!ind[s00.id]});const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];let pl=place(b.n,t);if(mv[s.id])pl=mv[s.id];return Object.assign({},s,{uid:s.id,k:s.kk||t.k,d:t.d,title:s.l||(t.l+(s.dl&&/muscu/.test(t.k)?" (légère)":"")),day:pl.day,slot:pl.slot,date:dateOf(pl.day),moved:!!mv[s.id]})});
+  const lt=ed.light||[],sh=ed.short||[],ind=ed.indoor||{};
+  const base=src.filter(s0=>!rm.includes(s0.id)).map(s00=>{let s0=auto?deloadify(s00,(tpl[s00.id]||{}).k):s00;if(lt.includes(s00.id))s0=Object.assign(deloadify(s0,(tpl[s00.id]||{}).k),{lt:1});else if(sh.includes(s00.id))s0=shortenify(s0);s0=Object.assign({},s0,{indoor:!!ind[s00.id]});const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];let pl=place(b.n,t);if(mv[s.id])pl=mv[s.id];return Object.assign({},s,{uid:s.id,k:s.kk||t.k,d:t.d,title:s.l||(t.l+(s.dl&&/muscu/.test(t.k)?" (légère)":"")),day:pl.day,slot:pl.slot,date:dateOf(pl.day),moved:!!mv[s.id]})});
   const add=(ed.added||[]).map(a=>Object.assign({},a,{date:dateOf(a.day),added:true}));
   return base.concat(add).sort((a,c)=>a.day-c.day||SLOTS.indexOf(a.slot)-SLOTS.indexOf(c.slot));
 }
@@ -1728,7 +1764,7 @@ function vBilan(){
   // séances de la semaine
   let ses=[],nDone=0,nPlan=0,warn=[],good=[],just=0;
   if(pw){ses=weekSessions(pw).filter(s=>!s.p.cancel);const due=dueSessions(ses,t);ses.forEach(s=>{if(!due.includes(s))return;nPlan++;const d=doneOn(s.date,s.d);if(d.length){nDone++;d.forEach(x=>{if(x.verdict==="warn")warn.push(s.title);if(x.verdict==="up")good.push(s.title)})}})}
-  ((LIVE&&LIVE.acts)||[]).forEach(a=>{if(a.date>=start&&a.date<end&&JUSTIFY.has(feelOf(a.id)))just++});
+  ((LIVE&&LIVE.acts)||[]).forEach(a=>{if(a.date>=start&&a.date<end&&isJustified(a))just++});
   const fs=(LIVE||DATA)&&(LIVE||DATA).fatigue.series||[];const fIn=fs.filter(p=>p.d>=start&&p.d<end);
   const fTxt=fIn.length>1?`${fIn[0].v} → ${fIn[fIn.length-1].v}/100`:"—";
   const nw=PLAN&&PLAN.weeks.find(x=>x.start===addDays(start,7));let next="";
