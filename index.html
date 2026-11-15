@@ -332,6 +332,25 @@ P.pigeon.lx={k1:-4,f1:12,k2:8,f2:9};
 P.ninety.lx={k1:-14,f1:6,k2:14,f2:6};P.ninetyLean.lx={k1:-14,f1:6,k2:14,f2:6};
 P.squat.lx={k1:-14,f1:-8,k2:14,f2:8,e1:-12,w1:-6,e2:12,w2:6};
 P.threadIn.lx={e1:6,w1:14};
+/* Poses de la section genou */
+const HIPS={e1:[47,44],w1:[54,52],e2:[73,44],w2:[66,52]};
+const BW=x(Object.assign({h:[60,24],n:[60,33],p:[60,60],k1:[53,74],f1:[54,88],k2:[67,74],f2:[66,88]},{e1:[47,52],w1:[54,60],e2:[73,52],w2:[66,60]}),FS);
+Object.assign(P,{
+ abdA:x(HIPS,FS),
+ abdB:x(Object.assign({h:[58,15],n:[59,24],k2:[71,69],f2:[80,86]},HIPS),FS),
+ bwA:BW,
+ bwB:x({p:[63,60],h:[63,24],n:[63,33],k1:[51,74],f1:[47,88],k2:[77,74],f2:[81,88],e1:[50,52],w1:[57,60],e2:[76,52],w2:[69,60]},BW),
+ supine1:x({k2:[66,69],f2:[82,55]},SUP),
+ bridge1:x({p:[48,67],k1:[64,62],f1:[72,88],k2:[66,61],f2:[85,55]},SUP),
+ wallsit:{wall:36,h:[44,30],n:[43,39],p:[42,64],e1:[47,51],w1:[56,57],e2:[45,51],w2:[54,57],k1:[64,68],f1:[64,88],k2:[62,68],f2:[62,88]},
+ sdA:x({k2:[64,70],f2:[69,85],e1:[66,36],w1:[76,38],e2:[63,36],w2:[73,38]}),
+ sdB:{h:[64,22],n:[62,31],p:[56,58],e1:[70,38],w1:[80,40],e2:[67,38],w2:[77,40],k1:[68,72],f1:[60,88],k2:[70,74],f2:[82,88]},
+ balance:x({k2:[66,58],f2:[67,76],e1:[44,40],w1:[38,50],e2:[76,40],w2:[82,50]},FS),
+ balanceB:x({h:[60,17],n:[60,26],p:[60,54],k1:[56,72],f1:[55,88],k2:[66,60],f2:[67,78],e1:[44,42],w1:[38,52],e2:[76,42],w2:[82,52]},FS),
+ sidePlankA:{front:1,h:[27,54],n:[35,59],p:[62,74],e1:[37,80],w1:[28,88],e2:[46,64],w2:[56,70],k1:[82,82],f1:[100,86],k2:[83,83],f2:[101,88]},
+ sidePlankB:{front:1,h:[27,46],n:[35,52],p:[62,64],e1:[37,80],w1:[28,88],e2:[44,40],w2:[50,26],k1:[82,77],f1:[100,86],k2:[86,70],f2:[104,74]},
+ tflStretch:x({h:[53,16],n:[55,25],p:[64,52],k1:[60,70],f1:[57,88],k2:[58,70],f2:[49,88],e1:[47,40],w1:[56,48],e2:[65,10],w2:[55,1]},FS)
+});
 function mirror(o){const r={};for(const k in o){r[k]=Array.isArray(o[k])?[120-o[k][0],o[k][1]]:o[k]}return r}
 
 /* ============ EXERCISES ============ */
@@ -384,7 +403,15 @@ const EX=[
  {id:"wallslide",n:"Glissés au mur",z:["epaules","thoracique","pectoraux"],t:"d",d:40,s:0,a:["wsW","wsY"],hl:["arm1","fore1","arm2","fore2"],c:["Dos, tête et bras contre le mur","Glisse des bras en W vers le Y","Côtes basses, lombaires au mur"]},
  {id:"triceps",n:"Triceps et dorsal au-dessus de la tête",z:["epaules","dorsaux"],t:"s",d:30,s:1,a:["triceps"],hl:["arm1","fore1"],c:["Main derrière la tête, coude vers le ciel","L'autre main tire doucement le coude","Grandis-toi, pas de cambrure"]},
  {id:"ecart",n:"Écart assis penché",z:["adducteurs","ischios"],t:"s",d:50,s:0,a:["seatedWideFold"],hl:["thigh1","thigh2"],c:["Assis jambes écartées, genoux vers le ciel","Penche-toi vers une jambe puis au centre","Dos long, bascule depuis les hanches"]},
- {id:"fenterot",n:"Fente basse mains au sol",z:["flechisseurs","adducteurs"],t:"s",d:40,s:1,a:["lunge2"],hl:["thigh2"],c:["Genou arrière au sol, mains à l'intérieur du pied avant","Laisse descendre le bassin","Respire dans l'aine"]}
+ {id:"fenterot",n:"Fente basse mains au sol",z:["flechisseurs","adducteurs"],t:"s",d:40,s:1,a:["lunge2"],hl:["thigh2"],c:["Genou arrière au sol, mains à l'intérieur du pied avant","Laisse descendre le bassin","Respire dans l'aine"]},
+ {id:"abddebout",n:"Abduction de hanche debout",z:["fessiers"],k:1,t:"d",d:40,s:1,a:["abdA","abdB"],hl:["thigh2","shin2"],c:["Debout, mains sur les hanches, appui sur un mur si besoin","Monte la jambe sur le côté à 30-40° seulement, pointe de pied vers l'avant","Buste droit, 2 s en haut, redescends lentement"],l:["fessiers"]},
+ {id:"marchelat",n:"Marche latérale en demi-squat",z:["fessiers","quadriceps"],k:1,t:"d",d:40,s:0,a:["bwA","bwB"],hl:["thigh1","thigh2"],c:["Demi-squat, élastique au-dessus des genoux si tu en as un","Petits pas de côté, 10 vers la droite puis 10 vers la gauche","Genoux poussés vers l'extérieur, alignés sur les pieds"],l:["fessiers","quadriceps"]},
+ {id:"pont1",n:"Pont sur une jambe",z:["fessiers","ischios"],k:1,t:"d",d:40,s:1,a:["supine1","bridge1"],hl:["thigh1","shin1"],c:["Une jambe tendue dans le prolongement de l'autre cuisse","Pousse dans le talon au sol et monte le bassin","Bassin bien horizontal : il ne doit pas pencher du côté libre"],l:["fessiers","lombaires"]},
+ {id:"chaise",n:"Chaise au mur (angle ouvert)",z:["quadriceps"],k:1,t:"s",d:40,s:0,a:["wallsit"],hl:["thigh1","thigh2"],c:["Dos au mur, descends jusqu'à environ 60° de flexion, pas plus bas","Genoux au-dessus des chevilles, poids dans les talons","Contraction tenue : la gêne doit rester à 3/10 maximum"],l:["quadriceps"]},
+ {id:"descente",n:"Descente de marche contrôlée",z:["quadriceps","fessiers"],k:1,t:"d",d:40,s:1,a:["sdA","sdB"],hl:["thigh1","shin1"],c:["Debout sur une marche basse (15-20 cm), sur une jambe","Descends en 3 s jusqu'à effleurer le sol du talon libre","Le genou reste aligné sur le 2e orteil : il ne rentre pas vers l'intérieur"],l:["quadriceps"]},
+ {id:"unipodal",n:"Équilibre sur une jambe",z:["chevilles","fessiers"],k:1,t:"d",d:40,s:1,a:["balance","balanceB"],hl:["thigh1","shin1"],c:["Sur une jambe, genou d'appui légèrement fléchi","Fléchis et tends doucement le genou d'appui, sans qu'il rentre vers l'intérieur","Plus dur : yeux fermés ou sur un coussin"],l:["chevilles"]},
+ {id:"planchelat",n:"Planche latérale + jambe levée",z:["fessiers","lombaires"],k:1,t:"d",d:30,s:1,a:["sidePlankA","sidePlankB"],hl:["thigh2","shin2","torso"],c:["Sur l'avant-bras, coude sous l'épaule (genoux au sol pour commencer)","Monte le bassin pour aligner le corps","Plus dur : lève la jambe du dessus, 2 s en haut"],l:["fessiers","lombaires","epaules"]},
+ {id:"tfl",n:"Étirement du fascia lata debout",z:["fessiers","quadriceps"],k:1,t:"s",d:40,s:1,a:["tflStretch"],hl:["thigh2"],c:["Croise la jambe à étirer derrière l'autre","Pousse la hanche vers l'extérieur et penche le buste du côté opposé","Tu sens l'étirement sur le côté de la hanche et de la cuisse"],l:["fessiers"]},
 ];
 const EXM={};EX.forEach(e=>{e.l=e.l||e.z;EXM[e.id]=e});
 
@@ -538,6 +565,20 @@ function buildSession(focus,type,seedStr,n){
   if(type==="souplesse")list=list.map(e=>Object.assign({},e,{d:Math.min(90,Math.round(e.d*1.5/5)*5)}));
   return list;
 }
+/* Section genou : renfo du moyen fessier et contrôle du genou, souplesse autour du genou, activation avant vélo.
+   Pas de flexion profonde sous charge (c'est là que le genou droit se réveille). */
+const KNEE={
+ renfo:{n:"Renfo",i:"💪",d:"Moyen fessier, contrôle du genou et quadriceps en angle ouvert. 2 à 3 fois par semaine, idéalement loin des grosses séances.",list:["abddebout","marchelat","pont1","chaise","descente","unipodal","planchelat"],next:"souplesse"},
+ velo:{n:"Avant vélo",i:"🚴",d:"4-5 minutes pour réveiller les fessiers et caler le genou avant de rouler (ou avant Zwift).",list:["pont","abddebout","marchelat","chaise"],next:"renfo"},
+ souplesse:{n:"Souplesse",i:"🌿",d:"Quadriceps, fascia lata, ischios, mollets et fessiers : tout ce qui tire autour du genou. Après le vélo ou le soir.",list:["quadri","tfl","itband","ischiodos","mollet","fig4"],next:"renfo"}};
+function kneeSession(){const k=KNEE[UI.knee]||KNEE.renfo;const list=k.list.map(id=>EXM[id]).filter(e=>e&&!blocked(e));
+  return {key:"genou:"+(UI.knee||"renfo"),title:"Genou · "+k.n,desc:k.d,list,removed:k.list.length-list.length,cat:"genou",mode:"genou"}}
+function vGenou(){
+  const ks=`<div class="seg">${Object.entries(KNEE).map(([k,v])=>`<button class="${(UI.knee||"renfo")===k?"on acc":""}" data-act="knee" data-v="${k}">${v.i} ${v.n}</button>`).join("")}</div>`;
+  const info=`<div class="card" style="border:1px solid rgba(255,176,32,.25)"><h3>🦵 Genou</h3><div class="muted" style="font-size:13.5px">Pour la gêne à l'avant et à l'intérieur du genou droit, quand il est très plié sous charge (haut du coup de pédale, squat profond). Le renfo du moyen fessier t'avait déjà aidé : c'est le cœur de cette section.</div>
+  <div style="font-size:13px;margin-top:10px;line-height:1.5">• Fais les exercices des deux côtés, avec une série en plus à droite.<br>• Gêne tolérée : 3/10 maximum, et elle doit passer en moins de 24 h. Au-delà, réduis l'amplitude ou saute l'exercice.<br>• Pas de squat profond ni de fente profonde chargée dans cette section.<br>• Ça ne remplace pas ton kiné : si la douleur change ou augmente, retourne le voir.</div></div>`;
+  return ks+info;
+}
 function catSession(){
   const n=({court:5,normal:7,long:9})[S.prefs.scale]||7,T=TYPES.find(t=>t[0]===UI.mode)||TYPES[0];
   if(UI.mode==="souplesse"){const th=THEMES[UI.theme]||THEMES.velo;
@@ -588,14 +629,15 @@ function sessionCard(se){
   return `<div class="card"><h3>${esc(se.title)}</h3><div class="muted">${esc(se.desc)}</div>
   <div class="tags">${zs.slice(0,6).map(z=>`<span class="tag">${Z[z]}</span>`).join("")}${se.removed?`<span class="tag pain">${se.removed} exercice${se.removed>1?"s":""} retiré${se.removed>1?"s":""} (douleur)</span>`:""}</div>
   ${done?'<div class="muted" style="font-size:12.5px;margin-top:8px">✓ Déjà faite aujourd\'hui. Tu peux la refaire ou en tirer une autre.</div>':""}
-  <div class="row" style="gap:8px;margin-top:10px"><button class="go" style="flex:2;margin:0" data-act="start"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Lancer · ${Math.round(totalSec(se.list)/60)} min</button>${se.cat!=="corps"&&se.cat!=="solo"?`<button class="go" style="flex:1;margin:0;background:var(--card2);color:var(--txt)" data-act="vary">🔀 Autre</button>`:""}</div>
+  <div class="row" style="gap:8px;margin-top:10px"><button class="go" style="flex:2;margin:0" data-act="start"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Lancer · ${Math.round(totalSec(se.list)/60)} min</button>${se.cat!=="corps"&&se.cat!=="solo"&&se.cat!=="genou"?`<button class="go" style="flex:1;margin:0;background:var(--card2);color:var(--txt)" data-act="vary">🔀 Autre</button>`:""}</div>
   <div class="grid">${ex}</div></div>`;
 }
 function vSeances(){
   const cats=CATS.map(c=>`<button class="cat${UI.cat===c.id?" on":""}" data-act="cat" data-id="${c.id}"><svg viewBox="0 0 24 24">${IC[c.id]}</svg>${c.n}</button>`).join("");
+  if(UI.mode!=="genou"&&!TYPES.some(t=>t[0]===UI.mode))UI.mode=UI.mode==="post"?"statique":"dynamique";
+  const types=`<div class="seg" style="display:grid;grid-template-columns:1fr 1fr;gap:4px">${TYPES.map(t=>`<button class="${UI.mode===t[0]?"on acc":""}" data-act="mode" data-v="${t[0]}">${t[1]}</button>`).join("")}<button style="grid-column:1/3" class="${UI.mode==="genou"?"on acc":""}" data-act="mode" data-v="genou">🦵 Genou</button></div>`;
+  if(UI.mode==="genou"){UI.cur=kneeSession();return types+vGenou()+sessionCard(UI.cur)}
   UI.cur=catSession();
-  if(!TYPES.some(t=>t[0]===UI.mode))UI.mode=UI.mode==="post"?"statique":"dynamique";
-  const types=`<div class="seg" style="display:grid;grid-template-columns:1fr 1fr;gap:4px">${TYPES.map(t=>`<button class="${UI.mode===t[0]?"on acc":""}" data-act="mode" data-v="${t[0]}">${t[1]}</button>`).join("")}</div>`;
   const themes=`<div class="chips" style="margin:4px 0 10px">${Object.entries(THEMES).map(([k,t])=>`<button class="chip${UI.theme===k?" sel":""}" data-act="theme" data-v="${k}">${t.n}</button>`).join("")}</div>`;
   return `${types}${UI.mode==="souplesse"?themes:`<div class="cats">${cats}</div>`}
   <div class="seg">${Object.keys(SCALE).map(k=>`<button class="${S.prefs.scale===k?"on":""}" data-act="scale" data-v="${k}">${SCN[k]}</button>`).join("")}</div>
@@ -692,7 +734,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.41 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.42 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -756,7 +798,7 @@ function finish(complete){
   if(done>=20){addSession({id:"s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),date:today(),key:se.key,title:se.title,cat:se.cat,mode:se.mode,zones:[...new Set(se.list.flatMap(e=>e.z))],exos:se.list.map(e=>e.id),n:se.list.length,done,planned:totalSec(se.list),complete:!!complete})}
   if(complete){beep(880,.15);setTimeout(()=>beep(1175,.3),180);say("Séance terminée. Bravo !")}
   $("#player").innerHTML=`<div class="ptop"><span></span><button class="x-btn" data-act="pclose">×</button></div><div class="pstage end"><div class="big">${complete?"Bravo":"Pause"}</div><div class="pname">${complete?"Séance terminée":"Séance interrompue"}</div><div class="pcue">${Math.round(done/60)} min de mobilité${done>=20?" · enregistrée dans ton suivi":""}</div>
-  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">${se.cat!=="corps"&&se.cat!=="solo"?'<button class="go" style="margin:0" data-act="pchain">🔀 Enchaîner une autre séance</button>':""}<button class="go" style="margin:0;background:var(--card2);color:var(--txt)" data-act="pother">Choisir une autre séance</button><button class="go" style="margin:0;background:transparent;color:var(--mut)" data-act="pclose">Fermer</button></div></div>`;
+  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">${se.cat==="genou"?`<button class="go" style="margin:0" data-act="pchain">Enchaîner : Genou · ${KNEE[KNEE[UI.knee||"renfo"].next].n}</button>`:se.cat!=="corps"&&se.cat!=="solo"?'<button class="go" style="margin:0" data-act="pchain">🔀 Enchaîner une autre séance</button>':""}<button class="go" style="margin:0;background:var(--card2);color:var(--txt)" data-act="pother">Choisir une autre séance</button><button class="go" style="margin:0;background:transparent;color:var(--mut)" data-act="pclose">Fermer</button></div></div>`;
 }
 function drawRing(){
   const st=PL.steps[PL.idx];const n=$("#pn");if(!n)return;
@@ -840,6 +882,7 @@ document.addEventListener("click",ev=>{
     case"saveinp":{let n=0;document.querySelectorAll("[data-inp]").forEach(el=>{const k=el.dataset.inp;let val=el.value.trim().replace(",",".");if(!["css","best5k"].includes(k)){val=+val;if(!isFinite(val)||val<=0)return}else if(!isFinite(mmss(val)))return;if(String(INP[k])!==String(val)){setInput(k,val);n++}});render();toast(n?n+" seuil(s) mis à jour · charges recalculées":"Aucun changement");break}
     case"mode":UI.mode=v;UI.vr=0;render();break;
     case"theme":UI.theme=v;UI.vr=0;render();break;
+    case"knee":UI.knee=v;render();break;
     case"vary":UI.vr=(UI.vr||0)+1;render();break;
     case"scale":S.prefs.scale=v;pushSettings();render();break;
     case"ex":openEx(b.dataset.id);break;
@@ -865,7 +908,7 @@ document.addEventListener("click",ev=>{
     case"pprev":prev();break;
     case"pstop":finish(false);break;
     case"pclose":$("#player").classList.remove("show");PL=null;render();break;
-    case"pchain":{$("#player").classList.remove("show");PL=null;UI.vr=(UI.vr||0)+1;UI.tab="seances";render();startSession(catSession());break}
+    case"pchain":{$("#player").classList.remove("show");PL=null;UI.tab="seances";if(UI.mode==="genou"){UI.knee=KNEE[UI.knee||"renfo"].next;render();startSession(kneeSession());break}UI.vr=(UI.vr||0)+1;render();startSession(catSession());break}
     case"pother":$("#player").classList.remove("show");PL=null;UI.tab="seances";render();window.scrollTo(0,0);break;
   }
 });
@@ -1410,7 +1453,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.41",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.42",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
