@@ -789,12 +789,12 @@
   "2026-11-14|velo": {
    "title": "Sortie longue en groupe",
    "verdict": "warn",
-   "comment": "3h09 de vélo (86,8 km, 27,5 km/h, 629 m D+), 182 W de moyenne, FC 144 (max 184). Prévu : 3h15 en Z2, montées plafonnées à 225 W. En réalité, une sortie de groupe nettement plus intense : bosses montées à 250–380 W (mur de Milon 384 W, FC 181), un sprint à 1005 W et une bonne partie du temps au-dessus de 150 bpm. Durée respectée, bonne séance de force et de plaisir, mais pas du Z2 de décharge."
+   "comment": "3h09 de vélo (86,8 km, 27,5 km/h, 629 m D+), 182 W de moyenne, FC 144 (max 184). Durée respectée (prévu 3h15). Le bloc de 40' à 230 W n'a pas été fait tel quel : ton meilleur 20' est à 211 W et ton meilleur 40' autour de 197 W. À la place, beaucoup d'efforts courts en bosse à 250–380 W (mur de Milon 384 W, FC 181) et un sprint à 1005 W. La charge globale est là, mais c'est un travail plus explosif que l'endurance de puissance visée. Rien d'alarmant pour une sortie en groupe : on replace un bloc long à puissance stable dans la semaine (S8)."
   },
   "2026-11-15|course": {
    "title": "Sortie longue + tempo",
-   "verdict": "ok",
-   "comment": "1h25 pour 15,6 km. Heure en Z2 propre : 10,55 km à 5:41/km, FC 137 (max 147), sous la limite de 140, malgré la sortie de la veille. Puis 25' de tempo à 5:04/km, FC 154 (max 163) au lieu des 15' progressifs prévus : allure tenue et FC sous le seuil, bon signe pour le marathon. Avec samedi, la semaine de décharge finit sur un week-end chargé : garde les séances faciles de lundi et mardi vraiment faciles."
+   "verdict": "up",
+   "comment": "1h25 pour 15,6 km. Première heure en Z2 propre : 10,55 km à 5:41/km, FC 137 (max 147), sous la limite de 140 malgré la sortie de la veille. Puis 25' de tempo à 5:04/km, FC 154 (max 163), au lieu des 15' progressifs prévus : 10' de plus, à allure stable, FC bien sous le seuil (160+). Belle séance, bon signe pour le marathon. Avec samedi, gros week-end pour lancer S8 : garde la journée de lundi facile."
   }
  }
 }
