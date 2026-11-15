@@ -756,6 +756,45 @@
    "average_heartrate": 97.9,
    "max_heartrate": 132,
    "note": "Muscu B en deload : 55 min au lieu de 40, FC 98 (max 132). Coût cardiaque très bas, cohérent avec un deload. Pour un deload, raccourcis aussi la séance, pas seulement les séries."
+  },
+  {
+   "id": "s20983613942",
+   "start_date_local": "2026-11-14T09:34:09",
+   "type": "Ride",
+   "name": "Sortie longue en groupe",
+   "source": "STRAVA (ajouté par Claude)",
+   "moving_time": 11347,
+   "elapsed_time": 14274,
+   "distance": 86830,
+   "average_watts": 182,
+   "icu_weighted_avg_watts": 209,
+   "average_heartrate": 144,
+   "max_heartrate": 184,
+   "note": "Ajoutée par Claude depuis Strava (NP estimée à 209 W, remplacée par la valeur exacte à la prochaine actualisation Intervals)."
+  },
+  {
+   "id": "s20993736610",
+   "start_date_local": "2026-11-15T08:59:05",
+   "type": "Run",
+   "name": "Sortie longue + tempo",
+   "source": "STRAVA (ajouté par Claude)",
+   "moving_time": 5135,
+   "elapsed_time": 5321,
+   "distance": 15608,
+   "average_heartrate": 142,
+   "max_heartrate": 163
   }
- ]
+ ],
+ "claude": {
+  "2026-11-14|velo": {
+   "title": "Sortie longue en groupe",
+   "verdict": "warn",
+   "comment": "3h09 de vélo (86,8 km, 27,5 km/h, 629 m D+), 182 W de moyenne, FC 144 (max 184). Prévu : 3h15 en Z2, montées plafonnées à 225 W. En réalité, une sortie de groupe nettement plus intense : bosses montées à 250–380 W (mur de Milon 384 W, FC 181), un sprint à 1005 W et une bonne partie du temps au-dessus de 150 bpm. Durée respectée, bonne séance de force et de plaisir, mais pas du Z2 de décharge."
+  },
+  "2026-11-15|course": {
+   "title": "Sortie longue + tempo",
+   "verdict": "ok",
+   "comment": "1h25 pour 15,6 km. Heure en Z2 propre : 10,55 km à 5:41/km, FC 137 (max 147), sous la limite de 140, malgré la sortie de la veille. Puis 25' de tempo à 5:04/km, FC 154 (max 163) au lieu des 15' progressifs prévus : allure tenue et FC sous le seuil, bon signe pour le marathon. Avec samedi, la semaine de décharge finit sur un week-end chargé : garde les séances faciles de lundi et mardi vraiment faciles."
+  }
+ }
 }

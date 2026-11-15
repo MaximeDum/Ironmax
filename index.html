@@ -692,7 +692,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.40 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.41 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1073,7 +1073,7 @@ function vDash(){
   const pc=v=>v>=85?"#3DDC84":v>=65?"#A3D94B":v>=45?"#F5A524":v>=25?"#FF7A3D":"#E4002B";
   const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px;color:${pc(p.v)}">${p.v} %${p.e!=null?`<small class="muted" style="font-size:11px;font-weight:500"> · attendu ${p.e} %</small>`:""}</b></div><div class="trk" style="position:relative;overflow:visible"><i style="width:${p.v}%;background:${pc(p.v)}"></i>${p.e!=null?`<span class="emk" style="left:${p.e}%"></span>`:""}</div></div>`).join("");
   const vp=(D.vsPlan||[]).map(r=>r.delta!==undefined?`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="vg"><div><small>Attendu aujourd'hui</small><b>${esc(r.exp)}</b></div><div><small>Réel</small><b>${esc(r.real)}</b></div><div><small>Écart</small><b class="${r.s}">${esc(r.delta||"—")}</b></div></div>${r.goal?`<div class="x">Objectif final : ${esc(r.goal)}</div>`:""}</div>`:`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
-  const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).filter(a=>a.sp!=="mob").slice(0,2).map(a=>{const an=ANA[a.id],j=isJustified(a),nc=nightCtx(a.date);return {id:a.id,date:a.date,sport:a.sp,title:a.name,metrics:autoComment(a),comment:(an?an.comment:"")+(nc?(an&&an.comment?" · ":"")+"🌙 "+nc.txt+(j&&!JUSTIFY.has(feelOf(a.id))?" : séance lue avec indulgence.":"."):""),verdict:j?"just":an&&an.verdict,feel:feelLabel(a.id)}}):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,2);
+  const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).filter(a=>a.sp!=="mob").slice(0,2).map(a=>{const an=ANA[a.id],j=isJustified(a),nc=nightCtx(a.date);return {id:a.id,date:a.date,sport:a.sp,title:a.name,metrics:autoComment(a),comment:(an?an.comment:"")+(nc?(an&&an.comment?" · ":"")+"🌙 "+nc.txt+(j&&!JUSTIFY.has(feelOf(a.id))?" : séance lue avec indulgence.":"."):""),verdict:j?"just":an&&an.verdict,feel:feelLabel(a.id)}}).map(withClaude):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,2);
   const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.verdict==="just"?"Justifiée":x.verdict==="warn"?"À surveiller":x.verdict==="up"?"Marge":"Maîtrisée"}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc ${x.verdict||""}">${esc(x.comment)}</div>`:""}${x.id!=null?`<button class="feelb" data-act="feeledit" data-v="${x.id}">${x.feel?esc(x.feel):"＋ Ressenti"}</button>`:""}</div>`).join("")}</div>`:"";
   const lightH=vLight(true),hero=heroBanner(D,(lightH||msgs)?`<div class="hsep"></div>${lightH}${msgs}`:"");
   const mobW=mobilityWeek();
@@ -1410,7 +1410,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.40",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.41",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1591,7 +1591,7 @@ function recompute(){
   const km4w=runsAll.filter(r=>r.date>=d28).reduce((a,r)=>a+r.km,0)/4;
   const longRide=Math.max(0,...ridesAll.filter(r=>r.date>=d42).map(r=>r.h));
   // allure ramenée à 140 bpm sur les sorties Z2 (FC moyenne 125–150, > 30 min) : 2,5 s/km par bpm d'écart
-  const z2p=actsN.filter(a=>a.sp==="course"&&a.average_heartrate>=125&&a.average_heartrate<=150&&a.moving_time>=1800&&a.distance>3000).sort((a,b)=>a.date<b.date?-1:1).map(a=>a.moving_time/(a.distance/1000)-(140-a.average_heartrate)*2.5);
+  const z2p=actsN.filter(a=>a.sp==="course"&&a.average_heartrate>=125&&a.average_heartrate<=150&&(!a.max_heartrate||a.max_heartrate<=152)&&a.moving_time>=1800&&a.distance>3000) // sorties Z2 seulement : un bloc tempo ou un test fait monter la FC max.sort((a,b)=>a.date<b.date?-1:1).map(a=>a.moving_time/(a.distance/1000)-(140-a.average_heartrate)*2.5);
   const p140s=(B&&B.p140?[B.p140.s]:[]).concat(z2p).slice(-5);const p140=p140s.length?p140s.slice().sort((a,b)=>a-b)[Math.floor(p140s.length/2)]:330;
   // Trajectoire attendue : le niveau qu'il faut avoir à chaque date pour être prêt le 27 juin (départ 28 sept., pic de volume fin mai)
   const T0=new Date("2026-09-28").getTime(),TR=new Date("2027-06-27").getTime(),TP=new Date("2027-05-30").getTime();
@@ -1799,11 +1799,15 @@ function weekSessions(w){
   const add=(ed.added||[]).map(a=>Object.assign({},a,{date:dateOf(a.day),added:true}));
   return base.concat(add).sort((a,c)=>a.day-c.day||SLOTS.indexOf(a.slot)-SLOTS.indexOf(c.slot));
 }
+/* Analyses écrites par Claude (data.json → claude["AAAA-MM-JJ|sport"]) : elles remplacent le commentaire automatique,
+   le ressenti « justifiée » reste prioritaire. */
+function claudeOf(date,sport){const c=DATA&&DATA.claude;return c?c[date+"|"+sport]||null:null}
+function withClaude(x){const c=claudeOf(x.date,x.sport);if(!c)return x;return Object.assign({},x,{comment:"🧠 Analyse de Claude : "+c.comment+(x.feel?"":""),verdict:x.verdict==="just"?"just":(c.verdict||x.verdict),title:c.title||x.title})}
 function doneOn(date,sport){
   const out=[];
   ((DATA&&DATA.sessions)||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push(s)});
   if(!out.length&&DATA&&DATA.base&&date<=DATA.base.asof)(DATA.base.done||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push({date,sport,title:s.title,comment:""})});
-  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{const an=ANA[a.id],fl=feelLabel(a.id);out.push({date,sport,title:a.name,metrics:autoComment(a),comment:(an?an.comment:(a.note||""))+(fl?" · Ressenti : "+fl:""),verdict:JUSTIFY.has(feelOf(a.id))?"ok":an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs})});
+  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{if(claudeOf(date,sport)){const fl=feelLabel(a.id);out.push(withClaude({date,sport,title:a.name,metrics:autoComment(a),comment:"",verdict:JUSTIFY.has(feelOf(a.id))?"just":null,feel:fl}));return}const an=ANA[a.id],fl=feelLabel(a.id);out.push({date,sport,title:a.name,metrics:autoComment(a),comment:(an?an.comment:(a.note||""))+(fl?" · Ressenti : "+fl:""),verdict:JUSTIFY.has(feelOf(a.id))?"ok":an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs})});
   return out;
 }
 function autoComment(a){
