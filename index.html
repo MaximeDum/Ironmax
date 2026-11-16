@@ -735,7 +735,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.44 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.45 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1454,7 +1454,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.44",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.45",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1538,6 +1538,8 @@ const EV=11;
 function maybeRecompute(){if(DATA&&PLAN&&(lsGet(LSK.raw,null)||(DATA.extra&&DATA.extra.length))&&(!LIVE||LIVE.ev!==EV||LIVE.xk!==extraKey())){recompute();render()}}
 /* Séances ajoutées à la main dans data.json (relevées sur Strava) : elles comptent tant qu'Intervals
    n'a pas la même séance (même sport, départ à ±20 min). */
+/* Corrections données par Claude (ex. distance de natation mal comptée par la montre) : DATA.fix["date|sport"] = {distance:…} */
+function fixAct(a){const f=DATA&&DATA.fix&&DATA.fix[a.date+"|"+a.sp];return f?Object.assign(a,f,{fixed:1}):a}
 function withExtra(list){
   const ex=((DATA&&DATA.extra)||[]).filter(e=>e&&e.start_date_local);
   const t=a=>new Date(a.start_date_local).getTime();
@@ -1547,7 +1549,7 @@ const extraKey=()=>((DATA&&DATA.extra)||[]).map(e=>e.id).join(",");
 function recompute(){
   const raw=lsGet(LSK.raw,null)||(DATA&&DATA.extra&&DATA.extra.length?{acts:[],well:[]}:null);if(!raw)return;
   const B=(DATA&&DATA.base)||null;
-  const acts=dedupe(withExtra(raw.acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))).map(a=>Object.assign(a,{load:actLoad(a)}));
+  const acts=dedupe(withExtra(raw.acts||[]).filter(a=>a&&a.start_date_local).map(a=>fixAct(Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)})))).map(a=>Object.assign(a,{load:actLoad(a)}));
   const well={};(raw.well||[]).forEach(w=>{if(w&&w.id)well[w.id]=w});
   const today=dkey(new Date());
   // CTL/ATL quotidiens

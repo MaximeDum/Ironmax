@@ -783,6 +783,18 @@
    "distance": 15608,
    "average_heartrate": 142,
    "max_heartrate": 163
+  },
+  {
+   "id": "s21005339107",
+   "start_date_local": "2026-11-16T07:09:07",
+   "type": "Swim",
+   "name": "Natation 3×500",
+   "source": "STRAVA (ajouté par Claude)",
+   "moving_time": 2740,
+   "elapsed_time": 3083,
+   "distance": 2300,
+   "average_heartrate": 139,
+   "max_heartrate": 165
   }
  ],
  "claude": {
@@ -795,6 +807,16 @@
    "title": "Sortie longue + tempo",
    "verdict": "up",
    "comment": "Z2 propre (137 bpm), puis 25' de tempo à 5:04/km au lieu de 15' : solide. Lundi facile."
+  },
+  "2026-11-16|nat": {
+   "title": "Natation 3×500",
+   "verdict": "up",
+   "comment": "2300 m réels (la montre a compté 2100). Blocs à 1:57, 1:56 et 1:55/100 m pour 1:55 visé, FC stable à 143 : pile dans la cible, et en accélérant."
+  }
+ },
+ "fix": {
+  "2026-11-16|nat": {
+   "distance": 2300
   }
  }
 }
