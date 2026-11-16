@@ -735,7 +735,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.48 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.49 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1431,18 +1431,21 @@ function zwText(s){
   if(["vo2","ss","thr","ef","im"].includes(k)){
     const st=zSets(p.sets);
     if(!st){blk(`Endurance\n- 10m ramp ${P(.45)}-${P(.62)}%\n- ${Math.max(5,min-10)}m ${P(.62)}-${P(.70)}%`,min);return out.join("\n\n")}
-    const rec=zMin(p.rec)||4,rw=P(k==="vo2"?.5:.55);warm(15+st.n*(st.d+rec)+10>min);
-    if(p.ou){const cyc=Math.max(1,Math.round(st.d/5));
-      for(let i=0;i<st.n;i++){blk(`Bloc ${i+1} : sur-sous\n${cyc}x\n- 3m ${P(p.ou[0])}%\n- 2m ${P(p.ou[1])}%`,cyc*5);if(i<st.n-1)blk(`Récup\n- ${rec}m ${rw}% 90rpm`,rec)}}
-    else blk(`Corps de séance\n${st.n}x\n- ${st.d}m ${P(p.w)}%${rpm}\n- ${rec}m ${rw}% 90rpm`,st.n*(st.d+rec));
-    z2fill(P(.62),P(.70),min);cool();return out.join("\n\n");
+    const rec=zMin(p.rec)||4,rw=P(k==="vo2"?.5:.55),cyc=Math.max(1,Math.round(st.d/5));
+    const setMin=p.ou?st.n*cyc*5+(st.n-1)*rec:st.n*st.d+(st.n-1)*rec;warm(15+setMin+10>min);
+    {const m=Math.round(min-used-setMin-10);if(m>=5)blk(`Endurance\n- ${m}m ${P(.62)}-${P(.70)}%`,m)}
+    // la récup du dernier bloc est comprise dans le retour au calme (10' au total après le dernier bloc)
+    if(p.ou){for(let i=0;i<st.n;i++){blk(`Bloc ${i+1} : sur-sous\n${cyc}x\n- 3m ${P(p.ou[0])}%\n- 2m ${P(p.ou[1])}%`,cyc*5);if(i<st.n-1)blk(`Récup\n- ${rec}m ${rw}% 90rpm`,rec)}}
+    else{if(st.n>1)blk(`Corps de séance\n${st.n-1}x\n- ${st.d}m ${P(p.w)}%${rpm}\n- ${rec}m ${rw}% 90rpm`,(st.n-1)*(st.d+rec));blk(`${st.n>1?"Dernier bloc":"Bloc"}\n- ${st.d}m ${P(p.w)}%${rpm}`,st.d)}
+    cool();return out.join("\n\n");
   }
   if(k==="tempo"){
     if(!p.tempo){blk(`Z2 facile\n- 10m ramp ${P(.45)}-${P(p.w-.05)}%\n- ${Math.max(5,min-10)}m ${P(p.w-.07)}-${P(p.w)}%`,min);return out.join("\n\n")}
-    warm();blk(`Z2\n- 20m ${P(.64)}-${P(.70)}%`,20);
-    const st=zSets(p.tempo);
-    if(st)blk(`Tempo\n${st.n}x\n- ${st.d}m ${P(p.w)}%\n- 5m ${P(.65)}%`,st.n*(st.d+5));else{const m=zMin(p.tempo)||30;blk(`Tempo\n- ${m}m ${P(p.w)}%`,m)}
-    z2fill(P(.64),P(.70),min);cool();return out.join("\n\n");
+    warm();const st=zSets(p.tempo),tMin=st?st.n*st.d+(st.n-1)*5:(zMin(p.tempo)||30);
+    blk(`Z2\n- ${Math.max(20,Math.round(min-used-tMin-10))}m ${P(.64)}-${P(.70)}%`,Math.max(20,Math.round(min-used-tMin-10)));
+    if(st){if(st.n>1)blk(`Tempo\n${st.n-1}x\n- ${st.d}m ${P(p.w)}%\n- 5m ${P(.65)}%`,(st.n-1)*(st.d+5));blk(`${st.n>1?"Dernier bloc tempo":"Tempo"}\n- ${st.d}m ${P(p.w)}%`,st.d)}
+    else blk(`Tempo\n- ${tMin}m ${P(p.w)}%`,tMin);
+    cool();return out.join("\n\n");
   }
   if(["long","brick","sim"].includes(k)){
     const bike=Math.max(30,min-zMin(p.brick)),lo=PL(p.z2-.03),hi=PL(p.z2+.03);
@@ -1461,12 +1464,22 @@ function zwText(s){
   }
   return `- ${min}m ${P(.62)}-${P(.70)}%`;
 }
+/* Titre Zwift = contenu des blocs, ex. « Sweet spot 3x18' @233W » */
+function zwTitle(s){const k=s.k,p=s.p,W=x=>Wt(x,k)+"W",WL=x=>Wt(x,"long")+"W",min=s.min||60;
+  const lab={ss:"Sweet spot",thr:"Seuil",vo2:"VO2max",ef:"Endurance de force",im:"Allure IM",tempo:"Tempo"}[k]||s.title||"Vélo";
+  const dur=m=>m>=60?Math.floor(m/60)+"h"+(m%60?String(m%60).padStart(2,"0"):""):m+"'";
+  if(p.test==="FTP")return "Test FTP 20'";
+  const st=zSets(p.sets);
+  if(["vo2","ss","thr","ef","im"].includes(k)&&st)return p.ou?`Sur-sous ${st.n}x${st.d}' ${W(p.ou[0])}/${W(p.ou[1])}`:`${lab} ${st.n}x${st.d}' @${W(p.w)}${p.rpm?" "+String(p.rpm).replace(/[–—]/g,"-")+"rpm":k==="ef"?" 65-70rpm":""}`;
+  if(k==="tempo"&&p.tempo){const t=zSets(p.tempo);return `Z2 + tempo ${t?t.n+"x"+t.d+"'":(zMin(p.tempo)||30)+"'"} @${W(p.w)}`}
+  if(["long","brick","sim"].includes(k)){const b=String(p.blocks||"");return `${k==="brick"?"Enchaînement":"Sortie longue"} ${dur(min)}${b?" dont "+b.replace(/'/g,"'")+" @"+WL(p.w):""}`}
+  return `Z2 ${dur(min)}`}
 function zwEvents(w){
   const t=today(),list=weekSessions(w).filter(s=>s.d==="velo"&&!s.p.cancel&&s.date>=t&&(!["long","brick","sim"].includes(s.k)||s.indoor));
   const byDay={};list.forEach(s=>{(byDay[s.date]=byDay[s.date]||[]).push(s)});
   return list.filter(s=>s.date>t||!splitToday(weekSessions(w).filter(x=>x.date===s.date&&!x.p.cancel),s.date).done.some(x=>x.uid===s.uid))
     .map(s=>({category:"WORKOUT",type:"Ride",indoor:true,start_date_local:s.date+"T"+(SLOT_H[s.slot]||"18:30")+":00",
-      name:"Ironmax · "+s.title,description:zwText(s),external_id:"ironmax-"+s.date+"-"+s.slot+"-"+s.uid}));
+      name:zwTitle(s),description:zwText(s),external_id:"ironmax-"+s.date+"-"+s.slot+"-"+s.uid}));
 }
 const zhash=str=>{let h=0;for(let i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))|0;return h};
 async function apiSend(method,path,body){
@@ -1503,7 +1516,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.48",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.49",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
