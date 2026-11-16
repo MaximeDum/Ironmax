@@ -801,17 +801,49 @@
   "2026-11-14|velo": {
    "title": "Sortie longue en groupe",
    "verdict": "warn",
-   "comment": "Volume OK, mais le bloc de 40' à 230 W n'y est pas (meilleur 20' : 211 W) : sortie plus explosive que prévu. On replace un bloc stable en S8."
+   "comment": "Bonne · volume OK, mais pas de bloc de 40' à 230 W (meilleur 20' : 211 W). À replacer en S8."
   },
   "2026-11-15|course": {
    "title": "Sortie longue + tempo",
    "verdict": "up",
-   "comment": "Z2 propre (137 bpm), puis 25' de tempo à 5:04/km au lieu de 15' : solide. Lundi facile."
+   "comment": "Excellente · Z2 propre puis tempo plus long que prévu, FC sous le seuil. Lundi facile.",
+   "reps": [
+    [
+     3600,
+     2.932551319648094,
+     137
+    ],
+    [
+     1500,
+     3.289473684210526,
+     154
+    ]
+   ]
   },
   "2026-11-16|nat": {
    "title": "Natation 3×500",
    "verdict": "up",
-   "comment": "2300 m réels (la montre a compté 2100). Blocs à 1:57, 1:56 et 1:55/100 m pour 1:55 visé, FC stable à 143 : pile dans la cible, et en accélérant."
+   "comment": "Excellente · 2300 m. Blocs dans la cible (1:56 de moyenne pour 1:55 visé), en accélérant, FC stable.",
+   "reps": [
+    [
+     525,
+     0.8571428571428571,
+     142.6,
+     450
+    ],
+    [
+     637,
+     0.8634222919937206,
+     143.7,
+     550
+    ],
+    [
+     574,
+     0.8710801393728222,
+     142.8,
+     500
+    ]
+   ]
   }
  },
  "fix": {
