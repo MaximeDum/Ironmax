@@ -735,7 +735,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.46 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.47 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -844,6 +844,10 @@ document.addEventListener("click",ev=>{
     case"feelok":{const note=($("#feelNote")||{}).value||"";if((UI.feelSel||"ok")==="ok"&&!note)delete FEEL[v];else FEEL[v]={f:UI.feelSel||"ok",note:note.trim(),at:Date.now()};lsSet("ironmax.feel",FEEL);FEELQ=FEELQ.filter(x=>String(x)!==String(v));recompute();render();if(UI.feelFromQ)nextFeel();else closeSheet();break}
     case"feelskip":FEELQ=FEELQ.filter(x=>String(x)!==String(v));if(UI.feelFromQ)nextFeel();else closeSheet();break;
     case"feeledit":feelPopup(v,false);break;
+    case"swimfix":swimFixPopup(v);break;
+    case"sfadd":UI.sf.laps.push({d:100,t:120,hr:0,w:true});swimFixDraw();break;
+    case"sfsave":swimFixSave(false);break;
+    case"sfclear":swimFixSave(true);break;
     case"nightpick":UI.nightSel=v;document.querySelectorAll(".fchip").forEach(x=>x.classList.toggle("sel",x.dataset.v===v));{const el=$("#nightAct");if(el)el.innerHTML=nightActHTML(v)}break;
     case"nightdo":nightDo(v);break;
     case"sc":{const [wn,uid,a]=v.split("|");sessionChoice(wn,uid,a);break}
@@ -1117,8 +1121,8 @@ function vDash(){
   const pc=v=>v>=85?"#3DDC84":v>=65?"#A3D94B":v>=45?"#F5A524":v>=25?"#FF7A3D":"#E4002B";
   const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px;color:${pc(p.v)}">${p.v} %${p.e!=null?`<small class="muted" style="font-size:11px;font-weight:500"> · attendu ${p.e} %</small>`:""}</b></div><div class="trk" style="position:relative;overflow:visible"><i style="width:${p.v}%;background:${pc(p.v)}"></i>${p.e!=null?`<span class="emk" style="left:${p.e}%"></span>`:""}</div></div>`).join("");
   const vp=(D.vsPlan||[]).map(r=>r.delta!==undefined?`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="vg"><div><small>Attendu aujourd'hui</small><b>${esc(r.exp)}</b></div><div><small>Réel</small><b>${esc(r.real)}</b></div><div><small>Écart</small><b class="${r.s}">${esc(r.delta||"—")}</b></div></div>${r.goal?`<div class="x">Objectif final : ${esc(r.goal)}</div>`:""}</div>`:`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
-  const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).filter(a=>a.sp!=="mob").slice(0,2).map(a=>{const an=ANA[a.id],j=isJustified(a),nc=nightCtx(a.date);return {id:a.id,date:a.date,sport:a.sp,title:a.name,metrics:autoComment(a),comment:(an?an.comment:"")+(nc?(an&&an.comment?" · ":"")+"🌙 "+nc.txt+(j&&!JUSTIFY.has(feelOf(a.id))?" : séance lue avec indulgence.":"."):""),verdict:j?"just":an&&an.verdict,feel:feelLabel(a.id)}}).map(withClaude):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,2);
-  const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.verdict==="just"?"Justifiée":x.verdict==="warn"?"À surveiller":x.verdict==="up"?"Marge":"Maîtrisée"}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc ${x.verdict||""}">${esc(x.comment)}</div>`:""}${x.crep?repTable(x):""}${x.id!=null?`<button class="feelb" data-act="feeledit" data-v="${x.id}">${x.feel?esc(x.feel):"＋ Ressenti"}</button>`:""}</div>`).join("")}</div>`:"";
+  const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).filter(a=>a.sp!=="mob").slice(0,2).map(a=>{const an=ANA[a.id],j=isJustified(a),nc=nightCtx(a.date);return {id:a.id,date:a.date,sport:a.sp,reps:an&&an.crep?an.reps:undefined,crep:an&&an.crep,title:a.name,metrics:autoComment(a),comment:(an?an.comment:"")+(nc?(an&&an.comment?" · ":"")+"🌙 "+nc.txt+(j&&!JUSTIFY.has(feelOf(a.id))?" : séance lue avec indulgence.":"."):""),verdict:j?"just":an&&an.verdict,feel:feelLabel(a.id)}}).map(withClaude):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,2);
+  const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.verdict==="just"?"Justifiée":x.verdict==="warn"?"À surveiller":x.verdict==="up"?"Marge":"Maîtrisée"}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc ${x.verdict||""}">${esc(x.comment)}</div>`:""}${x.crep?repTable(x):""}${x.id!=null?`<button class="feelb" data-act="feeledit" data-v="${x.id}">${x.feel?esc(x.feel):"＋ Ressenti"}</button>`:""}${x.id!=null&&x.sport==="nat"?`<button class="feelb" data-act="swimfix" data-v="${x.id}">🏊 ${SWIMFIX[x.id]?"Blocs corrigés ✓":"Corriger"}</button>`:""}</div>`).join("")}</div>`:"";
   const lightH=vLight(true),hero=heroBanner(D,(lightH||msgs)?`<div class="hsep"></div>${lightH}${msgs}`:"");
   const mobW=mobilityWeek();
   const dow=new Date().getDay(),bil=(dow===0&&new Date().getHours()>=17)||dow===1?`<button class="dc" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px" data-act="gobilan"><span style="font-size:22px">📊</span><span style="flex:1"><b>Bilan de la semaine disponible</b><br><span class="muted" style="font-size:12px">Volume, séances clés, fatigue et semaine suivante</span></span><span class="muted">›</span></button>`:"";
@@ -1200,9 +1204,7 @@ async function analyzeRecent(acts){
   const since=dkey(new Date(Date.now()-21*864e5));
   for(const a of acts){
     if(a.date<since||(ANA[a.id]&&(ANA[a.id].sport==="nat"||ANA[a.id].av===AV)))continue;
-    if(a.sp==="nat"){const ps=plannedFor(a.date,"nat");if(!ps)continue;const feel=ps.p.light?"facile":({"1":"facile","2":"modere","3":"facile","4":"soutenu"})[ps.p.var]||(ps.k==="ow"?"modere":"modere");
-      const r=IronAnalyze.analyzeSwim({m:ps.p.m,feel},{distance:a.distance,moving_time:a.moving_time,hr:a.average_heartrate,description:a.description},{fcmax:INP.fcmax,fcrest:INP.fcrest});
-      ANA[a.id]={title:ps.title,comment:r.comment,verdict:r.verdict,sum:r.sum,sport:"nat",date:a.date};continue}
+    if(a.sp==="nat"){const r=swimAna(a);if(r)ANA[a.id]=r;continue}
     if(!(a.sp==="velo"||a.sp==="course")||(a.moving_time||0)<1200)continue;
     const ps=plannedFor(a.date,a.sp,a);if(!ps){ANA[a.id]=freeAnalysis(a);continue}const plan=planTarget(ps);if(!plan)continue;
     try{
@@ -1219,6 +1221,7 @@ async function analyzeRecent(acts){
 }
 async function apiGetAbs(url){const r=await fetch(url,{headers:{Authorization:"Basic "+btoa("API_KEY:"+CFG.key)}});if(!r.ok)throw new Error(r.status);return r.json()}
 /* ============ RESSENTI APRÈS SYNCHRO ============ */
+let SWIMFIX=lsGet("ironmax.swimfix",{});
 let FEEL=lsGet("ironmax.feel",{}),SEEN=lsGet("ironmax.seen",null),FEELQ=[];
 const FEELS=[["ok","👍 Correct"],["easy","😎 Facile"],["hard","🥵 Dur"],["sick","🤒 Malade"],["sleep","😴 Fatigué · manque de sommeil"],["stress","🧠 Fatigué · stress / travail"],["load","🏋️ Fatigué · charge des jours précédents"],["pain","🩹 Douleur / gêne"],["cond","🌡️ Conditions (chaleur, matériel, terrain)"]];
 const JUSTIFY=new Set(["sick","sleep","stress","load","pain","cond"]);
@@ -1238,6 +1241,51 @@ function queueNewSessions(acts){
   const s=new Set(SEEN);const fresh=acts.filter(a=>a.sp!=="mob"&&!s.has(String(a.id))).sort((a,b)=>a.start_date_local<b.start_date_local?-1:1);
   fresh.forEach(a=>{if(!FEELQ.includes(a.id))FEELQ.push(a.id)});SEEN=Array.from(new Set(SEEN.concat(ids))).slice(-400);lsSet("ironmax.seen",SEEN);
 }
+/* ============ NATATION : ce qui a été fait vs ce que la montre a compté ============
+   La montre rate des longueurs. Tu corriges la distance de chaque bloc (les temps viennent des tours de la montre),
+   tu coches les blocs de travail : Ironmax recalcule distance, allures, charge et analyse. */
+function swimAna(a){
+  const ps=plannedFor(a.date,"nat");const sf=SWIMFIX[a.id];
+  let out=null;
+  if(ps){const feel=ps.p.light?"facile":({"1":"facile","2":"modere","3":"facile","4":"soutenu"})[ps.p.var]||"modere";
+    const r=IronAnalyze.analyzeSwim({m:ps.p.m,feel},{distance:a.distance,moving_time:a.moving_time,hr:a.average_heartrate,description:a.description},{fcmax:INP.fcmax,fcrest:INP.fcrest});
+    out={title:ps.title,comment:r.comment,verdict:r.verdict,sum:r.sum,sport:"nat",date:a.date}}
+  else out=Object.assign(freeAnalysis(a)||{},{sport:"nat",date:a.date});
+  if(sf&&sf.laps){const w=sf.laps.filter(l=>l.w&&l.d>0&&l.t>0);
+    if(w.length){const p=w.map(l=>l.t/(l.d/100)),avg=w.reduce((t,l)=>t+l.t,0)/(w.reduce((t,l)=>t+l.d,0)/100);
+      out.reps=w.map(l=>[l.t,l.d/l.t,l.hr||0,l.d]);out.crep=1;
+      out.comment=`${({up:"Excellente",ok:"Bonne",warn:"Moyenne"})[out.verdict]||"Bonne"} · ${Math.round(a.distance)} m (montre : ${Math.round(sf.watch||a.watchDist||0)} m) · blocs à ${p.map(toMMSS).join(", ")}/100 m, moyenne ${toMMSS(avg)}.`+(out.verdict==="warn"&&out.comment?" "+out.comment.split(". ").slice(-1)[0]:"")}}
+  return out;
+}
+async function swimLaps(a){
+  try{const d=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.id)+"?intervals=true");
+    const arr=(d&&(d.icu_intervals||d.laps||d.intervals))||[];
+    return arr.map(x=>({d:Math.round(x.distance||0),t:Math.round(x.moving_time||x.elapsed_time||0),hr:Math.round(x.average_heartrate||0)})).filter(x=>x.d>0&&x.t>0)}catch(e){return []}
+}
+async function swimFixPopup(id){
+  const a=(LIVE&&LIVE.acts||[]).find(x=>String(x.id)===String(id));if(!a)return;
+  let laps=(SWIMFIX[id]&&SWIMFIX[id].laps)||null,watch=(SWIMFIX[id]&&SWIMFIX[id].watch)||a.watchDist||a.distance;
+  if(!laps){$("#sheet").innerHTML=`<div class="grab"></div><h3>🏊 Corriger la natation</h3><div class="muted">Récupération des tours de la montre…</div>`;$("#ov").classList.add("show");
+    laps=await swimLaps(a);if(!laps.length)laps=[{d:Math.round(a.distance||0),t:a.moving_time||0,hr:Math.round(a.average_heartrate||0)}];
+    laps.forEach((l,i)=>l.w=laps.length>=3?(i>0&&i<laps.length-1):true);}
+  UI.sf={id,laps:laps.map(l=>Object.assign({},l)),watch};swimFixDraw();
+}
+function swimFixDraw(){const f=UI.sf;const tot=f.laps.reduce((t,l)=>t+(+l.d||0),0);
+  $("#sheet").innerHTML=`<div class="grab"></div><h3 style="font-family:var(--disp);font-weight:800;font-size:21px;margin:2px 0">🏊 Corriger la natation</h3>
+  <div class="muted" style="font-size:13px">Mets la vraie distance de chaque bloc et coche les blocs de travail (pas l'échauffement, les éducatifs ni le retour au calme). Les temps viennent de la montre.</div>
+  <table class="rt" style="margin-top:10px"><tr><th>Travail</th><th>Distance</th><th>Temps</th><th>Allure</th><th>FC</th></tr>
+  ${f.laps.map((l,i)=>`<tr><td><input type="checkbox" data-sf="w" data-i="${i}" ${l.w?"checked":""}></td><td><input class="inp" style="width:70px;padding:4px" inputmode="numeric" data-sf="d" data-i="${i}" value="${l.d}"> m</td><td><input class="inp" style="width:58px;padding:4px" data-sf="t" data-i="${i}" value="${toMMSS(l.t)}"></td><td>${l.d>0&&l.t>0?toMMSS(l.t/(l.d/100)):"—"}</td><td>${l.hr||"—"}</td></tr>`).join("")}</table>
+  <div class="row" style="margin-top:8px;justify-content:space-between;align-items:center"><button class="btn" data-act="sfadd">＋ Bloc</button><span><b>${tot} m</b> <span class="muted">(montre : ${Math.round(f.watch||0)} m)</span></span></div>
+  <div class="row" style="margin-top:12px"><button class="btn" style="flex:1" data-act="sfclear">Revenir à la montre</button><button class="btn" style="flex:2;background:var(--acc);color:#fff" data-act="sfsave">Enregistrer</button></div>`;
+  $("#ov").classList.add("show");
+  $("#sheet").querySelectorAll("[data-sf]").forEach(el=>el.addEventListener("change",()=>{const l=f.laps[+el.dataset.i],k=el.dataset.sf;
+    if(k==="w")l.w=el.checked;else if(k==="d")l.d=Math.max(0,parseInt(el.value)||0);else{const v=mmss(el.value);if(v>0)l.t=v}swimFixDraw()}));
+}
+function swimFixSave(clear){const f=UI.sf;if(!f)return;
+  if(clear)delete SWIMFIX[f.id];else SWIMFIX[f.id]={laps:f.laps.filter(l=>l.d>0&&l.t>0),watch:f.watch,at:Date.now()};
+  lsSet("ironmax.swimfix",SWIMFIX);delete ANA[f.id];recompute();
+  const a=(LIVE&&LIVE.acts||[]).find(x=>String(x.id)===String(f.id));if(a){const r=swimAna(a);if(r){ANA[a.id]=r;lsSet("ironmax.ana",ANA)}}
+  UI.sf=null;closeSheet();render();schedGh&&schedGh()}
 function feelPopup(id,fromQueue){
   const a=(LIVE&&LIVE.acts||[]).find(x=>String(x.id)===String(id));if(!a){nextFeel();return}
   const an=ANA[a.id],ps=plannedFor(a.date,a.sp,a),cur=FEEL[a.id]||{f:"ok",note:""};
@@ -1250,6 +1298,7 @@ function feelPopup(id,fromQueue){
   <h3 style="font-family:var(--disp);font-weight:800;font-size:21px;margin:2px 0">${D_IC[a.sp]||"•"} ${esc(a.name||"Séance")}</h3><div class="muted" style="font-size:13px">${fdate(a.date)}${ps?" · prévu : "+esc(ps.title):" · hors programme"}</div>
   <div class="kv">${kv.map(x=>`<div><small>${x[0]}</small><b>${esc(x[1])}</b></div>`).join("")}</div>
   ${an&&an.comment?`<div class="lc" style="margin-top:10px">${esc(an.comment)}</div>`:""}
+  ${a.sp==="nat"?`<button class="btn wide" style="margin-top:10px" data-act="swimfix" data-v="${a.id}">🏊 ${SWIMFIX[a.id]?"Modifier les blocs":"Corriger distances et blocs"}</button>`:""}
   <div class="dl" style="margin-top:16px">Ressenti <small>sans choix = correct</small></div>
   <div class="feels">${FEELS.map(f=>`<button class="fchip${cur.f===f[0]?" sel":""}" data-act="feelpick" data-v="${f[0]}">${f[1]}</button>`).join("")}</div>
   <input class="inp wide" id="feelNote" placeholder="Un mot (facultatif)" value="${esc(cur.note||"")}">
@@ -1454,11 +1503,11 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.46",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.47",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
-    zwift:L("ironmax.zw"),night:L("ironmax.night"),seen:L("ironmax.seen"),ready:L("ironmax.ready"),best:L("ironmax.best"),food:L("ironmax.food"),mobilite:L("delie.v1")};
+    zwift:L("ironmax.zw"),night:L("ironmax.night"),seen:L("ironmax.seen"),ready:L("ironmax.ready"),best:L("ironmax.best"),food:L("ironmax.food"),swimfix:L("ironmax.swimfix"),mobilite:L("delie.v1")};
 }
 async function ghPush(manual){
   if(!GH.token||!GH.repo||GHBUSY)return;GHBUSY=true;GH.err="";
@@ -1480,7 +1529,7 @@ async function ghRestore(){
   const put=(k,v)=>{if(v!=null)localStorage.setItem(k,JSON.stringify(v))};
   put(LSK.inp,d.inputs);put(LSK.adj,d.adjust);put(LSK.raw,d.intervals);put(LSK.caph,d.capHist);put("ironmax.ana",d.analyses);put("ironmax.feel",d.feel);
   const pg=d.programme||{};put("ironmax.wkedit",pg.edits);put("ironmax.sched",pg.sched);put("ironmax.deload",pg.deload);
-  put("ironmax.zw",d.zwift);put("ironmax.night",d.night);put("ironmax.seen",d.seen);put("ironmax.ready",d.ready);put("ironmax.best",d.best);put("ironmax.food",d.food);put("delie.v1",d.mobilite);
+  put("ironmax.zw",d.zwift);put("ironmax.night",d.night);put("ironmax.seen",d.seen);put("ironmax.ready",d.ready);put("ironmax.best",d.best);put("ironmax.food",d.food);put("ironmax.swimfix",d.swimfix);put("delie.v1",d.mobilite);
   if(d.athlete&&!CFG.athlete){CFG.athlete=d.athlete;lsSet(LSK.cfg,CFG)}
   localStorage.removeItem(LSK.live);location.reload();
 }
@@ -1539,7 +1588,9 @@ function maybeRecompute(){if(DATA&&PLAN&&(lsGet(LSK.raw,null)||(DATA.extra&&DATA
 /* Séances ajoutées à la main dans data.json (relevées sur Strava) : elles comptent tant qu'Intervals
    n'a pas la même séance (même sport, départ à ±20 min). */
 /* Corrections données par Claude (ex. distance de natation mal comptée par la montre) : DATA.fix["date|sport"] = {distance:…} */
-function fixAct(a){const f=DATA&&DATA.fix&&DATA.fix[a.date+"|"+a.sp];return f?Object.assign(a,f,{fixed:1}):a}
+function fixAct(a){const sf=typeof SWIMFIX!=="undefined"&&SWIMFIX[a.id];
+  if(sf&&sf.laps&&sf.laps.length){a.watchDist=a.distance;a.distance=sf.laps.reduce((t,l)=>t+(+l.d||0),0);a.fixed=1;return a}
+  const f=DATA&&DATA.fix&&DATA.fix[a.date+"|"+a.sp];return f?Object.assign(a,{watchDist:a.distance},f,{fixed:1}):a}
 function withExtra(list){
   const ex=((DATA&&DATA.extra)||[]).filter(e=>e&&e.start_date_local);
   const t=a=>new Date(a.start_date_local).getTime();
@@ -1852,12 +1903,12 @@ function repTable(x){if(!x.reps||!x.reps.length)return"";const nat=x.sport==="na
   const pace=r=>nat?toMMSS(100/r[1])+"/100":bike?Math.round(r[1])+" W":paceKm(r[1]*3.6)+"/km";
   return `<table class="rt"><tr><th></th><th>${nat?"Dist.":"Durée"}</th><th>${nat?"Allure":bike?"Puiss.":"Allure"}</th><th>FC moy.</th></tr>${x.reps.map((r,i)=>`<tr><td>${nat?"Bloc "+(i+1):"R"+(i+1)}</td><td>${nat&&r[3]?r[3]+" m":toMMSS(r[0])}</td><td>${pace(r)}</td><td>${Math.round(r[2])} bpm</td></tr>`).join("")}</table>`}
 function claudeOf(date,sport){const c=DATA&&DATA.claude;return c?c[date+"|"+sport]||null:null}
-function withClaude(x){const c=claudeOf(x.date,x.sport);if(!c)return x;return Object.assign({},x,{comment:(x.comment&&!/^🧠/.test(x.comment)?x.comment+" ":"")+"🧠 "+c.comment,verdict:x.verdict==="just"?"just":(c.verdict||x.verdict),title:c.title||x.title},c.reps?{reps:c.reps,recs:null,crep:1}:{})}
+function withClaude(x){const c=claudeOf(x.date,x.sport);if(!c)return x;return Object.assign({},x,{comment:(x.comment&&!c.reps&&!/^🧠/.test(x.comment)?x.comment+" ":"")+"🧠 "+c.comment,verdict:x.verdict==="just"?"just":(c.verdict||x.verdict),title:c.title||x.title},c.reps?{reps:c.reps,recs:null,crep:1}:{})}
 function doneOn(date,sport){
   const out=[];
   ((DATA&&DATA.sessions)||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push(s)});
   if(!out.length&&DATA&&DATA.base&&date<=DATA.base.asof)(DATA.base.done||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push({date,sport,title:s.title,comment:""})});
-  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{if(claudeOf(date,sport)){const fl=feelLabel(a.id);out.push(withClaude({date,sport,title:a.name,metrics:autoComment(a),comment:"",verdict:JUSTIFY.has(feelOf(a.id))?"just":null,feel:fl}));return}const an=ANA[a.id],fl=feelLabel(a.id);out.push({date,sport,title:a.name,metrics:autoComment(a),comment:(an?an.comment:(a.note||""))+(fl?" · Ressenti : "+fl:""),verdict:JUSTIFY.has(feelOf(a.id))?"ok":an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs})});
+  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{if(claudeOf(date,sport)){const fl=feelLabel(a.id);out.push(withClaude({date,sport,title:a.name,metrics:autoComment(a),comment:"",verdict:JUSTIFY.has(feelOf(a.id))?"just":null,feel:fl}));return}const an=ANA[a.id],fl=feelLabel(a.id);out.push({date,sport,title:a.name,metrics:autoComment(a),comment:(an?an.comment:(a.note||""))+(fl?" · Ressenti : "+fl:""),verdict:JUSTIFY.has(feelOf(a.id))?"ok":an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs,crep:an&&an.crep})});
   return out;
 }
 function autoComment(a){
