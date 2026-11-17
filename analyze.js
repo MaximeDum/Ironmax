@@ -86,6 +86,10 @@
         if (reps[i + 1]) res.recs.push({ i: i + 1, dur: next - s[1], drop60: peak - at60, tz });
       }
     });
+    // --- partie continue (Z2) : hors 10 premières et 10 dernières minutes, hors blocs et 3 min après chaque bloc
+    { const inRep = new Uint8Array(val.length); reps.forEach(s => { for (let k = s[0]; k < Math.min(val.length, s[1] + 180); k++) inRep[k] = 1; });
+      const idx = []; for (let k = 600; k < val.length - 600; k++) if (!inRep[k] && val[k] > 0) idx.push(k);
+      if (idx.length >= 600) { const v = mean(idx.map(k => val[k])), h = mean(idx.map(k => hr[k]).filter(x => x > 30)); res.z2 = [idx.length, v, h]; } }
     const n = res.reps.length, pct = mean(res.reps.map(x => x.pct)), first = res.reps[0], last = res.reps[n - 1];
     const drift = n > 1 ? (last.hr / first.hr - 1) * 100 : (first ? first.intra / first.hr * 100 : 0);
     const shortReps = res.reps.filter(x => x.dur < plan.repSec * 0.9).length;
