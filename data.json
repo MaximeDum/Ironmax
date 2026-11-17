@@ -849,6 +849,23 @@
    "title": "Sweet spot 3×18'",
    "verdict": "ok",
    "comment": "Bonne · 233 W tenus pile sur les 3 blocs. Dérive FC (155 → 166) logique après le gros week-end et la natation du matin. Demain facile."
+  },
+  "2026-11-17|velo": {
+   "title": "Z2 + tempo 10'",
+   "verdict": "up",
+   "comment": "Excellente · vraie séance facile : Z2 sous le plafond de 135 bpm, tempo pile à 210 W sans dérive, malgré la muscu du matin.",
+   "reps": [
+    [
+     2400,
+     171,
+     132
+    ],
+    [
+     600,
+     210,
+     150
+    ]
+   ]
   }
  },
  "fix": {

@@ -749,7 +749,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.63 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.64 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1176,7 +1176,7 @@ const hm=min=>{min=Math.round(min);return Math.floor(min/60)+"h"+pad(min%60)};
 function loadPlan(){fetch("plan.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{PLAN=j;maybeRecompute();render()}).catch(()=>{})}
 
 /* ============ INTERVALS.ICU ============ */
-const FIELDS="id,start_date_local,type,name,description,source,device_name,elapsed_time,moving_time,distance,icu_weighted_avg_watts,average_watts,average_heartrate,max_heartrate,icu_training_load,decoupling,trainer,icu_rpe,icu_eftp,icu_hr_zone_times,average_watts";
+const FIELDS="id,start_date_local,type,name,description,source,device_name,elapsed_time,moving_time,distance,icu_weighted_avg_watts,average_watts,average_heartrate,max_heartrate,icu_training_load,decoupling,trainer,icu_rpe,icu_eftp,icu_hr_zone_times,average_watts,icu_average_watts";
 async function apiGet(path){
   const r=await fetch("https://intervals.icu/api/v1/athlete/"+encodeURIComponent(CFG.athlete)+path,{headers:{Authorization:"Basic "+btoa("API_KEY:"+CFG.key)}});
   if(r.status===401||r.status===403)throw new Error("Clé ou identifiant refusé par Intervals.icu");
@@ -1538,7 +1538,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.63",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.64",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -2160,7 +2160,7 @@ const slope=pts=>{if(pts.length<4)return null;const xs=pts.map(p=>new Date(p.d)/
 
 /* --- 2. Vélo : efficacité aérobie (puissance normalisée / FC) --- */
 function anBikeEF(){
-  const W=a=>a.average_watts||a.icu_weighted_avg_watts;
+  const W=a=>a.average_watts||a.icu_average_watts||a.icu_weighted_avg_watts;
   const pts=anActs(84).filter(a=>a.sp==="velo"&&(a.moving_time||0)>=2400&&W(a)&&a.average_heartrate>100&&!/vo2/i.test(a.name||""))
     .map(a=>({d:a.date,v:W(a)/a.average_heartrate,c:a.trainer?"#4EA8FF":"#9DD1FF",tip:`${fdate(a.date)} · ${a.name||"Vélo"} : ${Math.round(W(a))} W de moyenne pour ${Math.round(a.average_heartrate)} bpm → ${frn((W(a)/a.average_heartrate).toFixed(2))} W/bpm`}));
   if(pts.length<3)return anCard("Vélo · efficacité aérobie","watts produits par battement de cœur","",anEmpty("Il faut au moins 3 sorties de plus de 40 min avec puissance et FC."));
