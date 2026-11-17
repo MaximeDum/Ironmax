@@ -737,7 +737,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.54 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.55 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1521,7 +1521,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.54",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.55",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -2191,8 +2191,37 @@ function anSwim(){
   return anCard("Natation · allure","allure /100 m · plus haut = plus rapide",anKey(toMMSS(pts[pts.length-1].v),"/100 m","dernière séance · ton seuil (CSS) "+css),
     trendChart(pts,{fmt:v=>toMMSS(v),inv:1,c:"#2EC4B6",ref:{v:mmss(css),lab:"seuil "+css}})+`<div class="legend2"><span><i style="background:#2EC4B6"></i>Blocs de travail corrigés</span><span><i style="background:#8FE3DA"></i>Séance entière</span></div>`,"");
 }
+/* --- 7. Part de facile semaine par semaine --- */
+function anEasyWeeks(){
+  const cur=mondayOf(today()),wk=[];for(let i=7;i>=0;i--)wk.push(addDays(cur,-7*i));
+  const acts=anActs(63).filter(a=>["velo","course","nat"].includes(a.sp));
+  const data=wk.map(s=>{const e=addDays(s,7),z={lo:0,mid:0,hi:0};acts.filter(a=>a.date>=s&&a.date<e).forEach(a=>{const q=zoneSplit(a);if(q)["lo","mid","hi"].forEach(k=>z[k]+=q[k])});const T=z.lo+z.mid+z.hi;return {s,T,p:T?z.lo/T*100:null,z}}).filter(x=>x.T>1800);
+  if(data.length<3)return "";
+  const W=330,H=140,pl=30,pb=16,bw=(W-pl-4)/data.length,Y=v=>H-pb-(H-pb-8)*v/100;
+  let o=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;[0,50,75,100].forEach(v=>o+=`<line x1="${pl}" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v===75?"var(--txt)":"var(--line)"}" ${v===75?'stroke-dasharray="3 3" opacity=".6"':""}/><text x="${pl-4}" y="${Y(v)+3}" text-anchor="end">${v}%</text>`);
+  data.forEach((x,i)=>{const X=pl+i*bw+bw*.18,w=bw*.64,c=x.p>=75?AZ.lo:x.p>=65?"#8FC6FF":AZ.mid;
+    o+=`<rect x="${X}" y="${Y(x.p)}" width="${w}" height="${Y(0)-Y(x.p)}" rx="4" fill="${c}" data-tip="Semaine du ${fdate(x.s)} : ${Math.round(x.p)} % en Z1–Z2 sur ${hm(x.T/60)} (Z3 ${hm(x.z.mid/60)}, Z4+ ${hm(x.z.hi/60)})"/>`;
+    if(w>18)o+=`<text x="${X+w/2}" y="${Y(x.p)-4}" text-anchor="middle" style="fill:var(--txt)">${Math.round(x.p)}</text>`;
+    o+=`<text x="${X+w/2}" y="${H-3}" text-anchor="middle">${new Date(x.s+"T12:00:00").getDate()}/${new Date(x.s+"T12:00:00").getMonth()+1}</text>`});
+  o+=`</svg><div class="legend2"><span><i style="background:${AZ.lo}"></i>≥ 75 % ✓</span><span><i style="background:#8FC6FF"></i>65–75 %</span><span><i style="background:${AZ.mid}"></i>&lt; 65 %</span><span><i style="background:none;border-top:2px dashed var(--txt);height:0;width:12px"></i>objectif 75 %</span></div>`;
+  const last=data[data.length-1],m=mean(data.slice(-4).map(x=>x.p));
+  return anCard("Part de facile par semaine","temps en Z1–Z2 sur le temps total · vélo, course, natation",anKey(Math.round(m),"%","moyenne des 4 dernières semaines"),o,
+    m>=75?"Ta répartition est bonne : garde ce cap.":`Il manque ${Math.round(75-m)} points pour atteindre 75 %. Le mardi en Z2 en rattrape une partie ; les sorties faciles doivent rester sous 135 bpm à vélo et 140 bpm à pied.`);
+}
+/* --- 8. Sommeil --- */
+function anSleep(){
+  const w=anWell(28).filter(x=>x.sleepSecs);if(w.length<7)return "";
+  const W=330,H=130,pl=30,pb=16,mx=Math.max(9.5,...w.map(x=>x.sleepSecs/3600))+.3,bw=(W-pl-4)/w.length,Y=v=>H-pb-(H-pb-8)*v/mx;
+  let o=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;[0,6,7.5,9].forEach(v=>o+=`<line x1="${pl}" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v===7.5?"var(--txt)":"var(--line)"}" ${v===7.5?'stroke-dasharray="3 3" opacity=".6"':""}/><text x="${pl-4}" y="${Y(v)+3}" text-anchor="end">${String(v).replace(".",",")}h</text>`);
+  w.forEach((x,i)=>{const h=x.sleepSecs/3600,X=pl+i*bw+bw*.15,ww=Math.max(2,bw*.7),c=h>=7.5?"#7B8CFF":h>=6.5?"#A9B4FF":ST.warn;
+    o+=`<rect x="${X}" y="${Y(h)}" width="${ww}" height="${Y(0)-Y(h)}" rx="2" fill="${c}" data-tip="Nuit du ${fdate(x.id)} : ${hm(h*60)}${x.sleepScore?" · score "+x.sleepScore:""}${x.hrv?" · VFC "+Math.round(x.hrv)+" ms":""}"/>`});
+  o+=`<text x="${pl}" y="${H-3}">${fdate(w[0].id)}</text><text x="${W-4}" y="${H-3}" text-anchor="end">${fdate(w[w.length-1].id)}</text></svg><div class="legend2"><span><i style="background:#7B8CFF"></i>≥ 7h30</span><span><i style="background:#A9B4FF"></i>6h30–7h30</span><span><i style="background:${ST.warn}"></i>&lt; 6h30 ⚠</span></div>`;
+  const m=mean(w.map(x=>x.sleepSecs/3600)),short=w.filter(x=>x.sleepSecs<6.5*3600).length;
+  return anCard("Sommeil","durée par nuit · 4 dernières semaines",anKey(hm(m*60),"","moyenne · repère 7h30 en période de charge"),o,
+    m>=7.4?"Ton sommeil suit la charge, c'est ton meilleur outil de récupération.":`En dessous de 7h30 en moyenne${short?" avec "+short+" nuit"+(short>1?"s":"")+" sous 6h30":""} : c'est souvent le premier levier avant d'alléger l'entraînement.`);
+}
 function vAnalyse(){
-  return `<h2>Analyse</h2><div class="muted" style="font-size:12.5px;margin:-4px 2px 8px">Touche un point ou une barre pour voir le détail.</div>`+anIntensity()+anBikeEF()+anRun140()+anDrift()+anRecovery()+anSwim();
+  return `<h2>Analyse</h2><div class="muted" style="font-size:12.5px;margin:-4px 2px 8px">Touche un point ou une barre pour voir le détail.</div>`+anIntensity()+anEasyWeeks()+anBikeEF()+anRun140()+anDrift()+anRecovery()+anSleep()+anSwim();
 }
 /* --- Poids & W/kg --- */
 function weightSeries(){const B=DATA&&DATA.base;const pts=((B&&B.weight)||[]).map(x=>({d:x.date,kg:x.kg}));INH.filter(h=>h.k==="weight").forEach(h=>pts.push({d:h.d,kg:+h.v}));((LIVE&&LIVE.weights)||[]).forEach(x=>pts.push({d:x.date,kg:x.kg}));const m={};pts.forEach(p=>m[p.d]=p.kg);return Object.keys(m).sort().map(d=>({d,kg:m[d]}))}
