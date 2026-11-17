@@ -857,8 +857,16 @@
   }
  },
  "hist": {
-  "note": "Séances du 28 sept. au 10 nov. reprises de Strava par Claude (FC et puissance échantillonnées), en attendant l'historique Intervals.",
+  "note": "Séances du 28 sept. au 10 nov. (vélo, course, natation, muscu, mobilité) reprises de Strava par Claude, en attendant l'historique Intervals.",
   "acts": [
+   {
+    "id": "s20360068151",
+    "start_date_local": "2026-09-28T07:10:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2351,
+    "distance": 2200
+   },
    {
     "id": "s20366695851",
     "start_date_local": "2026-09-28T18:00:00",
@@ -896,6 +904,13 @@
     ]
    },
    {
+    "id": "s20402571151",
+    "start_date_local": "2026-10-01T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3718
+   },
+   {
     "id": "s20409240191",
     "start_date_local": "2026-10-01T18:00:00",
     "type": "VirtualRide",
@@ -905,6 +920,15 @@
     "distance": 18449,
     "average_heartrate": 109.9,
     "average_watts": 141.1
+   },
+   {
+    "id": "s20430027715",
+    "start_date_local": "2026-10-03T08:50:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 9048,
+    "distance": 65210,
+    "icu_training_load": 72
    },
    {
     "id": "s20445443398",
@@ -921,6 +945,14 @@
     ]
    },
    {
+    "id": "s20456171585",
+    "start_date_local": "2026-10-05T07:10:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2781,
+    "distance": 2400
+   },
+   {
     "id": "s20462928190",
     "start_date_local": "2026-10-05T18:00:00",
     "type": "VirtualRide",
@@ -930,6 +962,13 @@
     "distance": 32773,
     "average_heartrate": 135.2,
     "average_watts": 192.2
+   },
+   {
+    "id": "s20469765011",
+    "start_date_local": "2026-10-06T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3663
    },
    {
     "id": "s20477177267",
@@ -955,6 +994,13 @@
      882,
      882
     ]
+   },
+   {
+    "id": "s20498455626",
+    "start_date_local": "2026-10-08T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3974
    },
    {
     "id": "s20505048305",
@@ -993,6 +1039,21 @@
     ]
    },
    {
+    "id": "s20549922560",
+    "start_date_local": "2026-10-12T07:10:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2901,
+    "distance": 2500
+   },
+   {
+    "id": "s20563645292",
+    "start_date_local": "2026-10-13T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4205
+   },
+   {
     "id": "s20570326471",
     "start_date_local": "2026-10-13T18:00:00",
     "type": "VirtualRide",
@@ -1007,6 +1068,13 @@
      818,
      0
     ]
+   },
+   {
+    "id": "s20586624833",
+    "start_date_local": "2026-10-14T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 6039
    },
    {
     "id": "s20577349449",
@@ -1054,6 +1122,22 @@
     "decoupling": 4.7
    },
    {
+    "id": "s20632371500",
+    "start_date_local": "2026-10-18T08:50:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 11415,
+    "distance": 80684,
+    "icu_training_load": 81
+   },
+   {
+    "id": "s20656609937",
+    "start_date_local": "2026-10-20T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4444
+   },
+   {
     "id": "s20663243080",
     "start_date_local": "2026-10-20T18:00:00",
     "type": "VirtualRide",
@@ -1084,6 +1168,20 @@
     ]
    },
    {
+    "id": "s20677839412",
+    "start_date_local": "2026-10-21T18:45:00",
+    "type": "Workout",
+    "name": "Renfo + mobilité",
+    "moving_time": 2404
+   },
+   {
+    "id": "s20684025964",
+    "start_date_local": "2026-10-22T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4688
+   },
+   {
     "id": "s20691163252",
     "start_date_local": "2026-10-22T18:00:00",
     "type": "VirtualRide",
@@ -1098,6 +1196,13 @@
      1531,
      1225
     ]
+   },
+   {
+    "id": "s20702875627",
+    "start_date_local": "2026-10-23T18:45:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 1479
    },
    {
     "id": "s20709946039",
@@ -1129,6 +1234,13 @@
     "decoupling": 0.0
    },
    {
+    "id": "s20729067328",
+    "start_date_local": "2026-10-25T18:45:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 1712
+   },
+   {
     "id": "s20740162084",
     "start_date_local": "2026-10-26T18:00:00",
     "type": "VirtualRide",
@@ -1143,6 +1255,13 @@
      846,
      338
     ]
+   },
+   {
+    "id": "s20746919408",
+    "start_date_local": "2026-10-27T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4321
    },
    {
     "id": "s20754600991",
@@ -1173,6 +1292,20 @@
      1338,
      618
     ]
+   },
+   {
+    "id": "s20768683800",
+    "start_date_local": "2026-10-28T18:45:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 1763
+   },
+   {
+    "id": "s20774600693",
+    "start_date_local": "2026-10-29T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3420
    },
    {
     "id": "s20782079173",
@@ -1222,6 +1355,21 @@
     ]
    },
    {
+    "id": "s20821078705",
+    "start_date_local": "2026-11-01T18:45:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 1552
+   },
+   {
+    "id": "s20825633256",
+    "start_date_local": "2026-11-02T07:10:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3153,
+    "distance": 2800
+   },
+   {
     "id": "s20833210410",
     "start_date_local": "2026-11-02T18:00:00",
     "type": "VirtualRide",
@@ -1236,6 +1384,13 @@
      3894,
      0
     ]
+   },
+   {
+    "id": "s20838872898",
+    "start_date_local": "2026-11-03T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4473
    },
    {
     "id": "s20845972214",
@@ -1266,6 +1421,20 @@
      777,
      1332
     ]
+   },
+   {
+    "id": "s20860069532",
+    "start_date_local": "2026-11-04T18:45:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 1316
+   },
+   {
+    "id": "s20866194970",
+    "start_date_local": "2026-11-05T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4135
    },
    {
     "id": "s20873215827",
@@ -1314,6 +1483,14 @@
     ]
    },
    {
+    "id": "s20916760162",
+    "start_date_local": "2026-11-09T07:10:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2844,
+    "distance": 2100
+   },
+   {
     "id": "s20923108527",
     "start_date_local": "2026-11-09T08:00:00",
     "type": "Run",
@@ -1326,6 +1503,13 @@
      71,
      0
     ]
+   },
+   {
+    "id": "s20929425169",
+    "start_date_local": "2026-11-10T07:15:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3352
    },
    {
     "id": "s20935932325",

@@ -737,7 +737,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.57 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.58 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1525,7 +1525,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.57",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.58",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -2227,8 +2227,35 @@ function anSleep(){
   return anCard("Sommeil","durée par nuit · 4 dernières semaines",anKey(hm(m*60),"","moyenne · repère 7h30 en période de charge"),o,
     m>=7.4?"Ton sommeil suit la charge, c'est ton meilleur outil de récupération.":`En dessous de 7h30 en moyenne${short?" avec "+short+" nuit"+(short>1?"s":"")+" sous 6h30":""} : c'est souvent le premier levier avant d'alléger l'entraînement.`);
 }
+/* --- 0. Statut de charge (comme le « cardio load status » de Polar) ---
+   Charge des 7 derniers jours (fatigue récente) ÷ charge des 28 derniers jours (tolérance), moyennes exponentielles.
+   < 0,8 repos · 0,8–1,0 maintien · 1,0–1,5 productif · > 1,5 excessif. Toutes les séances comptent, muscu et mobilité comprises. */
+const LST=[[0,.8,"Repos","#6B7A90","la charge récente est sous ta tolérance : tu récupères, mais tu ne progresses pas si ça dure."],[.8,1,"Maintien","#4EA8FF","tu entretiens ta forme sans vraiment la faire monter."],[1,1.5,"Productif","#3DDC84","la charge récente stimule la progression sans dépasser ce que tu tolères."],[1.5,9,"Excessif","#E4002B","la charge récente dépasse nettement ta tolérance : risque de fatigue qui s'installe, allège."]];
+function loadStatusSeries(){
+  const acts=anActs(160),by={};acts.forEach(a=>{const l=a.load!=null?a.load:actLoad(a);by[a.date]=(by[a.date]||0)+(l||0)});
+  const ds=Object.keys(by).sort();if(!ds.length)return [];
+  const t=today();let d=ds[0];const days=[];while(d<=t){days.push([d,by[d]||0]);d=addDays(d,1)}
+  const seed=mean(days.slice(0,21).map(x=>x[1]))||0;let a7=seed,a28=seed;const k7=1-Math.exp(-1/7),k28=1-Math.exp(-1/28);
+  return days.map(([d,l],i)=>{a7+=k7*(l-a7);a28+=k28*(l-a28);return {d,l,a7,a28,r:a28>0?a7/a28:null,ok:i>=21}}).filter(x=>x.ok);
+}
+function lsOf(r){return LST.find(z=>r>=z[0]&&r<z[1])||LST[0]}
+function anLoadStatus(){
+  const s=loadStatusSeries().slice(-70);if(s.length<10)return anCard("Statut de charge","charge récente ÷ tolérance","",anEmpty("Il faut au moins un mois de séances."));
+  const cur=s[s.length-1],z=lsOf(cur.r),W=330,H=170,pl=30,pb=16,lo=.4,hi=2,Y=v=>pb/2+(H-pb-pb/2)*(1-(Math.min(hi,Math.max(lo,v))-lo)/(hi-lo)),X=i=>pl+(W-pl-6)*i/(s.length-1);
+  let o=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;
+  LST.forEach(b=>{const y1=Y(Math.min(hi,b[1])),y2=Y(Math.max(lo,b[0]));o+=`<rect x="${pl}" y="${y1}" width="${W-pl-6}" height="${y2-y1}" fill="${b[3]}" opacity=".13"/><text x="${W-8}" y="${y1+12}" text-anchor="end" style="fill:${b[3]};font-weight:700">${b[2]}</text>`});
+  [.8,1,1.5].forEach(v=>o+=`<text x="${pl-4}" y="${Y(v)+3}" text-anchor="end">${String(v).replace(".",",")}</text>`);
+  o+=`<polyline points="${s.map((p,i)=>X(i).toFixed(1)+","+Y(p.r).toFixed(1)).join(" ")}" fill="none" stroke="var(--txt)" stroke-width="2" stroke-linejoin="round"/>`;
+  s.forEach((p,i)=>{if(i%1===0)o+=`<rect x="${X(i)-3}" y="${pb/2}" width="6" height="${H-pb-pb/2}" fill="transparent" data-tip="${fdate(p.d)} : ${lsOf(p.r)[2].toLowerCase()} (rapport ${frn(p.r.toFixed(2))}) · charge du jour ${Math.round(p.l)} · récente ${Math.round(p.a7)} · tolérance ${Math.round(p.a28)}"/>`});
+  o+=`<circle cx="${X(s.length-1)}" cy="${Y(cur.r)}" r="5" fill="${z[3]}" stroke="var(--card)" stroke-width="2"/><text x="${pl}" y="${H-3}">${fdate(s[0].d)}</text><text x="${W-6}" y="${H-3}" text-anchor="end">${fdate(cur.d)}</text></svg>`;
+  // temps passé dans chaque statut sur 4 semaines
+  const l28=s.slice(-28),cnt=LST.map(b=>l28.filter(p=>lsOf(p.r)===b).length);
+  const bar=`<div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin-top:8px;gap:2px">${LST.map((b,i)=>cnt[i]?`<i style="flex:${cnt[i]};background:${b[3]}" data-tip="${b[2]} : ${cnt[i]} jour${cnt[i]>1?"s":""} sur les 28 derniers"></i>`:"").join("")}</div><div class="legend2">${LST.map((b,i)=>`<span><i style="background:${b[3]}"></i>${b[2]} ${cnt[i]} j</span>`).join("")}</div>`;
+  const key=`<div class="big" style="font-size:30px;margin:6px 0 0;color:${z[3]}">${z[2]}</div><div class="muted" style="font-size:12px">rapport ${frn(cur.r.toFixed(2))} · charge récente ${Math.round(cur.a7)} / tolérance ${Math.round(cur.a28)}</div>`;
+  return anCard("Statut de charge","charge des 7 derniers jours ÷ charge des 28 derniers jours · toutes séances",key,o+bar,`${z[2]} : ${z[4]}`);
+}
 function vAnalyse(){
-  return `<h2>Analyse</h2><div class="muted" style="font-size:12.5px;margin:-4px 2px 8px">Touche un point ou une barre pour voir le détail.</div>`+anIntensity()+anEasyWeeks()+anBikeEF()+anRun140()+anDrift()+anRecovery()+anSleep()+anSwim();
+  return `<h2>Analyse</h2><div class="muted" style="font-size:12.5px;margin:-4px 2px 8px">Touche un point ou une barre pour voir le détail.</div>`+anLoadStatus()+anIntensity()+anEasyWeeks()+anBikeEF()+anRun140()+anDrift()+anRecovery()+anSleep()+anSwim();
 }
 /* --- Poids & W/kg --- */
 function weightSeries(){const B=DATA&&DATA.base;const pts=((B&&B.weight)||[]).map(x=>({d:x.date,kg:x.kg}));INH.filter(h=>h.k==="weight").forEach(h=>pts.push({d:h.d,kg:+h.v}));((LIVE&&LIVE.weights)||[]).forEach(x=>pts.push({d:x.date,kg:x.kg}));const m={};pts.forEach(p=>m[p.d]=p.kg);return Object.keys(m).sort().map(d=>({d,kg:m[d]}))}
