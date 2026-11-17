@@ -199,6 +199,7 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .splits div:last-child b{color:var(--acc)}
 .chart{width:100%;display:block;margin-top:10px}
 .chart text{fill:var(--mut);font-size:10px;font-family:-apple-system,system-ui}
+.subnav{display:flex;overflow-x:auto;gap:4px;scrollbar-width:none;margin-bottom:6px}.subnav::-webkit-scrollbar{display:none}.subnav button{flex:0 0 auto;white-space:nowrap}
 .anread{font-size:13px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);line-height:1.45}
 .tipline{color:var(--txt)}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
@@ -699,7 +700,18 @@ function stats(){
   return {streak,week:Math.round(week/60),n:done.length,days,mon};
 }
 function vSuivi(){
-  return vBilan()+`<h2>Tendances</h2><div class="dc"><div class="dl">Volume par semaine<small>12 dernières semaines · trait pointillé = prévu</small></div>${volChart()}</div><div class="dc"><div class="dl">Charge de fond et charge récente</div>${loadChart()}</div>`+vAnalyse()+vWkg()+vReady()+`<h2>Mobilité avec Ironmax</h2>`+vSuiviMob();
+  const SUB=[["bilan","Bilan"],["charge","Charge"],["progres","Progrès"],["recup","Récup"],["objectifs","Objectifs"],["mob","Mobilité"]];
+  if(!SUB.some(x=>x[0]===UI.sub))UI.sub="bilan";
+  const nav=`<div class="seg subnav">${SUB.map(x=>`<button class="${UI.sub===x[0]?"on acc":""}" data-act="suivisub" data-v="${x[0]}">${x[1]}</button>`).join("")}</div>`;
+  const tip=`<div class="muted" style="font-size:12.5px;margin:2px 2px 8px">Touche un point ou une barre pour voir le détail.</div>`;
+  let b="";
+  if(UI.sub==="bilan")b=vBilan();
+  else if(UI.sub==="charge")b=tip+anLoadStatus()+`<div class="dc"><div class="dl">Volume par semaine<small>12 dernières semaines · trait pointillé = prévu</small></div>${volChart()}</div><div class="dc"><div class="dl">Charge de fond et charge récente</div>${loadChart()}</div>`+anIntensity()+anEasyWeeks();
+  else if(UI.sub==="progres")b=tip+anBikeEF()+anRun140()+anDrift()+anSwim()+vWkg();
+  else if(UI.sub==="recup")b=tip+anRecovery()+anSleep();
+  else if(UI.sub==="objectifs")b=vReady();
+  else b=vSuiviMob();
+  return nav+b;
 }
 function vSuiviMob(){
   const st=stats();
@@ -737,7 +749,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.58 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.59 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -891,6 +903,7 @@ document.addEventListener("click",ev=>{
     case"mode":UI.mode=v;UI.vr=0;render();break;
     case"theme":UI.theme=v;UI.vr=0;render();break;
     case"knee":UI.knee=v;render();break;
+    case"suivisub":UI.sub=v;render();window.scrollTo(0,0);break;
     case"vary":UI.vr=(UI.vr||0)+1;render();break;
     case"scale":S.prefs.scale=v;pushSettings();render();break;
     case"ex":openEx(b.dataset.id);break;
@@ -1525,7 +1538,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.58",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.59",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
