@@ -855,5 +855,494 @@
   "2026-11-16|nat": {
    "distance": 2300
   }
+ },
+ "hist": {
+  "note": "Séances du 28 sept. au 10 nov. reprises de Strava par Claude (FC et puissance échantillonnées), en attendant l'historique Intervals.",
+  "acts": [
+   {
+    "id": "s20366695851",
+    "start_date_local": "2026-09-28T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 3x10@220W",
+    "moving_time": 3625,
+    "distance": 30998,
+    "average_heartrate": 145.4,
+    "average_watts": 185.8
+   },
+   {
+    "id": "s20380822546",
+    "start_date_local": "2026-09-29T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Moulinette",
+    "moving_time": 2740,
+    "distance": 21357,
+    "average_heartrate": 124.4,
+    "average_watts": 154.1
+   },
+   {
+    "id": "s20388399089",
+    "start_date_local": "2026-09-30T08:00:00",
+    "type": "Run",
+    "name": "6x2' @4:30",
+    "moving_time": 2689,
+    "distance": 7618,
+    "average_heartrate": 144.6,
+    "hz": [
+     1550,
+     820,
+     319
+    ]
+   },
+   {
+    "id": "s20409240191",
+    "start_date_local": "2026-10-01T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Recup",
+    "moving_time": 2411,
+    "distance": 18449,
+    "average_heartrate": 109.9,
+    "average_watts": 141.1
+   },
+   {
+    "id": "s20445443398",
+    "start_date_local": "2026-10-04T08:00:00",
+    "type": "Run",
+    "name": "Run Paris",
+    "moving_time": 3466,
+    "distance": 9883,
+    "average_heartrate": 152.1,
+    "hz": [
+     764,
+     2291,
+     411
+    ]
+   },
+   {
+    "id": "s20462928190",
+    "start_date_local": "2026-10-05T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 3x10@225W",
+    "moving_time": 3615,
+    "distance": 32773,
+    "average_heartrate": 135.2,
+    "average_watts": 192.2
+   },
+   {
+    "id": "s20477177267",
+    "start_date_local": "2026-10-06T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Moulinette",
+    "moving_time": 3031,
+    "distance": 25500,
+    "average_heartrate": 116.3,
+    "average_watts": 156.7
+   },
+   {
+    "id": "s20484230493",
+    "start_date_local": "2026-10-07T08:00:00",
+    "type": "Run",
+    "name": "5x3' @4:30",
+    "moving_time": 2603,
+    "distance": 8004,
+    "average_heartrate": 152.6,
+    "hz": [
+     838,
+     882,
+     882
+    ]
+   },
+   {
+    "id": "s20505048305",
+    "start_date_local": "2026-10-08T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Recup",
+    "moving_time": 2726,
+    "distance": 22340,
+    "average_heartrate": 109.8,
+    "average_watts": 152.6
+   },
+   {
+    "id": "s20511109333",
+    "start_date_local": "2026-10-09T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Z2 + tempo 3x12'@210W",
+    "moving_time": 7227,
+    "distance": 61463,
+    "average_heartrate": 138.9,
+    "average_watts": 177.1
+   },
+   {
+    "id": "s20537038872",
+    "start_date_local": "2026-10-11T08:00:00",
+    "type": "Run",
+    "name": "Blablarun Reims",
+    "moving_time": 3209,
+    "distance": 8600,
+    "average_heartrate": 136.4,
+    "hz": [
+     2393,
+     435,
+     381
+    ]
+   },
+   {
+    "id": "s20570326471",
+    "start_date_local": "2026-10-13T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - 35' Z2 + tempo 15'@205",
+    "moving_time": 3017,
+    "distance": 27171,
+    "average_heartrate": 123.9,
+    "average_watts": 178.6,
+    "hz": [
+     2199,
+     818,
+     0
+    ]
+   },
+   {
+    "id": "s20577349449",
+    "start_date_local": "2026-10-14T08:00:00",
+    "type": "Run",
+    "name": "6x3' @4:20",
+    "moving_time": 2767,
+    "distance": 8700,
+    "average_heartrate": 156.5,
+    "hz": [
+     563,
+     938,
+     1266
+    ]
+   },
+   {
+    "id": "s20598404690",
+    "start_date_local": "2026-10-15T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 3x12@228W",
+    "moving_time": 3979,
+    "distance": 36411,
+    "average_heartrate": 146.5,
+    "average_watts": 198.3,
+    "hz": [
+     1416,
+     2158,
+     405
+    ]
+   },
+   {
+    "id": "s20607189013",
+    "start_date_local": "2026-10-16T08:00:00",
+    "type": "Run",
+    "name": "55' Z2 + 6' @5:05",
+    "moving_time": 3666,
+    "distance": 10805,
+    "average_heartrate": 138.0,
+    "hz": [
+     3107,
+     559,
+     0
+    ],
+    "decoupling": 4.7
+   },
+   {
+    "id": "s20663243080",
+    "start_date_local": "2026-10-20T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - 30' Z2 + tempo 20'@210",
+    "moving_time": 3029,
+    "distance": 29213,
+    "average_heartrate": 131.2,
+    "average_watts": 183.7,
+    "hz": [
+     1848,
+     1181,
+     0
+    ]
+   },
+   {
+    "id": "s20670485439",
+    "start_date_local": "2026-10-21T08:00:00",
+    "type": "Run",
+    "name": "5x4' @4:15",
+    "moving_time": 3149,
+    "distance": 9705,
+    "average_heartrate": 154.4,
+    "hz": [
+     961,
+     801,
+     1388
+    ]
+   },
+   {
+    "id": "s20691163252",
+    "start_date_local": "2026-10-22T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 4x10'@230W",
+    "moving_time": 4517,
+    "distance": 37522,
+    "average_heartrate": 142.2,
+    "average_watts": 203.0,
+    "hz": [
+     1761,
+     1531,
+     1225
+    ]
+   },
+   {
+    "id": "s20709946039",
+    "start_date_local": "2026-10-24T08:43:19",
+    "type": "Ride",
+    "name": "Sortie pluie et vent",
+    "moving_time": 9481,
+    "distance": 70599,
+    "average_heartrate": 110.6,
+    "hz": [
+     9160,
+     321,
+     0
+    ]
+   },
+   {
+    "id": "s20721938435",
+    "start_date_local": "2026-10-25T08:00:00",
+    "type": "Run",
+    "name": "1h FC<140 + 17' @5:05",
+    "moving_time": 4675,
+    "distance": 13588,
+    "average_heartrate": 140.4,
+    "hz": [
+     3090,
+     1189,
+     396
+    ],
+    "decoupling": 0.0
+   },
+   {
+    "id": "s20740162084",
+    "start_date_local": "2026-10-26T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - VO2max 3x4'@290W + 2x4'@260W",
+    "moving_time": 3327,
+    "distance": 28618,
+    "average_heartrate": 135.0,
+    "average_watts": 208.5,
+    "hz": [
+     2143,
+     846,
+     338
+    ]
+   },
+   {
+    "id": "s20754600991",
+    "start_date_local": "2026-10-27T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - 35' Z2 + tempo 20'@210W",
+    "moving_time": 3326,
+    "distance": 23905,
+    "average_heartrate": 125.2,
+    "average_watts": 181.1,
+    "hz": [
+     2480,
+     846,
+     0
+    ]
+   },
+   {
+    "id": "s20760848284",
+    "start_date_local": "2026-10-28T08:00:00",
+    "type": "Run",
+    "name": "3x8' @4:45",
+    "moving_time": 3037,
+    "distance": 9458,
+    "average_heartrate": 149.5,
+    "hz": [
+     1081,
+     1338,
+     618
+    ]
+   },
+   {
+    "id": "s20782079173",
+    "start_date_local": "2026-10-29T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 4x15' @225W",
+    "moving_time": 5712,
+    "distance": 49637,
+    "average_heartrate": 146.4,
+    "average_watts": 200.6,
+    "hz": [
+     1743,
+     3001,
+     968
+    ]
+   },
+   {
+    "id": "s20801976791",
+    "start_date_local": "2026-10-31T18:00:00",
+    "type": "Ride",
+    "trainer": false,
+    "name": "Sortie ~80 km",
+    "moving_time": 9187,
+    "distance": 73548,
+    "average_heartrate": 152.3,
+    "average_watts": 188.6,
+    "hz": [
+     1713,
+     4983,
+     2491
+    ],
+    "decoupling": 4.2
+   },
+   {
+    "id": "s20814633964",
+    "start_date_local": "2026-11-01T08:00:00",
+    "type": "Run",
+    "name": "1h Z2 + 19' tempo",
+    "moving_time": 4746,
+    "distance": 14184,
+    "average_heartrate": 139.7,
+    "hz": [
+     3459,
+     1207,
+     80
+    ]
+   },
+   {
+    "id": "s20833210410",
+    "start_date_local": "2026-11-02T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 4x16' @225W",
+    "moving_time": 5891,
+    "distance": 51436,
+    "average_heartrate": 141.9,
+    "average_watts": 200.5,
+    "hz": [
+     1997,
+     3894,
+     0
+    ]
+   },
+   {
+    "id": "s20845972214",
+    "start_date_local": "2026-11-03T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - 35' Z2 + tempo 25'@210",
+    "moving_time": 3621,
+    "distance": 25670,
+    "average_heartrate": 134.1,
+    "average_watts": 184.5,
+    "hz": [
+     2271,
+     1350,
+     0
+    ]
+   },
+   {
+    "id": "s20853187116",
+    "start_date_local": "2026-11-04T08:00:00",
+    "type": "Run",
+    "name": "3x10' @4:40 + 10' allure IM",
+    "moving_time": 3274,
+    "distance": 10328,
+    "average_heartrate": 152.0,
+    "hz": [
+     1165,
+     777,
+     1332
+    ]
+   },
+   {
+    "id": "s20873215827",
+    "start_date_local": "2026-11-05T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - SEF 4x8' 205W @65rpm",
+    "moving_time": 4017,
+    "distance": 36508,
+    "average_heartrate": 129.2,
+    "average_watts": 181.5,
+    "hz": [
+     3677,
+     340,
+     0
+    ]
+   },
+   {
+    "id": "s20878889124",
+    "start_date_local": "2026-11-06T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Z1/Z2 + 20'@210W",
+    "moving_time": 7220,
+    "distance": 63140,
+    "average_heartrate": 132.8,
+    "average_watts": 174.0,
+    "hz": [
+     5262,
+     1958,
+     0
+    ]
+   },
+   {
+    "id": "s20891323588",
+    "start_date_local": "2026-11-07T08:00:00",
+    "type": "Run",
+    "name": "Run avec pacers",
+    "moving_time": 4465,
+    "distance": 9710,
+    "average_heartrate": 106.1,
+    "hz": [
+     4465,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s20923108527",
+    "start_date_local": "2026-11-09T08:00:00",
+    "type": "Run",
+    "name": "Deload 35' <140",
+    "moving_time": 2100,
+    "distance": 6240,
+    "average_heartrate": 131.6,
+    "hz": [
+     2029,
+     71,
+     0
+    ]
+   },
+   {
+    "id": "s20935932325",
+    "start_date_local": "2026-11-10T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - 40' z1/2 160W",
+    "moving_time": 2416,
+    "distance": 22538,
+    "average_heartrate": 116.9,
+    "average_watts": 159.4,
+    "hz": [
+     2416,
+     0,
+     0
+    ]
+   }
+  ]
  }
 }

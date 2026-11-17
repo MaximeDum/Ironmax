@@ -737,7 +737,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.53 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.54 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1163,7 +1163,7 @@ const hm=min=>{min=Math.round(min);return Math.floor(min/60)+"h"+pad(min%60)};
 function loadPlan(){fetch("plan.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{PLAN=j;maybeRecompute();render()}).catch(()=>{})}
 
 /* ============ INTERVALS.ICU ============ */
-const FIELDS="id,start_date_local,type,name,description,source,device_name,elapsed_time,moving_time,distance,icu_weighted_avg_watts,average_watts,average_heartrate,max_heartrate,icu_training_load,decoupling,trainer,icu_rpe,icu_eftp,icu_hr_zone_times";
+const FIELDS="id,start_date_local,type,name,description,source,device_name,elapsed_time,moving_time,distance,icu_weighted_avg_watts,average_watts,average_heartrate,max_heartrate,icu_training_load,decoupling,trainer,icu_rpe,icu_eftp,icu_hr_zone_times,average_watts";
 async function apiGet(path){
   const r=await fetch("https://intervals.icu/api/v1/athlete/"+encodeURIComponent(CFG.athlete)+path,{headers:{Authorization:"Basic "+btoa("API_KEY:"+CFG.key)}});
   if(r.status===401||r.status===403)throw new Error("Clé ou identifiant refusé par Intervals.icu");
@@ -1521,7 +1521,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.53",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.54",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -2068,7 +2068,11 @@ function loadChart(){
    Un graphique = une question. Chaque carte : un chiffre clé + une phrase de lecture + le graphique (touche un point pour sa valeur). */
 const AZ={lo:"#4EA8FF",mid:"#F5A524",hi:"#E4002B"};
 const ST={good:"#3DDC84",warn:"#F5A524",bad:"#E4002B"};
-function anActs(days){const t=today(),from=addDays(t,-days);return ((LIVE&&LIVE.acts)||[]).filter(a=>a.date>=from&&a.date<=t)}
+function anActs(days){const t=today(),from=addDays(t,-days),live=((LIVE&&LIVE.acts)||[]);
+  // historique repris par Claude (Strava) pour les jours que les données Intervals ne couvrent pas encore
+  const first=live.filter(a=>!/^s/.test(String(a.id))).reduce((m,a)=>a.date<m?a.date:m,"9999");
+  const hist=((DATA&&DATA.hist&&DATA.hist.acts)||[]).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a),hist:1})).filter(a=>a.date<first);
+  return live.concat(hist).filter(a=>a.date>=from&&a.date<=t)}
 function anWell(days){const t=today(),from=addDays(t,-days),raw=lsGet(LSK.raw,null);return ((raw&&raw.well)||[]).filter(w=>w.id>=from&&w.id<=t).sort((a,b)=>a.id<b.id?-1:1)}
 const mean=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
 const sd=a=>{const m=mean(a);return a.length>1?Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1)):0};
@@ -2079,11 +2083,12 @@ function anEmpty(txt){return `<div class="hint" style="margin-top:8px">${txt}</d
 
 /* --- 1. Répartition des intensités (temps par zone de FC) --- */
 function zoneSplit(a){
+  if(Array.isArray(a.hz))return {lo:a.hz[0],mid:a.hz[1],hi:a.hz[2],est:1};
   const z=a.icu_hr_zone_times;
   if(Array.isArray(z)&&z.length>=3){const v=z.map(x=>+x||0);return {lo:v[0]+v[1],mid:v[2],hi:v.slice(3).reduce((s,x)=>s+x,0),est:0}}
   // estimation sans les zones d'Intervals : blocs de travail de l'analyse, le reste à la FC moyenne
   const T=a.moving_time||0,hr=a.average_heartrate;if(!T||!hr)return null;
-  const lt=INP.fcrest+.85*(INP.fcmax-INP.fcrest),run=a.sp==="course",b1=lt*(run?.84:.80),b2=lt*(run?.92:.88),zof=h=>h<b1?"lo":h<b2?"mid":"hi";
+  const lt=INP.fcrest+.85*(INP.fcmax-INP.fcrest),run=a.sp==="course",b1=lt*(run?.84:.80),b2=lt*.92,zof=h=>h<b1?"lo":h<b2?"mid":"hi";
   const o={lo:0,mid:0,hi:0,est:1},an=ANA[a.id];
   if(an&&an.reps&&an.reps.length&&a.sp!=="nat"){let w=0;an.reps.forEach(r=>{o[zof(r[2])]+=r[0];w+=r[0]});o.lo+=Math.max(0,T-w)}else o[zof(hr)]+=T;
   return o;
@@ -2127,24 +2132,25 @@ const slope=pts=>{if(pts.length<4)return null;const xs=pts.map(p=>new Date(p.d)/
 
 /* --- 2. Vélo : efficacité aérobie (puissance normalisée / FC) --- */
 function anBikeEF(){
-  const pts=anActs(84).filter(a=>a.sp==="velo"&&(a.moving_time||0)>=2400&&a.icu_weighted_avg_watts&&a.average_heartrate>90)
-    .map(a=>({d:a.date,v:a.icu_weighted_avg_watts/a.average_heartrate,c:a.trainer?"#4EA8FF":"#9DD1FF",tip:`${fdate(a.date)} · ${a.name||"Vélo"} : ${Math.round(a.icu_weighted_avg_watts)} W pour ${Math.round(a.average_heartrate)} bpm → ${frn(( a.icu_weighted_avg_watts/a.average_heartrate).toFixed(2))} W/bpm`}));
+  const W=a=>a.average_watts||a.icu_weighted_avg_watts;
+  const pts=anActs(84).filter(a=>a.sp==="velo"&&(a.moving_time||0)>=2400&&W(a)&&a.average_heartrate>100&&!/vo2/i.test(a.name||""))
+    .map(a=>({d:a.date,v:W(a)/a.average_heartrate,c:a.trainer?"#4EA8FF":"#9DD1FF",tip:`${fdate(a.date)} · ${a.name||"Vélo"} : ${Math.round(W(a))} W de moyenne pour ${Math.round(a.average_heartrate)} bpm → ${frn((W(a)/a.average_heartrate).toFixed(2))} W/bpm`}));
   if(pts.length<3)return anCard("Vélo · efficacité aérobie","watts produits par battement de cœur","",anEmpty("Il faut au moins 3 sorties de plus de 40 min avec puissance et FC."));
   const sl=slope(pts),last=mean(pts.slice(-3).map(p=>p.v)),ch=sl!=null?sl*42/last*100:0;
   const read=ch>2?`En hausse (+${frn1(ch)} % sur 6 semaines) : tu produis plus de watts pour le même effort cardiaque.`:ch<-2?`En baisse (${frn1(ch)} % sur 6 semaines) : fatigue, chaleur ou séances plus dures. À recouper avec ta récupération.`:`Stable sur 6 semaines. Ça bougera surtout avec le volume en Z2.`;
-  return anCard("Vélo · efficacité aérobie","puissance normalisée ÷ FC moyenne · sorties ≥ 40 min",anKey(frn(last.toFixed(2)),"W/bpm","moyenne des 3 dernières sorties"),
+  return anCard("Vélo · efficacité aérobie","puissance moyenne ÷ FC moyenne · sorties ≥ 40 min, hors VO2max",anKey(frn(last.toFixed(2)),"W/bpm","moyenne des 3 dernières sorties"),
     trendChart(pts,{fmt:v=>v.toFixed(2).replace(".",","),roll:4,c:"#4EA8FF"})+`<div class="legend2"><span><i style="background:#4EA8FF"></i>Zwift</span><span><i style="background:#9DD1FF"></i>Extérieur</span><span><i style="background:var(--txt);height:2px"></i>Tendance (4 sorties)</span></div>`,read);
 }
 
 /* --- 3. Course : allure ramenée à 140 bpm --- */
 function anRun140(){
-  const R=140;const pts=anActs(84).filter(a=>a.sp==="course"&&(a.moving_time||0)>=1800&&a.distance>3000&&a.average_heartrate>110)
+  const R=140,itv=a=>/\d\s*[x×]\s*\d/i.test(a.name||"")||(ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length>1)||/vma|seuil/i.test(a.name||"");const pts=anActs(84).filter(a=>a.sp==="course"&&(a.moving_time||0)>=1800&&a.distance>3000&&a.average_heartrate>=128&&a.average_heartrate<=152&&!itv(a))
     .map(a=>{const v=a.distance/a.moving_time,v140=v*(R-INP.fcrest)/(a.average_heartrate-INP.fcrest),p=1000/v140;
       return {d:a.date,v:p,tip:`${fdate(a.date)} · ${(a.distance/1000).toFixed(1).replace(".",",")} km à ${toMMSS(1000/v)}/km pour ${Math.round(a.average_heartrate)} bpm → ${toMMSS(p)}/km à 140 bpm`}});
   if(pts.length<3)return anCard("Course · allure à 140 bpm","ton allure ramenée à la même FC","",anEmpty("Il faut au moins 3 sorties de plus de 30 min avec FC."));
   const sl=slope(pts),last=mean(pts.slice(-3).map(p=>p.v)),ch=sl!=null?sl*42:0;
   const read=ch<-3?`Tu gagnes ${Math.round(-ch)} s/km à 140 bpm sur 6 semaines : ton moteur aérobie progresse.`:ch>3?`Tu perds ${Math.round(ch)} s/km à 140 bpm sur 6 semaines : souvent la fatigue ou la chaleur. Regarde ta récupération.`:`Stable sur 6 semaines.`;
-  return anCard("Course · allure à 140 bpm","ton allure de chaque sortie ramenée à 140 bpm · plus haut = plus rapide",anKey(toMMSS(last),"/km","moyenne des 3 dernières sorties · repère marathon IM ≈ 5:45"),
+  return anCard("Course · allure à 140 bpm","sorties continues (hors fractionné) ramenées à 140 bpm · plus haut = plus rapide",anKey(toMMSS(last),"/km","moyenne des 3 dernières sorties · repère marathon IM ≈ 5:45"),
     trendChart(pts,{fmt:v=>toMMSS(v),inv:1,roll:4,c:"#3DDC84"}),read);
 }
 
