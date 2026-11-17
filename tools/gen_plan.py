@@ -74,6 +74,29 @@ def spec(j,dl,n):
 def taper(j,n):
     if n==39: return [NAT(1,1500,1),S("im",50,None,sets="3×5'",w=.80,rec="3'"),S("mp",30,None,sets="3×4'",v=.66,rec="2'"),S("ow",25,"Eau libre · reconnaissance",m=1000),S("long",45,"Vélo 45' + check matériel",z2=.65),S("lrun",0,"IRONMAN · dim. 27 juin",race=1)]
     return [NAT(4,2500),S("im",[80,60][j],None,sets=["3×10'","3×8'"][j],w=.80,rec="4'"),S("mA",[40,30][j],"Muscu légère",light=1),S("mp",[50,40][j],None,sets=["3×8'","2×8'"][j],v=.66,rec="2'"),S("ow",45,None,m=[2500,2000][j]),S("long",[180,120][j],None,z2=.70,blocks=["3×15'","2×15'"][j],w=.78),S("lrun",[75,60][j],None,v=.66,blk=["15' allure marathon","10' allure marathon"][j])]
+
+# --- Saison 2027 : tours du Léman (180 km) et triathlon M du 23 mai (course-entraînement) ---
+def _set(ss,i,**kw):
+    for k,x in enumerate(ss):
+        if x["id"]==i: ss[k]=S(i,kw.pop("min",x["min"]),kw.pop("l",x.get("l")),**kw)
+    return ss
+LEMAN="Allure Ironman, FC ≤ 140 bpm, sans suivre un groupe trop rapide. Nutrition du jour J : 80-90 g de glucides/h, 500-750 ml/h. Enchaîne la course dès la descente du vélo."
+def ovr(n,ss):
+    if n==31:  # sam. 1er mai : 1er tour du Léman (test nutrition et position)
+        _set(ss,"long",min=395,l="Tour du Léman · 180 km (1/2)",z2=.72,brick="20'",txt=LEMAN)
+        _set(ss,"lrun",min=80,l=None,v=.66)
+    if n==33:  # sam. 15 mai : 2e tour du Léman, la sortie clé
+        _set(ss,"long",min=400,l="Tour du Léman · 180 km (2/2)",z2=.73,brick="30'",txt=LEMAN)
+        _set(ss,"lrun",min=110,l=None,v=.66)
+    if n==34:  # semaine du M : charge réduite en fin de semaine
+        _set(ss,"im",min=90,l=None,sets="2×20'",w=.80,rec="5'")
+        _set(ss,"seuil",min=45,l=None,sets="2×8'",v=.86,rec="2'")
+        _set(ss,"long",min=60,l="Vélo 1h + activation (veille du M)",z2=.65,txt="Z2 facile avec 3×1' à allure de course M. Vérifie le vélo et prépare ton sac.")
+        _set(ss,"lrun",min=150,l="Triathlon M · course-entraînement (dim. 23 mai)",txt="1,5 km · 40 km · 10 km. Natation régulière, vélo ≈ 85 % FTP (FC ≤ 160 bpm), course un peu plus vite que l'allure Ironman ; lâche-toi sur les 5 derniers km si les jambes répondent. En option : 1h de vélo Z2 après l'arrivée.")
+    if n==35:  # récupération lundi-mardi après le M
+        _set(ss,"ss",min=45,l="Récup : vélo Z2 facile",w=.62)
+        _set(ss,"im",min=60,l="Récup : vélo Z2",w=.66)
+    return ss
 def phase(d):
     if d<=dt.date(2026,12,13): return "Base 1"
     if d<=dt.date(2027,2,21): return "Base 2"
@@ -90,7 +113,8 @@ for i in range(33):
         if ph=="Spécifique": ctr[ph]=j+1
         elif not dl: ctr[ph]=j+1
         ss={"Base 2":base2,"Build":build,"Spécifique":spec}.get(ph,lambda j,dl,n:taper(j,n))(j,dl,n) if ph!="Affûtage" else taper(j,n)
-    note={7:"Décharge · test VMA",11:"Décharge · test FTP",12:"Si FTP < 265 W au test : VO2max le lundi",21:"Décharge · retests FTP + VMA",32:"Semaine allégée · EVG",39:"Semaine de course"}.get(n,"Décharge" if dl else "")
+        ss=ovr(n,ss)
+    note={7:"Décharge · test VMA",11:"Décharge · test FTP",12:"Si FTP < 265 W au test : VO2max le lundi",21:"Décharge · retests FTP + VMA",31:"Tour du Léman samedi",32:"Semaine allégée · EVG",33:"Tour du Léman samedi",34:"Triathlon M dimanche (entraînement)",35:"Récup lundi-mardi après le M",39:"Semaine de course"}.get(n,"Décharge" if dl else "")
     test={11:"Test FTP 20'",21:"Retest FTP + VMA",39:"IRONMAN"}.get(n)
     sd=SD.get(n)
     if n==21: sd=base2_retest()
