@@ -735,7 +735,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.50 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.51 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1418,9 +1418,11 @@ function zwText(s){
   const rpm=p.rpm?" "+String(p.rpm).replace(/[–—]/g,"-")+"rpm":(k==="ef"?" 65-70rpm":"");
   const out=[];let used=0;const blk=(txt,m)=>{out.push(txt);used+=m};
   // échauffement court (10') quand la séance est courte, pour tenir la durée prévue
-  const warm=(short)=>short?blk(`Échauffement\n- 10m ramp ${P(.45)}-${P(.72)}% 90rpm`,10):blk(`Échauffement\n- 9m ramp ${P(.45)}-${P(.70)}% 90rpm\n3x\n- 1m ${P(.75)}% 100rpm\n- 1m ${P(.55)}%`,15);
+  // échauffement : toujours 10'
+  const warm=()=>blk(`Échauffement\n- 10m ramp ${P(.45)}-${P(.72)}% 90rpm`,10);
   const z2fill=(lo,hi,total)=>{const m=Math.round(total-used-10);if(m>=5)blk(`Endurance\n- ${m}m ${lo}-${hi}%`,m)};
-  const cool=()=>blk(`Retour au calme\n- 10m ramp ${P(.60)}-${P(.45)}%`,10);
+  // fin de séance : 10' au total après le dernier bloc = 5' Z2 + 5' retour au calme
+  const cool=()=>blk(`Z2\n- 5m ${P(.62)}-${P(.68)}%\n\nRetour au calme\n- 5m ramp ${P(.58)}-${P(.45)}%`,10);
   const min=s.min||60;
   if(p.test==="FTP"){
     blk(`Échauffement\n- 14m ramp ${P(.45)}-${P(.75)}% 90rpm\n3x\n- 1m ${P(1.10)}%\n- 1m ${P(.50)}%`,20);
@@ -1432,7 +1434,7 @@ function zwText(s){
     const st=zSets(p.sets);
     if(!st){blk(`Endurance\n- 10m ramp ${P(.45)}-${P(.62)}%\n- ${Math.max(5,min-10)}m ${P(.62)}-${P(.70)}%`,min);return out.join("\n\n")}
     const rec=zMin(p.rec)||4,rw=P(k==="vo2"?.5:.55),cyc=Math.max(1,Math.round(st.d/5));
-    const setMin=p.ou?st.n*cyc*5+(st.n-1)*rec:st.n*st.d+(st.n-1)*rec;warm(15+setMin+10>min);
+    const setMin=p.ou?st.n*cyc*5+(st.n-1)*rec:st.n*st.d+(st.n-1)*rec;warm();
     {const m=Math.round(min-used-setMin-10);if(m>=5)blk(`Endurance\n- ${m}m ${P(.62)}-${P(.70)}%`,m)}
     // la récup du dernier bloc est comprise dans le retour au calme (10' au total après le dernier bloc)
     if(p.ou){for(let i=0;i<st.n;i++){blk(`Bloc ${i+1} : sur-sous\n${cyc}x\n- 3m ${P(p.ou[0])}%\n- 2m ${P(p.ou[1])}%`,cyc*5);if(i<st.n-1)blk(`Récup\n- ${rec}m ${rw}% 90rpm`,rec)}}
@@ -1449,16 +1451,16 @@ function zwText(s){
   }
   if(["long","brick","sim"].includes(k)){
     const bike=Math.max(30,min-zMin(p.brick)),lo=PL(p.z2-.03),hi=PL(p.z2+.03);
-    blk(`Échauffement\n- 15m ramp ${P(.45)}-${lo}% 90rpm`,15);
+    blk(`Échauffement\n- 10m ramp ${P(.45)}-${lo}% 90rpm`,10);
     const bt=String(p.blocks||""),st=zSets(bt),two=bt.match(/(\d+)\s*'\s*puis\s*(\d+)\s*'/);
     let blocks=[];
     if(st)for(let i=0;i<st.n;i++)blocks.push([st.d,PL(p.w)]);
     else if(two)blocks=[[+two[1],PL(p.w)],[+two[2],PL(p.w2||p.w)]];
     else if(bt){const m=zMin(bt);if(m)blocks=[[m,PL(p.w)]]}
     const bTot=blocks.reduce((a,b)=>a+b[0],0)+Math.max(0,blocks.length-1)*10;
-    const lead=Math.round(bike-15-bTot-10);if(lead>=5)blk(`Endurance Z2\n- ${lead}m ${lo}-${hi}%`,lead);
+    const lead=Math.round(bike-10-bTot-10);if(lead>=5)blk(`Endurance Z2\n- ${lead}m ${lo}-${hi}%`,lead);
     blocks.forEach((b,i)=>{blk(`Bloc ${i+1}\n- ${b[0]}m ${b[1]}%`,b[0]);if(i<blocks.length-1)blk(`Z2\n- 10m ${lo}-${hi}%`,10)});
-    blk(`Fin souple\n- 10m ${P(.55)}%`,10);
+    cool();
     if(p.brick)out.push(`Enchaînement : ${p.brick} de course dès la descente du vélo`);
     return out.join("\n\n");
   }
@@ -1516,7 +1518,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.50",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.51",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
