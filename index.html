@@ -749,7 +749,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.59 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.60 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1538,7 +1538,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.59",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.60",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1949,10 +1949,18 @@ function doneOn(date,sport){
   if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{if(claudeOf(date,sport)){const fl=feelLabel(a.id);out.push(withClaude({date,sport,title:a.name,metrics:autoComment(a),comment:"",verdict:JUSTIFY.has(feelOf(a.id))?"just":null,feel:fl}));return}const an=ANA[a.id],fl=feelLabel(a.id);out.push({date,sport,title:a.name,metrics:autoComment(a),comment:(an?an.comment:(a.note||""))+(fl?" · Ressenti : "+fl:""),verdict:JUSTIFY.has(feelOf(a.id))?"ok":an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs,crep:an&&an.crep})});
   return out;
 }
+/* Allure natation fiable : blocs corrigés (toi) > blocs de l'analyse de Claude > séance entière (pauses comprises, donc trop lente) */
+function swimPace(a){
+  const sf=SWIMFIX[a.id],w=sf&&sf.laps?sf.laps.filter(l=>l.w&&l.d>0&&l.t>0):[];
+  if(w.length)return {p:w.reduce((t,l)=>t+l.t,0)/(w.reduce((t,l)=>t+l.d,0)/100),src:"blocs"};
+  const an=ANA[a.id],c=claudeOf(a.date,"nat"),reps=(an&&an.crep&&an.reps)||(c&&c.reps)||null;
+  if(reps&&reps.length){const t=reps.reduce((x,r)=>x+r[0],0),d=reps.reduce((x,r)=>x+(r[3]||r[1]*r[0]),0);if(d>0)return {p:t/(d/100),src:"blocs"}}
+  return a.distance?{p:a.moving_time/(a.distance/100),src:"séance"}:null;
+}
 function autoComment(a){
   const m=[hm(a.moving_time/60)];const W=a.icu_weighted_avg_watts||a.average_watts;
   if(W)m.push(W+" W (NP)");if(a.sp==="course"&&a.distance)m.push(paceKm(a.distance/a.moving_time*3.6)+"/km");
-  if(a.sp==="nat"&&a.distance)m.push(toMMSS(a.moving_time/(a.distance/100))+"/100 m");
+  if(a.sp==="nat"&&a.distance){const sp=swimPace(a);m.push(Math.round(a.distance)+" m");if(sp)m.push(toMMSS(sp.p)+"/100 m"+(sp.src==="blocs"?" sur les blocs":""))}
   if(a.average_heartrate)m.push(Math.round(a.average_heartrate)+" bpm");if(a.decoupling!=null)m.push("dérive "+frn(a.decoupling.toFixed(1))+" %");
   m.push("charge "+Math.round(a.load||0));return m.join(" · ");
 }
@@ -2203,10 +2211,9 @@ function anRecovery(){
 
 /* --- 6. Natation : allure moyenne --- */
 function anSwim(){
-  const pts=anActs(84).filter(a=>a.sp==="nat"&&a.distance>800&&a.moving_time).map(a=>{const sf=SWIMFIX[a.id],w=sf&&sf.laps?sf.laps.filter(l=>l.w):[];
-    const p=w.length?w.reduce((t,l)=>t+l.t,0)/(w.reduce((t,l)=>t+l.d,0)/100):a.moving_time/(a.distance/100);
-    return {d:a.date,v:p,c:w.length?"#2EC4B6":"#8FE3DA",tip:`${fdate(a.date)} · ${Math.round(a.distance)} m · ${toMMSS(p)}/100 m${w.length?" (blocs de travail)":" (séance entière)"}`}});
-  if(pts.length<2)return "";
+  const pts=anActs(84).filter(a=>a.sp==="nat"&&a.distance>800&&a.moving_time&&!a.hist).map(a=>{const sp=swimPace(a);if(!sp)return null;const b=sp.src==="blocs";
+    return {d:a.date,v:sp.p,c:b?"#2EC4B6":"#8FE3DA",tip:`${fdate(a.date)} · ${Math.round(a.distance)} m · ${toMMSS(sp.p)}/100 m${b?" sur les blocs de travail":" (séance entière, pauses comprises)"}`}}).filter(Boolean);
+  if(!pts.length)return anCard("Natation · allure","allure /100 m","",anEmpty("Corrige les distances de tes séances (bouton 🏊 Corriger) pour suivre ton allure sur les blocs de travail."));
   const css=INP.css||"1:55";
   return anCard("Natation · allure","allure /100 m · plus haut = plus rapide",anKey(toMMSS(pts[pts.length-1].v),"/100 m","dernière séance · ton seuil (CSS) "+css),
     trendChart(pts,{fmt:v=>toMMSS(v),inv:1,c:"#2EC4B6",ref:{v:mmss(css),lab:"seuil "+css}})+`<div class="legend2"><span><i style="background:#2EC4B6"></i>Blocs de travail corrigés</span><span><i style="background:#8FE3DA"></i>Séance entière</span></div>`,"");
