@@ -737,7 +737,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.55 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.56 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1435,19 +1435,19 @@ function zwText(s){
   }
   if(["vo2","ss","thr","ef","im"].includes(k)){
     const st=zSets(p.sets);
-    if(!st){blk(`Endurance\n- 10m ramp ${P(.45)}-${P(.62)}%\n- ${Math.max(5,min-10)}m ${P(.62)}-${P(.70)}%`,min);return out.join("\n\n")}
+    if(!st){blk(`Endurance (FC max 135 bpm)\n- 10m ramp ${P(.45)}-${P(.62)}%\n- ${Math.max(5,min-10)}m ${P(.62)}-${P(.70)}%`,min);return out.join("\n\n")}
     const rec=zMin(p.rec)||4,rw=P(k==="vo2"?.5:.55),cyc=Math.max(1,Math.round(st.d/5));
     const setMin=p.ou?st.n*cyc*5+(st.n-1)*rec:st.n*st.d+(st.n-1)*rec;warm();
-    {const m=Math.round(min-used-setMin-10);if(m>=5)blk(`Endurance\n- ${m}m ${P(.62)}-${P(.70)}%`,m)}
+    {const m=Math.round(min-used-setMin-10);if(m>=5)blk(`Endurance (FC max 135 bpm)\n- ${m}m ${P(.62)}-${P(.70)}%`,m)}
     // la récup du dernier bloc est comprise dans le retour au calme (10' au total après le dernier bloc)
     if(p.ou){for(let i=0;i<st.n;i++){blk(`Bloc ${i+1} : sur-sous\n${cyc}x\n- 3m ${P(p.ou[0])}%\n- 2m ${P(p.ou[1])}%`,cyc*5);if(i<st.n-1)blk(`Récup\n- ${rec}m ${rw}% 90rpm`,rec)}}
     else{if(st.n>1)blk(`Corps de séance\n${st.n-1}x\n- ${st.d}m ${P(p.w)}%${rpm}\n- ${rec}m ${rw}% 90rpm`,(st.n-1)*(st.d+rec));blk(`${st.n>1?"Dernier bloc":"Bloc"}\n- ${st.d}m ${P(p.w)}%${rpm}`,st.d)}
     cool();return out.join("\n\n");
   }
   if(k==="tempo"){
-    if(!p.tempo){blk(`Z2 facile\n- 10m ramp ${P(.45)}-${P(p.w-.05)}%\n- ${Math.max(5,min-10)}m ${P(p.w-.07)}-${P(p.w)}%`,min);return out.join("\n\n")}
+    if(!p.tempo){blk(`Z2 facile (FC max 135 bpm)\n- 10m ramp ${P(.45)}-${P(p.w-.05)}%\n- ${Math.max(5,min-10)}m ${P(p.w-.07)}-${P(p.w)}%`,min);return out.join("\n\n")}
     warm();const st=zSets(p.tempo),tMin=st?st.n*st.d+(st.n-1)*5:(zMin(p.tempo)||30);
-    blk(`Z2\n- ${Math.max(20,Math.round(min-used-tMin-10))}m ${P(.64)}-${P(.70)}%`,Math.max(20,Math.round(min-used-tMin-10)));
+    blk(`Z2 (FC max 135 bpm)\n- ${Math.max(20,Math.round(min-used-tMin-10))}m ${P(.64)}-${P(.70)}%`,Math.max(20,Math.round(min-used-tMin-10)));
     if(st){if(st.n>1)blk(`Tempo\n${st.n-1}x\n- ${st.d}m ${P(p.w)}%\n- 5m ${P(.65)}%`,(st.n-1)*(st.d+5));blk(`${st.n>1?"Dernier bloc tempo":"Tempo"}\n- ${st.d}m ${P(p.w)}%`,st.d)}
     else blk(`Tempo\n- ${tMin}m ${P(p.w)}%`,tMin);
     cool();return out.join("\n\n");
@@ -1461,8 +1461,8 @@ function zwText(s){
     else if(two)blocks=[[+two[1],PL(p.w)],[+two[2],PL(p.w2||p.w)]];
     else if(bt){const m=zMin(bt);if(m)blocks=[[m,PL(p.w)]]}
     const bTot=blocks.reduce((a,b)=>a+b[0],0)+Math.max(0,blocks.length-1)*10;
-    const lead=Math.round(bike-10-bTot-10);if(lead>=5)blk(`Endurance Z2\n- ${lead}m ${lo}-${hi}%`,lead);
-    blocks.forEach((b,i)=>{blk(`Bloc ${i+1}\n- ${b[0]}m ${b[1]}%`,b[0]);if(i<blocks.length-1)blk(`Z2\n- 10m ${lo}-${hi}%`,10)});
+    const lead=Math.round(bike-10-bTot-10);if(lead>=5)blk(`Endurance Z2 (FC max 135 bpm)\n- ${lead}m ${lo}-${hi}%`,lead);
+    blocks.forEach((b,i)=>{blk(`Bloc ${i+1}\n- ${b[0]}m ${b[1]}%`,b[0]);if(i<blocks.length-1)blk(`Z2 (FC max 135 bpm)\n- 10m ${lo}-${hi}%`,10)});
     cool();
     if(p.brick)out.push(`Enchaînement : ${p.brick} de course dès la descente du vélo`);
     return out.join("\n\n");
@@ -1521,7 +1521,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.55",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.56",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1836,13 +1836,13 @@ function steps(k,p,min,phase){
     case"vo2":return [["Échauffement","10' progressif"],["Corps de séance",p.sets+" à "+Wt(p.w,"vo2")+" W · récup "+p.rec+" à "+Wt(.5,"vo2")+" W"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]];
     case"ss":case"thr":case"ef":case"im":
       if(p.ou)return [["Échauffement","10' progressif"],["Corps de séance",p.sets+" : 3' à "+Wt(p.ou[0],k)+" W / 2' à "+Wt(p.ou[1],k)+" W · récup "+p.rec+" Z1"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]];
-      if(!p.sets)return [["Endurance",hm(min)+" à "+Wr(.62,.70,"tempo")]];
+      if(!p.sets)return [["Endurance",hm(min)+" à "+Wr(.62,.70,"tempo")+" · FC ≤ 135 bpm"]];
       return [["Échauffement","10' progressif"],["Corps de séance",p.sets+" à "+Wt(p.w,k)+" W"+(p.rpm?" · "+p.rpm+" rpm":"")+" · récup "+p.rec+" à "+Wt(.55,k)+" W"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]];
     case"tempo":
-      return p.tempo?[["Échauffement","10' progressif"],["Z2",Math.max(20,Math.round(min-20-(zMin(p.tempo)||10)))+"' à "+Wr(.64,.70,"tempo")],["Tempo",p.tempo+" à "+Wt(p.w,"tempo")+" W"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]]:[["Z2 facile",hm(min)+" à "+Wt(p.w,"tempo")+" W max · cadence libre"]];
+      return p.tempo?[["Échauffement","10' progressif"],["Z2",Math.max(20,Math.round(min-20-(zMin(p.tempo)||10)))+"' à "+Wr(.64,.70,"tempo")+" · FC ≤ 135 bpm"],["Tempo",p.tempo+" à "+Wt(p.w,"tempo")+" W"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]]:[["Z2 facile",hm(min)+" à "+Wt(p.w,"tempo")+" W max · FC ≤ 135 bpm · cadence libre"]];
     case"long":case"brick":case"sim":{const phase=arguments[3];
       if(p.test==="FTP")return steps("test",p,min);
-      const a=[["Endurance Z2",hm(min)+" à "+Wr(p.z2-.03,p.z2+.03,"long")]];
+      const a=[["Endurance Z2",hm(min)+" à "+Wr(p.z2-.03,p.z2+.03,"long")+" · FC ≤ 135 bpm hors blocs"]];
       if(p.blocks)a.push([k==="sim"?"Allure course":"Blocs",p.blocks+" à "+Wt(p.w,"long")+" W"+(p.w2?" puis "+Wt(p.w2,"long")+" W":"")]);
       if(p.brick)a.push(["Enchaînement course",p.brick+" à "+Pc(.66)+" dès la descente du vélo"]);
       a.push(["Règle","Montées plafonnées à 225 W et 165 bpm"]);return a.concat(nut);}
@@ -1851,8 +1851,8 @@ function steps(k,p,min,phase){
       return [["Échauffement","15' Z1–Z2 + 4 lignes droites"],["Corps de séance",p.sets+" à "+Pc(p.v,"seuil")+" · récup "+p.rec+" trot"],["Retour au calme","10' Z1"],["Plafond","FC moyenne par bloc ≤ 170 bpm"]];
     case"marathon":return [["Échauffement","15' Z2"],["Allure marathon",p.sets+" à "+Pc(p.v)+" · récup "+p.rec],["Retour au calme","10' Z1"]];
     case"longrun":if(p.race)return [["Course","3,8 km · 180 km · 42,2 km"],["Allures visées","Vélo ≈ "+Wt(.77,"long")+" W · marathon ≈ "+Pc(.66)]];
-      {const npr=nutriPlan({d:"course",min},phase);const bm=p.blk?(parseInt(String(p.blk))||15):0,prog=/progress/i.test(p.blk||"");return [["Endurance",hm(min-bm)+" à "+Pr(.62,.68)]].concat(p.blk?[["Bloc final",p.blk+(prog?" : de "+Pc(.66)+" jusqu'à "+Pc(.72):" à "+Pc(/tempo/.test(p.blk)?.72:.66))]]:[]).concat(npr?[["Ravito",npr.lines.join(" · ")],["",npr.timing||""]]:[]);}
-    case"z2run":return [["Footing Z2",hm(min)+" à "+Pr(.62,.68)]];
+      {const npr=nutriPlan({d:"course",min},phase);const bm=p.blk?(parseInt(String(p.blk))||15):0,prog=/progress/i.test(p.blk||"");return [["Endurance",hm(min-bm)+" à "+Pr(.62,.68)+" · FC ≤ 140 bpm"]].concat(p.blk?[["Bloc final",p.blk+(prog?" : de "+Pc(.66)+" jusqu'à "+Pc(.72):" à "+Pc(/tempo/.test(p.blk)?.72:.66))]]:[]).concat(npr?[["Ravito",npr.lines.join(" · ")],["",npr.timing||""]]:[]);}
+    case"z2run":return [["Footing Z2",hm(min)+" à "+Pr(.62,.68)+" · FC ≤ 140 bpm"]];
     case"nat":{const v=(PLAN.swim||{})[p.var]||["Natation",""];if(p.light)return [["Séance",v[0]+" en version courte, tout au ressenti facile"],["Total",(p.m||"").toLocaleString("fr-FR")+" m"]];
       return [["Séance",v[0]]].concat(v[1].split(" · ").map((x,i)=>[i===0?"Échauffement":"",x])).concat([["Total",(p.m||"").toLocaleString("fr-FR")+" m · ajuste le volume du bloc principal"],["Repère","4/10 facile · 6/10 modéré · 7–8/10 soutenu"]]);}
     case"ow":return [["Eau libre",(p.m||"").toLocaleString("fr-FR")+" m continu en combinaison, au ressenti allure course (6/10)"],["Technique","Lever la tête toutes les 6 coups de bras · départ groupé si possible"]];
