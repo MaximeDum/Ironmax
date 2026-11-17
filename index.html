@@ -735,7 +735,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.51 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.52 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1518,7 +1518,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.51",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.52",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1830,13 +1830,13 @@ function steps(k,p,min,phase){
   const np=nutriPlan({d:["long","brick","sim"].includes(k)?"velo":"course",min},phase);
   const nut=np?[["Ravito",np.lines.join(" · ")]].concat(np.timing?[["",np.timing]]:[]):[];
   switch(k){
-    case"vo2":return [["Échauffement","20' progressif dont 3×1' à 105 %"],["Corps de séance",p.sets+" à "+Wt(p.w,"vo2")+" W · récup "+p.rec+" à "+Wt(.5,"vo2")+" W"],["Retour au calme","10' souple"]];
+    case"vo2":return [["Échauffement","10' progressif"],["Corps de séance",p.sets+" à "+Wt(p.w,"vo2")+" W · récup "+p.rec+" à "+Wt(.5,"vo2")+" W"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]];
     case"ss":case"thr":case"ef":case"im":
-      if(p.ou)return [["Échauffement","15' progressif Z1→Z2 + 3×1' à 100 rpm"],["Corps de séance",p.sets+" : 3' à "+Wt(p.ou[0],k)+" W / 2' à "+Wt(p.ou[1],k)+" W · récup "+p.rec+" Z1"],["Retour au calme","10' souple"]];
+      if(p.ou)return [["Échauffement","10' progressif"],["Corps de séance",p.sets+" : 3' à "+Wt(p.ou[0],k)+" W / 2' à "+Wt(p.ou[1],k)+" W · récup "+p.rec+" Z1"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]];
       if(!p.sets)return [["Endurance",hm(min)+" à "+Wr(.62,.70,"tempo")]];
-      return [["Échauffement","15' progressif Z1→Z2 + 3×1' à 100 rpm"],["Corps de séance",p.sets+" à "+Wt(p.w,k)+" W"+(p.rpm?" · "+p.rpm+" rpm":"")+" · récup "+p.rec+" à "+Wt(.55,k)+" W"],["Retour au calme","10' souple"]];
+      return [["Échauffement","10' progressif"],["Corps de séance",p.sets+" à "+Wt(p.w,k)+" W"+(p.rpm?" · "+p.rpm+" rpm":"")+" · récup "+p.rec+" à "+Wt(.55,k)+" W"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]];
     case"tempo":
-      return p.tempo?[["Échauffement","15' progressif"],["Z2","20' à "+Wr(.64,.70,"tempo")],["Tempo",p.tempo+" à "+Wt(p.w,"tempo")+" W"],["Retour au calme","10' souple"]]:[["Z2 facile",hm(min)+" à "+Wt(p.w,"tempo")+" W max · cadence libre"]];
+      return p.tempo?[["Échauffement","10' progressif"],["Z2",Math.max(20,Math.round(min-20-(zMin(p.tempo)||10)))+"' à "+Wr(.64,.70,"tempo")],["Tempo",p.tempo+" à "+Wt(p.w,"tempo")+" W"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]]:[["Z2 facile",hm(min)+" à "+Wt(p.w,"tempo")+" W max · cadence libre"]];
     case"long":case"brick":case"sim":{const phase=arguments[3];
       if(p.test==="FTP")return steps("test",p,min);
       const a=[["Endurance Z2",hm(min)+" à "+Wr(p.z2-.03,p.z2+.03,"long")]];
