@@ -758,7 +758,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.78 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax ${APPV} · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1178,6 +1178,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
+const APPV="v1.79"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1565,7 +1566,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.78",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:APPV,ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1646,7 +1647,7 @@ function dedupe(acts){
   return acts.filter(a=>!drop.has(a.id));
 }
 const EV=11;
-function maybeRecompute(){if(DATA&&PLAN&&(lsGet(LSK.raw,null)||(DATA.extra&&DATA.extra.length))&&(!LIVE||LIVE.ev!==EV||LIVE.xk!==extraKey())){recompute();render()}}
+function maybeRecompute(){if(DATA&&PLAN&&(lsGet(LSK.raw,null)||(DATA.extra&&DATA.extra.length))&&(!LIVE||LIVE.ev!==EV||LIVE.xk!==extraKey()||LIVE.appv!==APPV||!LIVE.vpCtx)){recompute();render()}}
 /* Séances ajoutées à la main dans data.json (relevées sur Strava) : elles comptent tant qu'Intervals
    n'a pas la même séance (même sport, départ à ±20 min). */
 /* Puissance estimée (sorties vélo dehors sans capteur) : roulement + air + dénivelé, poids du cycliste + 9 kg de vélo.
@@ -1872,7 +1873,7 @@ function recompute(){
   rows.push({i:"Fatigue accumulée",exp:"< 40",real:fnow+"/100",s:fnow<40?"ok":"warn",t:fnow<40?"Dans la cible":"À surveiller"});
   const vig=(LIVE.adjust||[]).map(a=>a.t).concat(highDays>4?["Fatigue élevée depuis "+highDays+" jours"]:[]);
   rows.push({i:"Points de vigilance",exp:"aucun",real:vig.length?vig.join(" ; "):"aucun",s:vig.length?"warn":"ok",t:vig.length?"À surveiller":"RAS"});
-  LIVE.vsPlan=rows;
+  LIVE.vsPlan=rows;LIVE.appv=APPV;
   // preuves pour les pages détail (recalculées à chaque actualisation)
   const top=(a,f,n)=>a.slice().sort((x,y)=>f(y)-f(x)).slice(0,n),d14=dkey(new Date(Date.now()-14*864e5));
   const kmW=[3,2,1,0].map(i=>{const a=dkey(new Date(Date.now()-(i+1)*7*864e5)),b=dkey(new Date(Date.now()-i*7*864e5));return {d:a,km:runsAll.filter(r=>r.date>a&&r.date<=b).reduce((x,r)=>x+r.km,0)}});
@@ -2203,6 +2204,7 @@ function nextPlanned(ids,days){if(!PLAN)return null;const t=today(),end=addDays(
 function vpKey(i){return /^Volume/.test(i)?"vol":/FTP/.test(i)?"ftp":/Vitesse Ironman/.test(i)?"bikeim":/🚴 Plus longue/.test(i)?"longride":/140 bpm/.test(i)?"p140":/🏃 Plus longue/.test(i)?"longrun":/Volume hebdo/.test(i)?"km":/marathon/.test(i)?"runim":/CTL/.test(i)?"ctl":/🚴 Efficacité/.test(i)?"efv":/🏃 Efficacité/.test(i)?"efc":/🏊 Efficacité/.test(i)?"efn":/Fatigue/.test(i)?"fat":"vig"}
 function anIn(id){AN_BIG=true;AN_RANGE=90;try{return AN_BUILD[id]()}finally{AN_BIG=false}}
 function vpDetail(idx){
+  if(LIVE&&(LIVE.appv!==APPV||!LIVE.vpCtx)&&lsGet(LSK.raw,null))recompute();
   const r=(LIVE&&LIVE.vsPlan||[])[idx];if(!r)return;const c=LIVE.vpCtx||{},k=vpKey(r.i),up=r.s==="up",warn=r.s==="warn";
   const hm2=h=>Math.floor(h)+"h"+pad(Math.round(h%1*60)),ns=(ids,d)=>{const s=nextPlanned(ids,d);return s?`${fdate(s.date).replace(/\.$/,"")} : ${s.title}${s.min?" ("+hm(s.min)+")":""}`:null};
   let how="",why=[],todo=[],chart="";
