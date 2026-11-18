@@ -757,7 +757,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.71 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.72 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1187,7 +1187,7 @@ const hm=min=>{min=Math.round(min);return Math.floor(min/60)+"h"+pad(min%60)};
 function loadPlan(){fetch("plan.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{PLAN=j;maybeRecompute();render()}).catch(()=>{})}
 
 /* ============ INTERVALS.ICU ============ */
-const FIELDS="id,start_date_local,type,name,description,source,device_name,elapsed_time,moving_time,distance,icu_weighted_avg_watts,average_watts,average_heartrate,max_heartrate,icu_training_load,decoupling,trainer,icu_rpe,icu_eftp,icu_hr_zone_times,average_watts,icu_average_watts";
+const FIELDS="id,start_date_local,type,name,description,source,device_name,elapsed_time,moving_time,distance,icu_weighted_avg_watts,average_watts,average_heartrate,max_heartrate,icu_training_load,decoupling,trainer,icu_rpe,icu_eftp,icu_hr_zone_times,icu_average_watts,total_elevation_gain";
 async function apiGet(path){
   const r=await fetch("https://intervals.icu/api/v1/athlete/"+encodeURIComponent(CFG.athlete)+path,{headers:{Authorization:"Basic "+btoa("API_KEY:"+CFG.key)}});
   if(r.status===401||r.status===403)throw new Error("Clé ou identifiant refusé par Intervals.icu");
@@ -1552,7 +1552,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.71",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.72",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1636,8 +1636,13 @@ const EV=11;
 function maybeRecompute(){if(DATA&&PLAN&&(lsGet(LSK.raw,null)||(DATA.extra&&DATA.extra.length))&&(!LIVE||LIVE.ev!==EV||LIVE.xk!==extraKey())){recompute();render()}}
 /* Séances ajoutées à la main dans data.json (relevées sur Strava) : elles comptent tant qu'Intervals
    n'a pas la même séance (même sport, départ à ±20 min). */
+/* Puissance estimée (sorties vélo dehors sans capteur) : roulement + air + dénivelé, poids du cycliste + 9 kg de vélo.
+   Sert à l'efficacité aérobie ; marquée « estimée » (west) et jamais utilisée pour la charge quand Intervals en fournit une. */
+function estPower(a){const v=a.distance/a.moving_time,m=(INP.weight||84)+9,g=9.81,e=a.total_elevation_gain||0;
+  return Math.round(0.98*(0.005*m*g*v+0.5*1.2*0.32*v*v*v+m*g*e/a.moving_time))}
+function withEstPower(a){if(a.sp==="velo"&&!a.trainer&&!a.west&&!(a.average_watts||a.icu_average_watts||a.icu_weighted_avg_watts)&&a.distance>5000&&a.moving_time>900&&a.total_elevation_gain!=null){a.estW=estPower(a);a.west=1}return a}
 /* Corrections données par Claude (ex. distance de natation mal comptée par la montre) : DATA.fix["date|sport"] = {distance:…} */
-function fixAct(a){const sf=typeof SWIMFIX!=="undefined"&&SWIMFIX[a.id];
+function fixAct(a){withEstPower(a);const sf=typeof SWIMFIX!=="undefined"&&SWIMFIX[a.id];
   if(sf&&sf.laps&&sf.laps.length){a.watchDist=a.distance;a.distance=sf.laps.reduce((t,l)=>t+(+l.d||0),0);a.fixed=1;return a}
   const f=DATA&&DATA.fix&&DATA.fix[a.date+"|"+a.sp];return f?Object.assign(a,{watchDist:a.distance},f,{fixed:1}):a}
 function withExtra(list){
@@ -2204,7 +2209,7 @@ const slope=pts=>{if(pts.length<4)return null;const xs=pts.map(p=>new Date(p.d)/
 
 /* --- 2. Vélo : efficacité aérobie (puissance normalisée / FC) --- */
 function anBikeEF(){
-  const W=a=>a.average_watts||a.icu_average_watts||a.icu_weighted_avg_watts;
+  const W=a=>a.average_watts||a.icu_average_watts||a.icu_weighted_avg_watts||a.estW;
   const all=anActs(RG(84)).filter(a=>a.sp==="velo"&&(a.moving_time||0)>=1800&&W(a)&&a.average_heartrate>90).sort((x,y)=>x.date<y.date?-1:1);
   const pts=all.map(a=>{const est=!!a.west,tr=!est&&!/vo2|test/i.test(a.name||"");
     return {d:a.date,v:W(a)/a.average_heartrate,tr,hollow:est,c:est?"#8A93A1":a.trainer?"#4EA8FF":"#9DD1FF",tip:`${fdate(a.date)} · ${a.name||"Vélo"} : ${est?"≈ ":""}${Math.round(W(a))} W${est?" (estimés, pas de capteur)":""} pour ${Math.round(a.average_heartrate)} bpm → ${frn((W(a)/a.average_heartrate).toFixed(2))} W/bpm`}});
@@ -2219,7 +2224,7 @@ function anBikeEF(){
 /* --- 3. Course : allure ramenée à 140 bpm --- */
 function anRun140(){
   const R=140,itv=a=>/\d\s*[x×]\s*[\d(]/i.test(a.name||"")||(ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length>1)||/vma|seuil|fraction|tri|man ·|kiné|enchaîn|brick|tapis/i.test(a.name||"");
-  const all=anActs(RG(84)).filter(a=>a.sp==="course"&&(a.moving_time||0)>=1200&&a.distance>2500&&a.average_heartrate>=110&&a.average_heartrate<=180).sort((x,y)=>x.date<y.date?-1:1);
+  const all=anActs(RG(84)).filter(a=>a.sp==="course"&&!a.noChart&&!a.trainer&&!/tapis|treadmill/i.test(a.name||"")&&(a.moving_time||0)>=1200&&a.distance>2500&&a.average_heartrate>=110&&a.average_heartrate<=180).sort((x,y)=>x.date<y.date?-1:1);
   const pts=all.map(a=>{const v=a.distance/a.moving_time,v140=v*(R-INP.fcrest)/(a.average_heartrate-INP.fcrest),p=1000/v140,cont=!itv(a)&&a.average_heartrate>=128&&a.average_heartrate<=152&&(a.moving_time||0)>=1800;
       return {d:a.date,v:p,tr:cont,hollow:!cont,c:cont?"#3DDC84":"#8A93A1",tip:`${fdate(a.date)} · ${a.name||"Course"} · ${(a.distance/1000).toFixed(1).replace(".",",")} km à ${toMMSS(1000/v)}/km pour ${Math.round(a.average_heartrate)} bpm → ${cont?"":"≈ "}${toMMSS(p)}/km à 140 bpm${cont?"":" (fractionné, enchaînement ou course : estimation moins fiable)"}`}});
   const tp=pts.filter(p=>p.tr);
