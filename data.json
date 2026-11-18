@@ -878,27 +878,30 @@
   "2026-11-18|course": {
    "title": "Seuil 4×8'",
    "verdict": "up",
-   "comment": "Excellente · 4×8' entre 4:28 et 4:33/km, FC 165-169 sous le plafond de 170, récup rapide. Le 4e bloc à 4:43 est un écart GPS : même puissance, cadence et FC que les autres, il était plutôt vers 4:30.",
+   "comment": "Excellente · 4×8' entre 4:27 et 4:31/km pour 4:33 visé, FC 166-171 stable, récup rapide. Le 4e bloc mesuré à 4:43 est un écart GPS (même puissance et même FC) : ≈ 4:30.",
    "reps": [
     [
-     496,
-     3.659274193548387,
-     165
-    ],
-    [
-     441,
-     3.7369614512471654,
-     169
-    ],
-    [
-     480,
-     3.7083333333333335,
+     476,
+     3.69,
      166
     ],
     [
-     479,
-     3.538622129436326,
+     473,
+     3.74,
+     170
+    ],
+    [
+     465,
+     3.72,
      169
+    ],
+    [
+     471,
+     3.7,
+     171,
+     0,
+     null,
+     1
     ]
    ],
    "recs": [
