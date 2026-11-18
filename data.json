@@ -935,7 +935,14 @@
     "name": "Sortie vélo",
     "moving_time": 4201,
     "distance": 24548,
-    "icu_training_load": 11
+    "average_heartrate": 101.2,
+    "hz": [
+     4201,
+     0,
+     0
+    ],
+    "average_watts": 91,
+    "west": 1
    },
    {
     "id": "s17573896605",
@@ -943,7 +950,13 @@
     "type": "Run",
     "name": "Course sur tapis",
     "moving_time": 1927,
-    "distance": 7242
+    "distance": 7242,
+    "average_heartrate": 149.3,
+    "hz": [
+     642,
+     1285,
+     0
+    ]
    },
    {
     "id": "s17573889946",
@@ -974,7 +987,14 @@
     "name": "Sortie vélo",
     "moving_time": 6990,
     "distance": 41600,
-    "icu_training_load": 27
+    "average_heartrate": 120.3,
+    "hz": [
+     6990,
+     0,
+     0
+    ],
+    "average_watts": 93,
+    "west": 1
    },
    {
     "id": "s17614011336",
@@ -1046,7 +1066,13 @@
     "type": "Run",
     "name": "10×1' fractionné",
     "moving_time": 2690,
-    "distance": 7234
+    "distance": 7234,
+    "average_heartrate": 155.9,
+    "hz": [
+     598,
+     1196,
+     897
+    ]
    },
    {
     "id": "s17763324337",
@@ -1062,7 +1088,14 @@
     "name": "Sortie vélo",
     "moving_time": 3618,
     "distance": 21742,
-    "icu_training_load": 22
+    "average_heartrate": 130.0,
+    "hz": [
+     3216,
+     402,
+     0
+    ],
+    "average_watts": 94,
+    "west": 1
    },
    {
     "id": "s17775755185",
@@ -1078,7 +1111,14 @@
     "name": "Sortie vélo",
     "moving_time": 5876,
     "distance": 41506,
-    "icu_training_load": 27
+    "average_heartrate": 124.4,
+    "hz": [
+     5223,
+     653,
+     0
+    ],
+    "average_watts": 131,
+    "west": 1
    },
    {
     "id": "s17811765856",
@@ -1115,7 +1155,13 @@
     "type": "Run",
     "name": "3×8' @5:15",
     "moving_time": 3299,
-    "distance": 9126
+    "distance": 9126,
+    "average_heartrate": 156.7,
+    "hz": [
+     1100,
+     367,
+     1833
+    ]
    },
    {
     "id": "s17850150730",
@@ -1222,7 +1268,14 @@
     "name": "Sortie vélo",
     "moving_time": 4268,
     "distance": 29742,
-    "icu_training_load": 38
+    "average_heartrate": 137.2,
+    "hz": [
+     2371,
+     1897,
+     0
+    ],
+    "average_watts": 121,
+    "west": 1
    },
    {
     "id": "s17949758471",
@@ -1252,7 +1305,14 @@
     "name": "Sortie vélo",
     "moving_time": 8816,
     "distance": 59660,
-    "icu_training_load": 99
+    "average_heartrate": 136.1,
+    "hz": [
+     6857,
+     1959,
+     0
+    ],
+    "average_watts": 135,
+    "west": 1
    },
    {
     "id": "s17988143753",
@@ -1290,7 +1350,14 @@
     "name": "Sortie vélo",
     "moving_time": 2431,
     "distance": 17328,
-    "icu_training_load": 28
+    "average_heartrate": 140.8,
+    "hz": [
+     1351,
+     1080,
+     0
+    ],
+    "average_watts": 132,
+    "west": 1
    },
    {
     "id": "s18145807492",
@@ -1322,7 +1389,14 @@
     "name": "Sortie vélo",
     "moving_time": 8058,
     "distance": 50218,
-    "icu_training_load": 46
+    "average_heartrate": 125.6,
+    "hz": [
+     8058,
+     0,
+     0
+    ],
+    "average_watts": 114,
+    "west": 1
    },
    {
     "id": "s18184127327",
@@ -1398,7 +1472,14 @@
     "name": "Sortie vélo 55 km",
     "moving_time": 8531,
     "distance": 55360,
-    "icu_training_load": 66
+    "average_heartrate": 132.2,
+    "hz": [
+     7583,
+     948,
+     0
+    ],
+    "average_watts": 115,
+    "west": 1
    },
    {
     "id": "s18249165081",
@@ -1489,7 +1570,14 @@
     "name": "Sortie vélo",
     "moving_time": 3346,
     "distance": 23640,
-    "icu_training_load": 42
+    "average_heartrate": 139.0,
+    "hz": [
+     2231,
+     1115,
+     0
+    ],
+    "average_watts": 146,
+    "west": 1
    },
    {
     "id": "s18341759420",
@@ -1564,7 +1652,14 @@
     "name": "Sortie vélo",
     "moving_time": 5524,
     "distance": 38977,
-    "icu_training_load": 88
+    "average_heartrate": 140.7,
+    "hz": [
+     2455,
+     3069,
+     0
+    ],
+    "average_watts": 140,
+    "west": 1
    },
    {
     "id": "s18447466268",
@@ -1609,7 +1704,14 @@
     "name": "Sortie vélo",
     "moving_time": 2830,
     "distance": 20547,
-    "icu_training_load": 46
+    "average_heartrate": 144.9,
+    "hz": [
+     943,
+     1258,
+     629
+    ],
+    "average_watts": 142,
+    "west": 1
    },
    {
     "id": "s18504284249",
@@ -1626,7 +1728,14 @@
     "name": "Sortie vélo",
     "moving_time": 6215,
     "distance": 44331,
-    "icu_training_load": 147
+    "average_heartrate": 154.3,
+    "hz": [
+     0,
+     4834,
+     1381
+    ],
+    "average_watts": 153,
+    "west": 1
    },
    {
     "id": "s18525900589",
@@ -1672,7 +1781,14 @@
     "name": "Sortie vélo",
     "moving_time": 3242,
     "distance": 22779,
-    "icu_training_load": 49
+    "average_heartrate": 141.6,
+    "hz": [
+     1441,
+     1801,
+     0
+    ],
+    "average_watts": 145,
+    "west": 1
    },
    {
     "id": "s18582745248",
@@ -1696,7 +1812,14 @@
     "name": "Sortie vélo",
     "moving_time": 4018,
     "distance": 27050,
-    "icu_training_load": 25
+    "average_heartrate": 129.3,
+    "hz": [
+     3572,
+     446,
+     0
+    ],
+    "average_watts": 136,
+    "west": 1
    },
    {
     "id": "s18617168569",
@@ -1727,7 +1850,13 @@
     "type": "Run",
     "name": "Evening Run",
     "moving_time": 1788,
-    "distance": 4147
+    "distance": 4147,
+    "average_heartrate": 143.7,
+    "hz": [
+     993,
+     795,
+     0
+    ]
    },
    {
     "id": "s18671340384",
@@ -1743,7 +1872,14 @@
     "name": "Sortie vélo",
     "moving_time": 3249,
     "distance": 22302,
-    "icu_training_load": 38
+    "average_heartrate": 138.7,
+    "hz": [
+     1805,
+     1444,
+     0
+    ],
+    "average_watts": 136,
+    "west": 1
    },
    {
     "id": "s18710672316",
@@ -1769,7 +1905,14 @@
     "name": "Triathlon Monumental · vélo",
     "moving_time": 5110,
     "distance": 39537,
-    "icu_training_load": 196
+    "average_heartrate": 168.0,
+    "hz": [
+     0,
+     1136,
+     3974
+    ],
+    "average_watts": 194,
+    "west": 1
    },
    {
     "id": "s18726216258",
@@ -1777,7 +1920,13 @@
     "type": "Run",
     "name": "Triathlon Monumental · course",
     "moving_time": 3172,
-    "distance": 10002
+    "distance": 10002,
+    "average_heartrate": 182.8,
+    "hz": [
+     0,
+     0,
+     3172
+    ]
    },
    {
     "id": "s18770427565",
@@ -1801,7 +1950,13 @@
     "type": "Run",
     "name": "Récup post tri",
     "moving_time": 1958,
-    "distance": 4662
+    "distance": 4662,
+    "average_heartrate": 134.3,
+    "hz": [
+     1740,
+     218,
+     0
+    ]
    },
    {
     "id": "s18811694153",
@@ -1810,7 +1965,14 @@
     "name": "Sortie vélo",
     "moving_time": 7488,
     "distance": 48662,
-    "icu_training_load": 52
+    "average_heartrate": 136.1,
+    "hz": [
+     6656,
+     832,
+     0
+    ],
+    "average_watts": 131,
+    "west": 1
    },
    {
     "id": "s18819250565",
@@ -1865,7 +2027,14 @@
     "name": "Sortie vélo 68 km",
     "moving_time": 10390,
     "distance": 68407,
-    "icu_training_load": 95
+    "average_heartrate": 135.8,
+    "hz": [
+     6927,
+     3463,
+     0
+    ],
+    "average_watts": 126,
+    "west": 1
    },
    {
     "id": "s18926381005",
@@ -1881,7 +2050,13 @@
     "type": "Run",
     "name": "Afternoon Run",
     "moving_time": 1864,
-    "distance": 4529
+    "distance": 4529,
+    "average_heartrate": 139.1,
+    "hz": [
+     1864,
+     0,
+     0
+    ]
    },
    {
     "id": "s18939303893",
@@ -1890,7 +2065,14 @@
     "name": "Sortie vélo",
     "moving_time": 3253,
     "distance": 23253,
-    "icu_training_load": 15
+    "average_heartrate": 122.8,
+    "hz": [
+     2892,
+     361,
+     0
+    ],
+    "average_watts": 145,
+    "west": 1
    },
    {
     "id": "s18943508889",
@@ -1914,7 +2096,14 @@
     "name": "Sortie vélo Z2",
     "moving_time": 4172,
     "distance": 29040,
-    "icu_training_load": 23
+    "average_heartrate": 129.0,
+    "hz": [
+     4172,
+     0,
+     0
+    ],
+    "average_watts": 142,
+    "west": 1
    },
    {
     "id": "s18971353540",
@@ -1930,7 +2119,14 @@
     "name": "Sortie vélo 79 km",
     "moving_time": 10836,
     "distance": 78915,
-    "icu_training_load": 56
+    "average_heartrate": 123.6,
+    "hz": [
+     9632,
+     1204,
+     0
+    ],
+    "average_watts": 128,
+    "west": 1
    },
    {
     "id": "s19005508219",
@@ -2100,7 +2296,14 @@
     "name": "Sortie bourbier",
     "moving_time": 12600,
     "distance": 81036,
-    "icu_training_load": 155
+    "average_heartrate": 140.1,
+    "hz": [
+     4200,
+     7000,
+     1400
+    ],
+    "average_watts": 126,
+    "west": 1
    },
    {
     "id": "s19190319786",
@@ -2123,7 +2326,13 @@
     "type": "Run",
     "name": "CAP kiné",
     "moving_time": 1790,
-    "distance": 4371
+    "distance": 4371,
+    "average_heartrate": 125.9,
+    "hz": [
+     1790,
+     0,
+     0
+    ]
    },
    {
     "id": "s19204388131",
@@ -2154,7 +2363,13 @@
     "type": "Run",
     "name": "CAP kiné",
     "moving_time": 2400,
-    "distance": 5685
+    "distance": 5685,
+    "average_heartrate": 134.8,
+    "hz": [
+     2133,
+     267,
+     0
+    ]
    },
    {
     "id": "s19224590357",
@@ -2193,7 +2408,13 @@
     "type": "Run",
     "name": "CAP kiné",
     "moving_time": 2700,
-    "distance": 6512
+    "distance": 6512,
+    "average_heartrate": 122.3,
+    "hz": [
+     2700,
+     0,
+     0
+    ]
    },
    {
     "id": "s19238196432",
@@ -2209,7 +2430,14 @@
     "name": "Sortie vélo 103 km",
     "moving_time": 15400,
     "distance": 102887,
-    "icu_training_load": 164
+    "average_heartrate": 133.4,
+    "hz": [
+     15400,
+     0,
+     0
+    ],
+    "average_watts": 141,
+    "west": 1
    },
    {
     "id": "s19270951306",
@@ -2225,7 +2453,13 @@
     "type": "Run",
     "name": "CAP kiné",
     "moving_time": 2962,
-    "distance": 7179
+    "distance": 7179,
+    "average_heartrate": 134.7,
+    "hz": [
+     2633,
+     329,
+     0
+    ]
    },
    {
     "id": "s19290516362",
@@ -2256,7 +2490,13 @@
     "type": "Run",
     "name": "CAP kiné",
     "moving_time": 3583,
-    "distance": 9075
+    "distance": 9075,
+    "average_heartrate": 125.6,
+    "hz": [
+     3583,
+     0,
+     0
+    ]
    },
    {
     "id": "s19309241043",
@@ -2287,7 +2527,13 @@
     "type": "Run",
     "name": "CAP kiné",
     "moving_time": 3960,
-    "distance": 10041
+    "distance": 10041,
+    "average_heartrate": 135.3,
+    "hz": [
+     3960,
+     0,
+     0
+    ]
    },
    {
     "id": "s19360185141",
@@ -2296,7 +2542,14 @@
     "name": "Sortie vélo 73 km",
     "moving_time": 10703,
     "distance": 73225,
-    "icu_training_load": 104
+    "average_heartrate": 132.3,
+    "hz": [
+     8325,
+     2378,
+     0
+    ],
+    "average_watts": 154,
+    "west": 1
    },
    {
     "id": "s19373122543",
@@ -2312,7 +2565,13 @@
     "type": "Run",
     "name": "CAP kiné post natation",
     "moving_time": 4501,
-    "distance": 11900
+    "distance": 11900,
+    "average_heartrate": 137.9,
+    "hz": [
+     4501,
+     0,
+     0
+    ]
    },
    {
     "id": "s19386971867",
@@ -2402,7 +2661,13 @@
     "type": "Run",
     "name": "CAP kiné",
     "moving_time": 4201,
-    "distance": 11349
+    "distance": 11349,
+    "average_heartrate": 129.7,
+    "hz": [
+     4201,
+     0,
+     0
+    ]
    },
    {
     "id": "s19471703872",
@@ -2411,7 +2676,14 @@
     "name": "Sortie vélo 100 km",
     "moving_time": 13689,
     "distance": 100091,
-    "icu_training_load": 172
+    "average_heartrate": 131.3,
+    "hz": [
+     7605,
+     6084,
+     0
+    ],
+    "average_watts": 152,
+    "west": 1
    },
    {
     "id": "s19481324669",
@@ -2479,7 +2751,14 @@
     "name": "Sortie vélo 111 km",
     "moving_time": 15866,
     "distance": 111444,
-    "icu_training_load": 265
+    "average_heartrate": 141.4,
+    "hz": [
+     7052,
+     7052,
+     1763
+    ],
+    "average_watts": 159,
+    "west": 1
    },
    {
     "id": "s19553803505",
@@ -2675,7 +2954,14 @@
     "name": "Sortie vélo 113 km",
     "moving_time": 15608,
     "distance": 113113,
-    "icu_training_load": 278
+    "average_heartrate": 138.0,
+    "hz": [
+     10405,
+     5203,
+     0
+    ],
+    "average_watts": 166,
+    "west": 1
    },
    {
     "id": "s19750067959",
@@ -2859,7 +3145,13 @@
     "type": "Run",
     "name": "Seuil",
     "moving_time": 3080,
-    "distance": 10504
+    "distance": 10504,
+    "average_heartrate": 164.0,
+    "hz": [
+     342,
+     684,
+     2053
+    ]
    },
    {
     "id": "s19906695742",
@@ -2997,7 +3289,14 @@
     "name": "Sortie vélo 105 km",
     "moving_time": 15028,
     "distance": 105262,
-    "icu_training_load": 135
+    "average_heartrate": 131.7,
+    "hz": [
+     11688,
+     3340,
+     0
+    ],
+    "average_watts": 147,
+    "west": 1
    },
    {
     "id": "s20046267873",
@@ -3043,7 +3342,14 @@
     "name": "Sortie vélo J-7",
     "moving_time": 10298,
     "distance": 77065,
-    "icu_training_load": 145
+    "average_heartrate": 139.8,
+    "hz": [
+     5721,
+     4577,
+     0
+    ],
+    "average_watts": 157,
+    "west": 1
    },
    {
     "id": "s20154140988",
@@ -3083,7 +3389,13 @@
     "type": "Run",
     "name": "Footing + 2×3'",
     "moving_time": 2305,
-    "distance": 7032
+    "distance": 7032,
+    "average_heartrate": 146.2,
+    "hz": [
+     1537,
+     512,
+     256
+    ]
    },
    {
     "id": "s20237332472",
@@ -3117,7 +3429,14 @@
     "name": "Extrememan · vélo",
     "moving_time": 9865,
     "distance": 81657,
-    "icu_training_load": 283
+    "average_heartrate": 154.6,
+    "hz": [
+     1096,
+     5481,
+     3288
+    ],
+    "average_watts": 212,
+    "west": 1
    },
    {
     "id": "s20253565943",
@@ -3125,7 +3444,13 @@
     "type": "Run",
     "name": "Extrememan · course",
     "moving_time": 7173,
-    "distance": 20625
+    "distance": 20625,
+    "average_heartrate": 164.4,
+    "hz": [
+     0,
+     797,
+     6376
+    ]
    },
    {
     "id": "s20319880774",
@@ -3226,7 +3551,14 @@
     "name": "Sortie vélo",
     "moving_time": 9048,
     "distance": 65210,
-    "icu_training_load": 72
+    "average_heartrate": 127.3,
+    "hz": [
+     6032,
+     3016,
+     0
+    ],
+    "average_watts": 152,
+    "west": 1
    },
    {
     "id": "s20445443398",
@@ -3426,7 +3758,13 @@
     "name": "Sortie vélo",
     "moving_time": 11415,
     "distance": 80684,
-    "icu_training_load": 81
+    "average_heartrate": 127.1,
+    "hz": [
+     11415,
+     0,
+     0
+    ],
+    "average_watts": 177
    },
    {
     "id": "s20656609937",
@@ -3514,7 +3852,9 @@
      9160,
      321,
      0
-    ]
+    ],
+    "average_watts": 154,
+    "west": 1
    },
    {
     "id": "s20721938435",

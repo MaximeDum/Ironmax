@@ -757,7 +757,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.70 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.71 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1552,7 +1552,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.70",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.71",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -2194,9 +2194,10 @@ function trendChart(pts,o){
   if(o.band)s+=`<rect x="${pl}" y="${Math.min(Y(o.band[0]),Y(o.band[1]))}" width="${W-pl}" height="${Math.abs(Y(o.band[1])-Y(o.band[0]))}" fill="${o.bandC||"#3DDC84"}" opacity=".12"/>`;
   if(o.ref)s+=`<line x1="${pl}" x2="${W}" y1="${Y(o.ref.v)}" y2="${Y(o.ref.v)}" stroke="var(--txt)" stroke-dasharray="3 3" opacity=".6"/><text x="${pl+3}" y="${Y(o.ref.v)-3}">${o.ref.lab}</text>`;
   const sp=pts.slice().sort((a,b)=>a.d<b.d?-1:1);
-  if(o.roll&&sp.length>=3){const r=sp.map((p,i)=>{const w=sp.slice(Math.max(0,i-o.roll+1),i+1);return [p.d,mean(w.map(x=>x.v))]});
+  const tsp=sp.some(p=>p.tr!=null)?sp.filter(p=>p.tr):sp;
+  if(o.roll&&tsp.length>=3){const r=tsp.map((p,i)=>{const w=tsp.slice(Math.max(0,i-o.roll+1),i+1);return [p.d,mean(w.map(x=>x.v))]});
     s+=`<polyline points="${r.map(p=>X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join(" ")}" fill="none" stroke="${o.c||"var(--txt)"}" stroke-width="2" stroke-linejoin="round"/>`}
-  sp.forEach(p=>s+=`<circle cx="${X(p.d).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="4" fill="${p.c||o.c||"var(--txt)"}" stroke="var(--card)" stroke-width="2" opacity="${o.roll?.75:1}"/><circle cx="${X(p.d).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="12" fill="transparent" data-tip="${esc(p.tip)}"/>`);
+  sp.forEach(p=>s+=`<circle cx="${X(p.d).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${p.hollow?3.2:4}" fill="${p.hollow?"var(--card)":p.c||o.c||"var(--txt)"}" stroke="${p.hollow?p.c:"var(--card)"}" stroke-width="${p.hollow?1.6:2}" opacity="${o.roll?.8:1}"/><circle cx="${X(p.d).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="12" fill="transparent" data-tip="${esc(p.tip)}"/>`);
   s+=`<text x="${pl}" y="${H-3}">${fdate(t0)}</text><text x="${W-4}" y="${H-3}" text-anchor="end">${fdate(t1)}</text></svg>`;return s;
 }
 const slope=pts=>{if(pts.length<4)return null;const xs=pts.map(p=>new Date(p.d)/864e5),ys=pts.map(p=>p.v),mx=mean(xs),my=mean(ys);let n=0,d=0;xs.forEach((x,i)=>{n+=(x-mx)*(ys[i]-my);d+=(x-mx)*(x-mx)});return d?n/d:0};
@@ -2204,25 +2205,29 @@ const slope=pts=>{if(pts.length<4)return null;const xs=pts.map(p=>new Date(p.d)/
 /* --- 2. Vélo : efficacité aérobie (puissance normalisée / FC) --- */
 function anBikeEF(){
   const W=a=>a.average_watts||a.icu_average_watts||a.icu_weighted_avg_watts;
-  const pts=anActs(RG(84)).filter(a=>a.sp==="velo"&&(a.moving_time||0)>=2400&&W(a)&&a.average_heartrate>100&&!/vo2/i.test(a.name||""))
-    .map(a=>({d:a.date,v:W(a)/a.average_heartrate,c:a.trainer?"#4EA8FF":"#9DD1FF",tip:`${fdate(a.date)} · ${a.name||"Vélo"} : ${Math.round(W(a))} W de moyenne pour ${Math.round(a.average_heartrate)} bpm → ${frn((W(a)/a.average_heartrate).toFixed(2))} W/bpm`}));
-  if(pts.length<3)return anCard("Vélo · efficacité aérobie","watts produits par battement de cœur","",anEmpty("Il faut au moins 3 sorties de plus de 40 min avec puissance et FC."));
-  const sl=slope(pts),last=mean(pts.slice(-3).map(p=>p.v)),ch=sl!=null?sl*42/last*100:0;
+  const all=anActs(RG(84)).filter(a=>a.sp==="velo"&&(a.moving_time||0)>=1800&&W(a)&&a.average_heartrate>90).sort((x,y)=>x.date<y.date?-1:1);
+  const pts=all.map(a=>{const est=!!a.west,tr=!est&&!/vo2|test/i.test(a.name||"");
+    return {d:a.date,v:W(a)/a.average_heartrate,tr,hollow:est,c:est?"#8A93A1":a.trainer?"#4EA8FF":"#9DD1FF",tip:`${fdate(a.date)} · ${a.name||"Vélo"} : ${est?"≈ ":""}${Math.round(W(a))} W${est?" (estimés, pas de capteur)":""} pour ${Math.round(a.average_heartrate)} bpm → ${frn((W(a)/a.average_heartrate).toFixed(2))} W/bpm`}});
+  const tp=pts.filter(p=>p.tr);
+  if(tp.length<3)return anCard("Vélo · efficacité aérobie","watts produits par battement de cœur","",anEmpty("Il faut au moins 3 sorties de plus de 30 min avec puissance et FC."));
+  const rec=tp.filter(p=>p.d>=addDays(today(),-84)),sl=slope(rec.length>=4?rec:tp),last=mean(tp.slice(-3).map(p=>p.v)),ch=sl!=null?sl*42/last*100:0;
   const read=ch>2?`En hausse (+${frn1(ch)} % sur 6 semaines) : tu produis plus de watts pour le même effort cardiaque.`:ch<-2?`En baisse (${frn1(ch)} % sur 6 semaines) : fatigue, chaleur ou séances plus dures. À recouper avec ta récupération.`:`Stable sur 6 semaines. Ça bougera surtout avec le volume en Z2.`;
-  return anCard("Vélo · efficacité aérobie","puissance moyenne ÷ FC moyenne · sorties ≥ 40 min, hors VO2max",anKey(frn(last.toFixed(2)),"W/bpm","moyenne des 3 dernières sorties"),
-    trendChart(pts,{fmt:v=>v.toFixed(2).replace(".",","),roll:4,c:"#4EA8FF"})+`<div class="legend2"><span><i style="background:#4EA8FF"></i>Zwift</span><span><i style="background:#9DD1FF"></i>Extérieur</span><span><i style="background:var(--txt);height:2px"></i>Tendance (4 sorties)</span></div>`,read);
+  return anCard("Vélo · efficacité aérobie","puissance moyenne ÷ FC moyenne · toutes les sorties ≥ 30 min",anKey(frn(last.toFixed(2)),"W/bpm","moyenne des 3 dernières sorties avec capteur"),
+    trendChart(pts,{fmt:v=>v.toFixed(2).replace(".",","),roll:4,c:"#4EA8FF"})+`<div class="legend2"><span><i style="background:#4EA8FF"></i>Zwift</span><span><i style="background:#9DD1FF"></i>Extérieur (capteur)</span><span><i style="background:none;border:2px solid #8A93A1"></i>Extérieur, puissance estimée</span><span><i style="background:var(--txt);height:2px"></i>Tendance (sorties avec capteur)</span></div>`,read);
 }
 
 /* --- 3. Course : allure ramenée à 140 bpm --- */
 function anRun140(){
-  const R=140,itv=a=>/\d\s*[x×]\s*\d/i.test(a.name||"")||(ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length>1)||/vma|seuil|fraction/i.test(a.name||"");const pts=anActs(RG(84)).filter(a=>a.sp==="course"&&(a.moving_time||0)>=1800&&a.distance>3000&&a.average_heartrate>=128&&a.average_heartrate<=152&&!itv(a))
-    .map(a=>{const v=a.distance/a.moving_time,v140=v*(R-INP.fcrest)/(a.average_heartrate-INP.fcrest),p=1000/v140;
-      return {d:a.date,v:p,tip:`${fdate(a.date)} · ${(a.distance/1000).toFixed(1).replace(".",",")} km à ${toMMSS(1000/v)}/km pour ${Math.round(a.average_heartrate)} bpm → ${toMMSS(p)}/km à 140 bpm`}});
-  if(pts.length<3)return anCard("Course · allure à 140 bpm","ton allure ramenée à la même FC","",anEmpty("Il faut au moins 3 sorties de plus de 30 min avec FC."));
-  const sl=slope(pts),last=mean(pts.slice(-3).map(p=>p.v)),ch=sl!=null?sl*42:0;
+  const R=140,itv=a=>/\d\s*[x×]\s*[\d(]/i.test(a.name||"")||(ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length>1)||/vma|seuil|fraction|tri|man ·|kiné|enchaîn|brick|tapis/i.test(a.name||"");
+  const all=anActs(RG(84)).filter(a=>a.sp==="course"&&(a.moving_time||0)>=1200&&a.distance>2500&&a.average_heartrate>=110&&a.average_heartrate<=180).sort((x,y)=>x.date<y.date?-1:1);
+  const pts=all.map(a=>{const v=a.distance/a.moving_time,v140=v*(R-INP.fcrest)/(a.average_heartrate-INP.fcrest),p=1000/v140,cont=!itv(a)&&a.average_heartrate>=128&&a.average_heartrate<=152&&(a.moving_time||0)>=1800;
+      return {d:a.date,v:p,tr:cont,hollow:!cont,c:cont?"#3DDC84":"#8A93A1",tip:`${fdate(a.date)} · ${a.name||"Course"} · ${(a.distance/1000).toFixed(1).replace(".",",")} km à ${toMMSS(1000/v)}/km pour ${Math.round(a.average_heartrate)} bpm → ${cont?"":"≈ "}${toMMSS(p)}/km à 140 bpm${cont?"":" (fractionné, enchaînement ou course : estimation moins fiable)"}`}});
+  const tp=pts.filter(p=>p.tr);
+  if(tp.length<3)return anCard("Course · allure à 140 bpm","ton allure ramenée à la même FC","",anEmpty("Il faut au moins 3 sorties de plus de 30 min avec FC."));
+  const rec=tp.filter(p=>p.d>=addDays(today(),-84)),sl=slope(rec.length>=4?rec:tp),last=mean(tp.slice(-3).map(p=>p.v)),ch=sl!=null?sl*42:0;
   const read=ch<-3?`Tu gagnes ${Math.round(-ch)} s/km à 140 bpm sur 6 semaines : ton moteur aérobie progresse.`:ch>3?`Tu perds ${Math.round(ch)} s/km à 140 bpm sur 6 semaines : souvent la fatigue ou la chaleur. Regarde ta récupération.`:`Stable sur 6 semaines.`;
-  return anCard("Course · allure à 140 bpm","sorties continues (hors fractionné) ramenées à 140 bpm · plus haut = plus rapide",anKey(toMMSS(last),"/km","moyenne des 3 dernières sorties · repère marathon IM ≈ 5:45"),
-    trendChart(pts,{fmt:v=>toMMSS(v),inv:1,roll:4,c:"#3DDC84"}),read);
+  return anCard("Course · allure à 140 bpm","toutes tes sorties ramenées à 140 bpm · plus haut = plus rapide",anKey(toMMSS(last),"/km","moyenne des 3 dernières sorties continues · repère marathon IM ≈ 5:45"),
+    trendChart(pts,{fmt:v=>toMMSS(v),inv:1,roll:4,c:"#3DDC84"})+`<div class="legend2"><span><i style="background:#3DDC84"></i>Sorties continues</span><span><i style="background:none;border:2px solid #8A93A1"></i>Fractionné, enchaînement, course</span><span><i style="background:#3DDC84;height:2px"></i>Tendance (sorties continues)</span></div>`,read);
 }
 
 /* --- 4. Dérive cardiaque des séances longues --- */
