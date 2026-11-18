@@ -758,7 +758,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.77 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.78 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1565,7 +1565,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.77",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.78",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1672,7 +1672,9 @@ const extraKey=()=>((DATA&&DATA.extra)||[]).map(e=>e.id).join(",");
 /* Estimations communes (tableau de bord, pages détail, graphiques) */
 // FTP d'un bloc : puissance ÷ 0,90 (sweet spot) ou ÷ 0,97 (seuil) ; si la FC est au-dessus de l'habituel, correction par la FC (FC de réserve ∝ puissance, FC seuil = repos + 85 % de la réserve)
 function ftpOfRep(w,hr){const R0=INP.fcmax-INP.fcrest,lt=INP.fcrest+.85*R0,pct=w/INP.ftp,base=w/(pct<=.97?.90:.97);
-  const byHr=hr>INP.fcrest+20?w*(lt-INP.fcrest)/(hr-INP.fcrest):base,est=hr>INP.fcrest+.70*R0;return {v:Math.min(base,byHr),est,corr:byHr<base}}
+  // FC attendue pour ce % de FTP (FC seuil − 0,9 bpm par % sous la FTP, rapporté à ta réserve) + 4 bpm de dérive normale sur un long bloc
+  const expHr=lt+(pct-1)*.9*(lt-INP.fcrest)+4,over=Math.max(0,hr-expHr),v=base*(1-over*.9/(lt-INP.fcrest));
+  return {v,est:over>0,corr:over>0}}
 // allure ramenée à 140 bpm, par ordre de fiabilité :
 //  1. calculée sur les portions stables de la séance (flux seconde par seconde, cf. IronAnalyze.speedAtHR)
 //  2. sortie continue proche de 140 bpm : moyenne de la séance + pente personnelle vitesse/FC
