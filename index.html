@@ -1178,7 +1178,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v1.79"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v1.80"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1785,7 +1785,7 @@ function recompute(){
   const wsum=disc.reduce((a,d)=>a+(planH[d.k==="natation"?"nat":d.k]||1),0);
   const global=disc.reduce((a,d)=>a+d.v*(planH[d.k==="natation"?"nat":d.k]||1),0)/wsum;
   // cap Ironman
-  const swims=acts.filter(a=>a.sp==="nat"&&a.distance>1500&&a.date>=dkey(new Date(Date.now()-42*864e5))).map(a=>a.moving_time/(a.distance/100)).sort((a,b)=>a-b);
+  const swims=acts.filter(a=>a.sp==="nat"&&a.distance>1500&&a.date>=dkey(new Date(Date.now()-42*864e5))).map(a=>swimTime(a)/(a.distance/100)).sort((a,b)=>a-b);
   const swimPace=swims.length?swims[Math.floor(swims.length/2)]:(B?B.swimPace:(mmss(INP.css)||115)+8);
   traj.nat=trajScore((120/swimPace-1)*100*.5);   // natation en entretien : tenir ~2:00/100 m, écart compté à moitié
   disc.forEach(d=>{if(d.k==="natation"){d.traj=+traj.nat.toFixed(1);d.v=+(.4*d.plan+.3*d.eff+.3*d.traj).toFixed(1)}});
@@ -2037,12 +2037,19 @@ function doneOn(date,sport){
   return out;
 }
 /* Allure natation fiable : blocs corrigés (toi) > blocs de l'analyse de Claude > séance entière (pauses comprises, donc trop lente) */
+// Temps de nage hors pauses. Strava (historique) le donne directement ; Intervals compte les pauses au mur pour la Polar.
+// Ordre : tes tours corrigés 🏊 s'ils couvrent la séance, sinon temps total × 0,91 (part de nage médiane de tes 24 séances piscine Strava, juin → nov.)
+const SWIM_MOVE=.91;
+function swimTime(a){if(a.hist||/^s/.test(String(a.id)))return a.moving_time;
+  const sf=SWIMFIX[a.id],L=sf&&sf.laps?sf.laps.filter(l=>l.d>0&&l.t>0):[],ld=L.reduce((t,l)=>t+l.d,0);
+  if(L.length&&a.distance&&ld>=.9*a.distance)return L.reduce((t,l)=>t+l.t,0)*a.distance/ld;
+  return Math.round((a.elapsed_time||a.moving_time)*SWIM_MOVE)}
 function swimPace(a){
   const sf=SWIMFIX[a.id],w=sf&&sf.laps?sf.laps.filter(l=>l.w&&l.d>0&&l.t>0):[];
   if(w.length)return {p:w.reduce((t,l)=>t+l.t,0)/(w.reduce((t,l)=>t+l.d,0)/100),src:"blocs"};
   const an=ANA[a.id],c=claudeOf(a.date,"nat"),reps=(an&&an.crep&&an.reps)||(c&&c.reps)||null;
   if(reps&&reps.length){const t=reps.reduce((x,r)=>x+r[0],0),d=reps.reduce((x,r)=>x+(r[3]||r[1]*r[0]),0);if(d>0)return {p:t/(d/100),src:"blocs"}}
-  return a.distance?{p:a.moving_time/(a.distance/100),src:"séance"}:null;
+  return a.distance?{p:swimTime(a)/(a.distance/100),src:"séance"}:null;
 }
 function autoComment(a){
   const m=[hm(a.moving_time/60)];const W=a.icu_weighted_avg_watts||a.average_watts;
@@ -2411,12 +2418,18 @@ function anRecovery(){
 
 /* --- 6. Natation : allure moyenne --- */
 function anSwim(){
-  const pts=anActs(RG(84)).filter(a=>a.sp==="nat"&&a.distance>800&&a.moving_time&&!a.hist).map(a=>{const sp=swimPace(a);if(!sp)return null;const b=sp.src==="blocs";
-    return {d:a.date,v:sp.p,c:b?"#2EC4B6":"#8FE3DA",tip:`${fdate(a.date)} · ${Math.round(a.distance)} m · ${toMMSS(sp.p)}/100 m${b?" sur les blocs de travail":" (séance entière, pauses comprises)"}`}}).filter(Boolean);
-  if(!pts.length)return anCard("Natation · allure","allure /100 m","",anEmpty("Corrige les distances de tes séances (bouton 🏊 Corriger) pour suivre ton allure sur les blocs de travail."));
-  const css=INP.css||"1:55";
-  return anCard("Natation · allure","allure /100 m · plus haut = plus rapide",anKey(toMMSS(pts[pts.length-1].v),"/100 m","dernière séance · ton seuil (CSS) "+css),
-    trendChart(pts,{fmt:v=>toMMSS(v),inv:1,c:"#2EC4B6",ref:{v:mmss(css),lab:"seuil "+css}})+`<div class="legend2"><span><i style="background:#2EC4B6"></i>Blocs de travail corrigés</span><span><i style="background:#8FE3DA"></i>Séance entière</span></div>`,"");
+  // toutes les séances depuis le début : historique Strava (distances corrigées d'après tes descriptions), puis Intervals + tes corrections 🏊
+  const pts=[];anActs(RG(84)).filter(a=>a.sp==="nat"&&a.distance>800&&a.moving_time).sort((x,y)=>x.date<y.date?-1:1).forEach(a=>{
+    const mt=swimTime(a),whole=mt/(a.distance/100);if(whole<95||whole>240)return;   // montre perdue : allure impossible
+    const ow=!!a.ow,lab=a.race?"course":ow?"eau libre":"piscine",note=a.description?` · ${esc(a.description)}`:"";
+    pts.push({d:a.date,v:whole,tr:!ow,hollow:ow,c:ow?"#8A93A1":"#8FE3DA",tip:`${fdate(a.date)} · ${lab} · ${Math.round(a.distance)} m en ${hm(mt/60)} de nage${a.hist?"":" (pauses déduites)"} → ${toMMSS(whole)}/100 m séance entière${note}`});
+    const sp=swimPace(a);if(sp&&sp.src==="blocs")pts.push({d:a.date,v:sp.p,tr:false,c:"#2EC4B6",tip:`${fdate(a.date)} · blocs de travail : ${toMMSS(sp.p)}/100 m`})});
+  if(!pts.length)return anCard("Natation · allure","allure /100 m","",anEmpty("Aucune séance de natation sur la période."));
+  const css=INP.css||"1:55",wh=pts.filter(p=>p.tr),bl=pts.filter(p=>p.c==="#2EC4B6"),sl=wh.length>=4?slope(wh):null,ch=sl!=null?sl*42:0;
+  const lastW=wh.length?mean(wh.slice(-3).map(p=>p.v)):null;
+  const read=(bl.length?`Dernier bloc de travail : ${toMMSS(bl[bl.length-1].v)}/100 m. `:"")+(sl==null?"":ch<-2?`Séance entière : tu gagnes ${Math.round(-ch)} s/100 m sur 6 semaines.`:ch>2?`Séance entière : ${Math.round(ch)} s/100 m de plus sur 6 semaines (plus d'éducatifs ou de récup ?).`:"Séance entière stable sur 6 semaines.");
+  return anCard("Natation · allure","allure /100 m · plus haut = plus rapide",anKey(lastW?toMMSS(lastW):"—","/100 m","séance entière, moyenne des 3 dernières · seuil (CSS) "+css),
+    trendChart(pts,{fmt:v=>toMMSS(v),inv:1,roll:4,c:"#2EC4B6",ref:{v:mmss(css),lab:"seuil "+css}})+`<div class="legend2"><span><i style="background:#8FE3DA"></i>Séance entière (piscine)</span><span><i style="background:#2EC4B6"></i>Blocs de travail</span><span><i style="background:none;border:2px solid #8A93A1"></i>Eau libre / course</span><span><i style="background:#2EC4B6;height:2px"></i>Tendance (piscine)</span></div>`,read);
 }
 /* --- 7. Part de facile semaine par semaine --- */
 function anEasyWeeks(){
