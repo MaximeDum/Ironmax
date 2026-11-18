@@ -213,6 +213,7 @@ svg [data-tip].tipon{stroke:var(--txt);stroke-width:2}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .tile{background:var(--card);border-radius:16px;padding:12px}.tile span{font-size:11.5px;color:var(--mut)}.tile b{display:block;font-family:var(--disp);font-weight:800;font-size:26px;line-height:1.1;margin-top:4px}.tile b small{font-size:12px;color:var(--mut);margin-left:2px}.tile em{font-style:normal;font-size:11px;color:var(--mut)}
 .vp{padding:14px 0;border-top:3px solid var(--line)}.vg{display:grid;grid-template-columns:1fr 1fr .8fr;gap:6px;margin-top:8px}.vg small{display:block;font-size:10.5px;color:var(--mut)}.vg b{font-family:var(--disp);font-size:15px}.vg b.up{color:#3DDC84}.vg b.ok{color:#4EA8FF}.vg b.warn{color:#F5A524}.emk{position:absolute;top:-4px;width:3px;height:16px;margin-left:-1.5px;background:var(--txt);border-radius:2px}.vp:first-of-type{border:0}
+.vp{cursor:pointer;position:relative}.vp .t span:first-child::after{content:" ›";color:var(--mut)}
 .vp .t{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-weight:600;font-size:14px}
 .vp .x{font-size:12.5px;color:var(--mut);margin-top:2px}
 .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
@@ -757,7 +758,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.73 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.74 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -914,6 +915,7 @@ document.addEventListener("click",ev=>{
     case"theme":UI.theme=v;UI.vr=0;render();break;
     case"knee":UI.knee=v;render();break;
     case"suivisub":UI.sub=v;render();window.scrollTo(0,0);break;
+    case"vpdet":vpDetail(+v);break;
     case"andetail":AN_RANGE=90;anDetail(v);break;
     case"anrange":{const [i,d]=v.split("|");AN_RANGE=+d;anDetail(i);break}
     case"andclose":{const el=$("#andet");if(el)el.classList.remove("show");document.body.style.overflow="";break}
@@ -1149,7 +1151,7 @@ function vDash(){
   const bars=D.note.disc.map(d=>`<div class="bar"><div class="h"><span>${d.n}</span><b>${frn(d.v)}<small class="muted" style="font-size:12px">/20</small></b></div><div class="trk"><i style="width:${d.v*5}%;background:${DC[d.k]}"></i></div><div class="f">Plan ${frn(d.plan)} · efficacité ${frn(d.eff)} · trajectoire ${frn(d.traj)}<br>${esc(d.txt)}</div></div>`).join("");
   const pc=v=>v>=85?"#3DDC84":v>=65?"#A3D94B":v>=45?"#F5A524":v>=25?"#FF7A3D":"#E4002B";
   const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px;color:${pc(p.v)}">${p.v} %${p.e!=null?`<small class="muted" style="font-size:11px;font-weight:500"> · attendu ${p.e} %</small>`:""}</b></div><div class="trk" style="position:relative;overflow:visible"><i style="width:${p.v}%;background:${pc(p.v)}"></i>${p.e!=null?`<span class="emk" style="left:${p.e}%"></span>`:""}</div></div>`).join("");
-  const vp=(D.vsPlan||[]).map(r=>r.delta!==undefined?`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="vg"><div><small>Attendu aujourd'hui</small><b>${esc(r.exp)}</b></div><div><small>Réel</small><b>${esc(r.real)}</b></div><div><small>Écart</small><b class="${r.s}">${esc(r.delta||"—")}</b></div></div>${r.goal?`<div class="x">Objectif final : ${esc(r.goal)}</div>`:""}</div>`:`<div class="vp"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
+  const vp=(D.vsPlan||[]).map((r,ix)=>r.delta!==undefined?`<div class="vp" data-act="vpdet" data-v="${ix}"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="vg"><div><small>Attendu aujourd'hui</small><b>${esc(r.exp)}</b></div><div><small>Réel</small><b>${esc(r.real)}</b></div><div><small>Écart</small><b class="${r.s}">${esc(r.delta||"—")}</b></div></div>${r.goal?`<div class="x">Objectif final : ${esc(r.goal)}</div>`:""}</div>`:`<div class="vp" data-act="vpdet" data-v="${ix}"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
   const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).filter(a=>a.sp!=="mob").slice(0,2).map(a=>{const an=ANA[a.id],j=isJustified(a),nc=nightCtx(a.date);return {id:a.id,date:a.date,sport:a.sp,out:outdoorRide(a),bike:BIKE[a.id]||null,reps:an&&an.reps,recs:an&&an.recs,crep:an&&an.crep,title:a.name,metrics:autoComment(a),comment:(an?an.comment:"")+(nc?(an&&an.comment?" · ":"")+"🌙 "+nc.txt+(j&&!JUSTIFY.has(feelOf(a.id))?" : séance lue avec indulgence.":"."):""),verdict:j?"just":an&&an.verdict,feel:feelLabel(a.id)}}).map(withClaude):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,2);
   const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.grade||(x.verdict==="just"?"Justifiée":x.verdict==="warn"?"Moyenne":x.verdict==="up"?"Excellente":"Bonne")}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc ${x.verdict||""}">${esc(x.comment)}</div>`:""}${repTable(x)}${x.id!=null?`<button class="feelb" data-act="feeledit" data-v="${x.id}">${x.feel?esc(x.feel):"＋ Ressenti"}</button>`:""}${x.id!=null&&x.out?`<button class="feelb" data-act="bikeask" data-v="${x.id}">🚲 ${x.bike?BIKES.find(b=>b[0]===x.bike)[1]:"Quel vélo ?"}</button>`:""}${x.id!=null&&x.sport==="nat"?`<button class="feelb" data-act="swimfix" data-v="${x.id}">🏊 ${SWIMFIX[x.id]?"Blocs corrigés ✓":"Corriger"}</button>`:""}</div>`).join("")}</div>`:"";
   const lightH=vLight(true),hero=heroBanner(D,(lightH||msgs)?`<div class="hsep"></div>${lightH}${msgs}`:"");
@@ -1167,7 +1169,7 @@ function vDash(){
     ${capChart(C)}<div class="f muted" style="font-size:11.5px"><span style="color:var(--acc)">━</span> réel  <span>╌</span> niveau à avoir à chaque date pour être prêt le jour J · <span style="color:var(--txt)">▏</span> repère sur les barres = attendu aujourd'hui</div>${parts}</div>
   <div class="dc" style="display:flex;align-items:center;gap:12px"><span style="font-size:24px">🧘</span><div style="flex:1"><div class="dl" style="color:var(--txt)">Mobilité cette semaine<small>${mobW.n} séance${mobW.n>1?"s":""} · ${hm(mobW.min)} · objectif 3 séances${mobW.last?" · dernière : "+(mobW.last.date===today()?"aujourd'hui":fdate(mobW.last.date))+" ("+hm(mobW.last.moving_time/60)+")":""}</small></div><div class="trk" style="margin-top:6px"><i style="width:${Math.min(100,mobW.n/3*100)}%;background:${mobW.n>=3?"#3DDC84":"#F5A524"}"></i></div></div></div>
   <div class="tiles"><div class="tile"><span>FTP (test)</span><b>${P.ftp}<small>W</small></b><em>${frn(P.wkg)} W/kg · estimée ${P.ftpEst}</em></div><div class="tile"><span>VMA</span><b>${frn(P.vma)}<small>km/h</small></b><em>seuil ≈ ${paceKm(P.vma*.88)}/km</em></div><div class="tile"><span>VO2max</span><b>~${P.vo2}</b><em>estimée</em></div></div>
-  ${D.vsPlan?`<div class="dc"><div class="dl">Où tu en es vs le plan</div>${vp}</div>`:""}
+  ${D.vsPlan?`<div class="dc"><div class="dl">Où tu en es vs le plan<small>touche une ligne pour le détail</small></div>${vp}</div>`:""}
   <div class="src">${esc(D.source)}<br>Données au ${fdate(D.asof)}</div>`;
 }
 /* ============ CONFIG / INPUTS ============ */
@@ -1557,7 +1559,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.73",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.74",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1827,6 +1829,7 @@ function recompute(){
   const vig=(LIVE.adjust||[]).map(a=>a.t).concat(highDays>4?["Fatigue élevée depuis "+highDays+" jours"]:[]);
   rows.push({i:"Points de vigilance",exp:"aucun",real:vig.length?vig.join(" ; "):"aucun",s:vig.length?"warn":"ok",t:vig.length?"À surveiller":"RAS"});
   LIVE.vsPlan=rows;
+  LIVE.vpCtx={blk:blk.n,from:blk.from,doneH,planH,ftpSrc,ftp:ftpLvl,longRide,longRun,km4w,ctl:L.ctl,atl:L.atl,highDays};
   lsSet(LSK.live,LIVE);
 }
 function nextTest(){if(!PLAN)return null;const t=dkey(new Date());const w=PLAN.weeks.find(w=>w.test&&w.start>=dkey(new Date(Date.now()-6*864e5)));if(!w)return null;let d=w.start;if(/FTP 20/.test(w.test))d="2026-12-12";return {n:w.test.replace(/\s*\(.*\)/,""),d}}
@@ -2140,6 +2143,72 @@ const RG=d=>AN_BIG?AN_RANGE:d;
 const RANGES=[[14,"2 sem."],[30,"1 mois"],[90,"3 mois"],[182,"6 mois"],[365,"1 an"]];
 const AN_BUILD={charge:()=>anLoadStatus(),intens:()=>anIntensity(),weeks:()=>anEasyWeeks(),ef:()=>anBikeEF(),run:()=>anRun140(),drift:()=>anDrift(),recup:()=>anRecovery(),sleep:()=>anSleep(),swim:()=>anSwim()};
 function an(id){AN_CUR=id;const h=AN_BUILD[id]();AN_CUR=null;return h}
+/* ============ « Où tu en es vs le plan » : une page détail par ligne ============ */
+function nextPlanned(ids,days){if(!PLAN)return null;const t=today(),end=addDays(t,days||21);let out=null;
+  PLAN.weeks.filter(w=>w.start<=end&&addDays(w.start,7)>t).some(w=>{let ss=[];try{ss=weekSessions(w)}catch(e){}return ss.some(s=>{if(s.date>=t&&ids.includes(s.id)&&!s.p.cancel){out=s;return true}return false})});return out}
+function vpKey(i){return /^Volume/.test(i)?"vol":/FTP/.test(i)?"ftp":/Vitesse Ironman/.test(i)?"bikeim":/🚴 Plus longue/.test(i)?"longride":/140 bpm/.test(i)?"p140":/🏃 Plus longue/.test(i)?"longrun":/Volume hebdo/.test(i)?"km":/marathon/.test(i)?"runim":/CTL/.test(i)?"ctl":/🚴 Efficacité/.test(i)?"efv":/🏃 Efficacité/.test(i)?"efc":/🏊 Efficacité/.test(i)?"efn":/Fatigue/.test(i)?"fat":"vig"}
+function anIn(id){AN_BIG=true;AN_RANGE=90;try{return AN_BUILD[id]()}finally{AN_BIG=false}}
+function vpDetail(idx){
+  const r=(LIVE&&LIVE.vsPlan||[])[idx];if(!r)return;const c=LIVE.vpCtx||{},k=vpKey(r.i),up=r.s==="up",warn=r.s==="warn";
+  const hm2=h=>Math.floor(h)+"h"+pad(Math.round(h%1*60)),ns=(ids,d)=>{const s=nextPlanned(ids,d);return s?`${fdate(s.date)} : ${s.title}${s.min?" ("+hm(s.min)+")":""}`:null};
+  let how="",why=[],todo=[],chart="";
+  switch(k){
+    case"vol":{how=`Heures faites depuis le début du bloc ${c.blk||""} (${fdate(c.from)}) comparées aux heures prévues jusqu'à aujourd'hui.`;
+      const L=[["velo","🚴 Vélo"],["course","🏃 Course"],["nat","🏊 Natation"],["muscu","🏋️ Muscu"]].filter(([s])=>(c.planH||{})[s]!=null);
+      why.push(`<table class="rt"><tr><th></th><th>Prévu</th><th>Fait</th><th>Écart</th></tr>${L.map(([s,l])=>{const p=c.planH[s]||0,d=(c.doneH||{})[s]||0;return `<tr><td>${l}</td><td>${hm2(p)}</td><td>${hm2(d)}</td><td>${d>=p?"+":"−"}${hm2(Math.abs(d-p))}</td></tr>`}).join("")}</table>`);
+      const big=L.map(([s,l])=>[l,((c.doneH||{})[s]||0)-((c.planH||{})[s]||0)]).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]))[0];
+      if(big&&Math.abs(big[1])>.5)why.push(`L'écart vient surtout ${({"🚴 Vélo":"du vélo","🏃 Course":"de la course","🏊 Natation":"de la natation","🏋️ Muscu":"de la muscu"})[big[0]]} (${big[1]>=0?"+":"−"}${hm2(Math.abs(big[1]))}).`);
+      todo.push(warn?"Ne rattrape pas les heures perdues : reprends le programme tel quel, c'est la régularité qui compte.":up?"Tu en fais plus que prévu : garde les séances faciles vraiment faciles et surveille ta fatigue.":"Continue comme ça : le volume suit le programme.");
+      break}
+    case"ftp":{how=`FTP estimée à partir de tes séances récentes (${c.ftpSrc||"—"}), comparée à la trajectoire prévue : 255 W au test de septembre, 280 W visés.`;
+      why.push(`Ton dernier test : ${INP.ftp} W. Les puissances tenues en sweet spot et en seuil donnent ${r.real} aujourd'hui.`);
+      if(warn)why.push("Les blocs de sweet spot ou de seuil ont été faits un peu sous la cible, ou il y en a eu moins que prévu.");
+      const t=nextTest();todo.push(t?`Prochain test : ${t.n} le ${fdate(t.d).replace(/\.$/,"")}. C'est lui qui fixera la nouvelle FTP.`:"Garde le sweet spot du lundi : c'est la séance qui fait monter la FTP.");
+      todo.push(up?"Si les blocs passent facilement 2 semaines de suite, Ironmax te proposera d'augmenter les cibles.":warn?"Vise la puissance cible sur les blocs (au besoin un bloc de moins plutôt qu'une puissance plus basse).":"Tiens les cibles des blocs, sans les dépasser.");
+      chart=anIn("ef");break}
+    case"bikeim":{how="Vitesse estimée sur 180 km à ton allure Ironman (≈ 75 % de la FTP), selon ta FTP et ta capacité à tenir longtemps (plus longue sortie).";
+      why.push(`Elle dépend surtout de ta FTP (${c.ftp||"—"} W) et de ta plus longue sortie récente (${c.longRide!=null?hm2(c.longRide):"—"}).`);
+      todo.push("Elle progressera avec la FTP (sweet spot du lundi) et l'allongement des sorties longues en Base 2.");break}
+    case"longride":{how="Plus longue sortie vélo des 6 dernières semaines, comparée à la durée prévue à ce stade.";
+      why.push(warn?"Les sorties longues récentes ont été plus courtes que prévu (météo, semaine allégée, groupe).":up?"Tu as fait une sortie plus longue que prévu.":"Les sorties longues suivent le programme.");
+      const s=ns(["long","brick","sim"],21);if(s)todo.push("Prochaine sortie longue : "+s+".");
+      todo.push("Tiens la durée en Z2, plafond 135 bpm hors blocs : c'est la durée qui compte, pas la vitesse.");break}
+    case"p140":{how="Ton allure de course ramenée à 140 bpm (sorties continues), comparée à la progression prévue vers 5:00/km.";
+      why.push(up?"Tu progresses plus vite que prévu : le volume en Z2 et le seuil du mercredi paient.":warn?"Les dernières sorties ont été faites fatigué ou au chaud, ou trop peu de Z2 continue.":"Ta progression suit le programme.");
+      todo.push("Fais tes footings et ta sortie longue sous 140 bpm, même si ça oblige à ralentir.");chart=anIn("run");break}
+    case"longrun":{how="Plus longue sortie de course des 6 dernières semaines, comparée à la distance prévue.";
+      const s=ns(["lrun"],14);if(s)todo.push("Prochaine sortie longue : "+s+".");
+      why.push(warn?"La sortie longue a été raccourcie ou sautée récemment.":"Les sorties longues suivent le programme.");
+      todo.push("N'augmente pas de plus de 10 % par semaine : le genou et les tendons s'adaptent plus lentement que le cœur.");break}
+    case"km":{how="Kilomètres de course par semaine (moyenne des 4 dernières), comparés au volume prévu.";
+      why.push(warn?"Une ou plusieurs séances de course manquent sur les 4 dernières semaines.":up?"Tu cours plus que prévu.":"Le volume de course suit le programme.");
+      todo.push(up?"Garde le surplus en Z2, et pas plus de 10 % de plus par semaine.":"Fais les séances prévues ; ne rattrape pas les kilomètres manqués.");break}
+    case"runim":{how="Allure marathon Ironman estimée à partir de ton allure à 140 bpm et de ton volume de course.";
+      why.push("Elle bouge avec l'allure à 140 bpm (moteur aérobie) et la sortie longue (endurance).");
+      todo.push("Elle progressera surtout avec la Z2 régulière et la sortie longue du dimanche.");chart=anIn("run");break}
+    case"ctl":{how="Charge de fond : moyenne de ta charge des 6 dernières semaines, comparée à la trajectoire prévue jusqu'à la cible de fin mai.";
+      why.push(`Charge de fond ${c.ctl!=null?Math.round(c.ctl):"—"}, charge récente ${c.atl!=null?Math.round(c.atl):"—"}.`);
+      why.push(warn?"Les semaines récentes ont été plus légères que prévu (semaine allégée, fatigue ou séances sautées).":up?"Tu as plus chargé que prévu ces dernières semaines.":"La charge suit le programme.");
+      todo.push(up?"Pas besoin d'en rajouter : si la fatigue monte, allège une séance plutôt que d'accumuler.":warn?"Reprends les séances prévues ; la charge de fond remonte en 2 à 3 semaines.":"Continue : monte de 3 à 6 points par semaine au maximum.");chart=anIn("charge");break}
+    case"efv":case"efc":case"efn":{const sp={efv:"vélo",efc:"course",efn:"natation"}[k];how=`Gain d'efficacité cardiaque en ${sp} depuis le début du bloc (même effort pour une FC plus basse), comparé au gain attendu.`;
+      why.push(up?"Ton cœur travaille moins pour le même effort : l'endurance progresse.":warn?"L'efficacité stagne : souvent la fatigue, la chaleur, ou trop d'intensité par rapport à la Z2.":"La progression suit le programme.");
+      todo.push(warn?"Mets l'accent sur la Z2 sous le plafond de FC, et vérifie ta récupération.":"Continue : la Z2 régulière fait le travail.");chart=anIn(k==="efv"?"ef":k==="efc"?"run":"swim");break}
+    case"fat":{how="Indice de fatigue : 65 % charge récente et 35 % récupération (sommeil, variabilité cardiaque, FC au repos).";
+      why.push(c.highDays>0?`Fatigue au-dessus de 40 depuis ${c.highDays} jour${c.highDays>1?"s":""}.`:"La fatigue reste sous 40.");
+      todo.push(warn?"Allège la prochaine séance dure (le feu du jour te le propose) et soigne le sommeil.":"RAS : tu encaisses bien la charge.");chart=anIn("recup");break}
+    default:{how="Les signaux qu'Ironmax surveille : propositions d'ajustement en cours et fatigue qui dure.";
+      why.push(r.real==="aucun"?"Aucun signal en ce moment.":esc(r.real));
+      todo.push(r.real==="aucun"?"Rien à faire de particulier.":"Regarde les propositions d'ajustement dans le Programme et décide si tu les appliques.");}
+  }
+  const nums=r.delta!==undefined?`<div class="vg" style="margin:10px 0 4px"><div><small>Attendu aujourd'hui</small><b>${esc(r.exp)}</b></div><div><small>Réel</small><b>${esc(r.real)}</b></div><div><small>Écart</small><b class="${r.s}">${esc(r.delta||"—")}</b></div></div>${r.goal?`<div class="x muted" style="font-size:12.5px">Objectif final : ${esc(r.goal)}</div>`:""}`:`<div class="muted" style="margin:8px 0">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div>`;
+  let el=$("#andet");if(!el){el=document.createElement("div");el.id="andet";document.body.appendChild(el)}
+  el.innerHTML=`<div class="andh"><button class="btn" data-act="andclose">‹ Retour</button></div>
+   <div class="dc"><div class="t" style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><h3 style="margin:0;font-size:18px">${esc(r.i)}</h3><span class="st ${r.s}">${esc(r.t)}</span></div>${nums}</div>
+   <div class="dc"><div class="dl">Comment c'est calculé</div><div style="font-size:13.5px;margin-top:4px;line-height:1.45">${how}</div></div>
+   <div class="dc"><div class="dl">${up?"Pourquoi tu es en avance":warn?"Pourquoi tu es en retard":"Ce qui se passe"}</div><div style="font-size:13.5px;margin-top:4px;line-height:1.5">${why.map(x=>/^<table/.test(x)?x:`<div>• ${x}</div>`).join("")}</div></div>
+   <div class="dc"><div class="dl">Ce que tu dois faire</div><div style="font-size:13.5px;margin-top:4px;line-height:1.5">${todo.map(x=>`<div>• ${x}</div>`).join("")}</div></div>${chart}`;
+  el.classList.add("show");el.scrollTop=0;document.body.style.overflow="hidden";
+}
 function anDetail(id){
   AN_BIG=true;AN_CUR=id;let h="";try{h=AN_BUILD[id]()}finally{AN_BIG=false;AN_CUR=null}
   let el=$("#andet");if(!el){el=document.createElement("div");el.id="andet";document.body.appendChild(el)}
