@@ -1941,7 +1941,7 @@ function repTable(x){if(!x.reps||!x.reps.length)return"";const nat=x.sport==="na
   const pace=r=>nat?toMMSS(100/r[1])+"/100":bike?Math.round(r[1])+" W":paceKm(r[1]*3.6)+"/km";
   return `<table class="rt"><tr><th></th><th>${nat?"Dist.":"Durée"}</th><th>${nat?"Allure":bike?"Puiss.":"Allure"}</th><th>FC moy.</th>${rc?"<th>Récup</th>":""}</tr>${(()=>{let n=0;return x.reps.map(r=>{const lab=r[4]||(nat?"Bloc "+(++n):"R"+(++n));return [r,lab,r[4]?null:n-1]})})().map(([r,lab,ri])=>`<tr><td>${lab}</td><td>${nat&&r[3]?r[3]+" m":toMMSS(r[0])}</td><td>${pace(r)}</td><td>${Math.round(r[2])} bpm</td>${rc?`<td>${ri!=null&&x.recs[ri]?"−"+x.recs[ri][1]+" bpm/1'":""}</td>`:""}</tr>`).join("")}</table>`}
 function claudeOf(date,sport){const c=DATA&&DATA.claude;return c?c[date+"|"+sport]||null:null}
-function withClaude(x){const c=claudeOf(x.date,x.sport);if(!c)return x;return Object.assign({},x,{comment:"🧠 "+c.comment,grade:x.verdict==="just"?"Justifiée":((c.comment.match(/^(Excellente|Bonne|Moyenne|Nulle|À revoir)\b/)||[])[1]),verdict:x.verdict==="just"?"just":(c.verdict||x.verdict),title:c.title||x.title},c.reps?{reps:c.reps,recs:c.recs||null,crep:1}:{})}
+function withClaude(x){const c=claudeOf(x.date,x.sport);if(!c)return x;return Object.assign({},x,{comment:"🧠 "+c.comment,grade:(c.comment.match(/^(Excellente|Bonne|Moyenne|Nulle|À revoir)\b/)||[])[1]||(x.verdict==="just"?"Justifiée":null),verdict:x.verdict==="just"&&!/^(Excellente|Bonne)\b/.test(c.comment)?"just":(c.verdict||x.verdict),title:c.title||x.title},c.reps?{reps:c.reps,recs:c.recs||null,crep:1}:{})}
 function doneOn(date,sport){
   const out=[];
   ((DATA&&DATA.sessions)||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push(s)});
