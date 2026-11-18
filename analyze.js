@@ -169,6 +169,38 @@
     const m = /^(\d+)×(\d+)'(\d+)?/.exec(sets || ""); const r = /(\d+)'(\d+)?/.exec(rec || "");
     return m ? { n: +m[1], repSec: +m[2] * 60 + (+m[3] || 0), recSec: r ? +r[1] * 60 + (+r[2] || 0) : 0 } : (/^(\d+)'$/.test(sets || "") ? { n: 1, repSec: parseInt(sets) * 60, recSec: 0 } : null);
   }
-  const api = { analyze, analyzeSwim, realSwimDistance, parseSets, cleanHR, pace };
+
+  // Allure équivalente à une FC donnée (140 bpm), calculée sur les portions stables d'une séance de course :
+  // tranches de 30 s après les 5 premières minutes, vitesse stable depuis 90 s (la FC a eu le temps de suivre),
+  // puis droite vitesse = a + b × FC sur ces tranches. Marche pour le continu comme pour le fractionné.
+  function speedAtHR(st, target, prof) {
+    target = target || 140;
+    const r = resample(st), hr = cleanHR(r.hr), v = r.val, B = 30, bins = [];
+    for (let s = 300; s + B <= v.length; s += B) {
+      const vv = v.slice(s, s + B), hh = hr.slice(s, s + B).filter(x => x > 30);
+      if (hh.length < B * .6) { bins.push(null); continue; }
+      bins.push({ v: mean(vv), h: mean(hh), lo: Math.min(...vv) });
+    }
+    const pts = [];
+    for (let i = 3; i < bins.length; i++) {
+      const b = bins[i], p = [bins[i - 1], bins[i - 2], bins[i - 3]];
+      if (!b || p.some(x => !x) || b.v < 1.8 || b.h < 105 || b.h > 190) continue;
+      if (p.every(x => Math.abs(x.v / b.v - 1) <= .06) && Math.abs(b.h - p[0].h) <= 4) pts.push(b);
+    }
+    if (pts.length < 8) return null;
+    const mh = mean(pts.map(x => x.h)), mv = mean(pts.map(x => x.v));
+    let sxy = 0, sxx = 0; pts.forEach(x => { sxy += (x.h - mh) * (x.v - mv); sxx += (x.h - mh) ** 2; });
+    const lo = Math.min(...pts.map(x => x.h)), hi = Math.max(...pts.map(x => x.h));
+    const sl = prof && prof.slope || .021;                       // m/s par bpm (pente personnelle si connue)
+    let b = sxx > 0 ? sxy / sxx : sl;
+    const spread = hi - lo >= 12;                               // assez d'écart de FC pour mesurer la pente
+    if (!spread || b < .008 || b > .045) b = sl;
+    // si 140 est hors des FC de la séance, on part du groupe de tranches le plus proche
+    let v140;
+    if (target >= lo - 3 && target <= hi + 3) v140 = mv + b * (target - mh);
+    else { const near = pts.filter(x => Math.abs(x.h - (target < lo ? lo : hi)) <= 6); v140 = mean(near.map(x => x.v)) + b * (target - mean(near.map(x => x.h))); }
+    return { v: v140, slope: spread ? b : null, n: pts.length, lo: Math.round(lo), hi: Math.round(hi) };
+  }
+  const api = { speedAtHR, analyze, analyzeSwim, realSwimDistance, parseSets, cleanHR, pace };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.IronAnalyze = api;
 })(typeof self !== "undefined" ? self : this);
