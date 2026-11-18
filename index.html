@@ -758,7 +758,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.74 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.75 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1559,7 +1559,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.74",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.75",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1829,7 +1829,17 @@ function recompute(){
   const vig=(LIVE.adjust||[]).map(a=>a.t).concat(highDays>4?["Fatigue élevée depuis "+highDays+" jours"]:[]);
   rows.push({i:"Points de vigilance",exp:"aucun",real:vig.length?vig.join(" ; "):"aucun",s:vig.length?"warn":"ok",t:vig.length?"À surveiller":"RAS"});
   LIVE.vsPlan=rows;
-  LIVE.vpCtx={blk:blk.n,from:blk.from,doneH,planH,ftpSrc,ftp:ftpLvl,longRide,longRun,km4w,ctl:L.ctl,atl:L.atl,highDays};
+  // preuves pour les pages détail (recalculées à chaque actualisation)
+  const top=(a,f,n)=>a.slice().sort((x,y)=>f(y)-f(x)).slice(0,n),d14=dkey(new Date(Date.now()-14*864e5));
+  const kmW=[3,2,1,0].map(i=>{const a=dkey(new Date(Date.now()-(i+1)*7*864e5)),b=dkey(new Date(Date.now()-i*7*864e5));return {d:a,km:runsAll.filter(r=>r.date>a&&r.date<=b).reduce((x,r)=>x+r.km,0)}});
+  const z2L=actsN.filter(a=>a.sp==="course"&&a.average_heartrate>=125&&a.average_heartrate<=150&&(!a.max_heartrate||a.max_heartrate<=152)&&a.moving_time>=1800&&a.distance>3000).sort((a,b)=>a.date<b.date?-1:1).slice(-5).map(a=>({d:a.date,hr:Math.round(a.average_heartrate),p:a.moving_time/(a.distance/1000)-(140-a.average_heartrate)*2.5}));
+  const ssL=[];Object.values(ANA).forEach(an=>{if(an.sport!=="velo"||an.date<since30||!an.reps)return;const rr=an.reps.filter(r=>r[1]/INP.ftp>=.86&&r[1]/INP.ftp<=.97&&r[0]>=480);if(rr.length)ssL.push({d:an.date,w:Math.round(rr.reduce((x,r)=>x+r[1],0)/rr.length),hr:Math.round(rr.reduce((x,r)=>x+r[2],0)/rr.length),n:rr.length,ok:rr.every(r=>r[2]<=INP.fcrest+.70*R0)})});ssL.sort((a,b)=>a.d<b.d?-1:1);
+  const miss=[];if(PLAN)PLAN.weeks.filter(w=>addDays(w.start,7)>d14&&w.start<=today).forEach(w=>{let ss=[];try{ss=dueSessions(weekSessions(w).filter(x=>!x.p.cancel),today)}catch(e){}ss.forEach(x=>{if(x.date<d14||(B&&x.date<=B.asof)||x.d==="mob"||!x.min)return;miss.push({d:x.date,sp:x.d,t:x.title,min:x.min})})});
+  {const used=new Set();miss.sort((a,b)=>a.d<b.d?-1:1);for(let i=miss.length-1;i>=0;i--){const x=miss[i];   // séance faite le jour même ou décalée d'un jour = faite
+    const a=acts.find(a=>a.sp===x.sp&&!used.has(a.id)&&Math.abs((new Date(a.date)-new Date(x.d))/864e5)<=1);if(a){used.add(a.id);miss.splice(i,1)}}}
+  const c14=days.length>14?days[days.length-15].ctl:null;
+  LIVE.vpCtx={blk:blk.n,from:blk.from,doneH,planH,ftpSrc,ftp:ftpLvl,longRide,longRun,km4w,ctl:L.ctl,atl:L.atl,highDays,
+    rides:top(ridesAll.filter(r=>r.date>=d42),r=>r.h,3),runs:top(runsAll.filter(r=>r.date>=d42),r=>r.km,3),kmW,z2:z2L,ss:ssL.slice(-4),miss,c14,expCtl14:expAt(tn-14*864e5).ctl,expCtl:exp.ctl};
   lsSet(LSK.live,LIVE);
 }
 function nextTest(){if(!PLAN)return null;const t=dkey(new Date());const w=PLAN.weeks.find(w=>w.test&&w.start>=dkey(new Date(Date.now()-6*864e5)));if(!w)return null;let d=w.start;if(/FTP 20/.test(w.test))d="2026-12-12";return {n:w.test.replace(/\s*\(.*\)/,""),d}}
@@ -2150,19 +2160,26 @@ function vpKey(i){return /^Volume/.test(i)?"vol":/FTP/.test(i)?"ftp":/Vitesse Ir
 function anIn(id){AN_BIG=true;AN_RANGE=90;try{return AN_BUILD[id]()}finally{AN_BIG=false}}
 function vpDetail(idx){
   const r=(LIVE&&LIVE.vsPlan||[])[idx];if(!r)return;const c=LIVE.vpCtx||{},k=vpKey(r.i),up=r.s==="up",warn=r.s==="warn";
-  const hm2=h=>Math.floor(h)+"h"+pad(Math.round(h%1*60)),ns=(ids,d)=>{const s=nextPlanned(ids,d);return s?`${fdate(s.date)} : ${s.title}${s.min?" ("+hm(s.min)+")":""}`:null};
+  const hm2=h=>Math.floor(h)+"h"+pad(Math.round(h%1*60)),ns=(ids,d)=>{const s=nextPlanned(ids,d);return s?`${fdate(s.date).replace(/\.$/,"")} : ${s.title}${s.min?" ("+hm(s.min)+")":""}`:null};
   let how="",why=[],todo=[],chart="";
+  const tbl=(h,rows)=>rows.length?`<table class="rt"><tr>${h.map(x=>`<th>${x}</th>`).join("")}</tr>${rows.map(r=>`<tr>${r.map(x=>`<td>${x}</td>`).join("")}</tr>`).join("")}</table>`:"";
+  const SPN={velo:"🚴",course:"🏃",nat:"🏊",muscu:"🏋️"},fd=d=>fdate(d).replace(/\.$/,"");
+  const missFor=sp=>{const m=(c.miss||[]).filter(x=>!sp||sp.includes(x.sp));if(m.length)why.push(`Séance${m.length>1?"s":""} prévue${m.length>1?"s":""} non faite${m.length>1?"s":""} ces 14 derniers jours :`+tbl(["Date","Séance"],m.map(x=>[fd(x.d),SPN[x.sp]+" "+esc(x.t)])));return m.length};
   switch(k){
     case"vol":{how=`Heures faites depuis le début du bloc ${c.blk||""} (${fdate(c.from)}) comparées aux heures prévues jusqu'à aujourd'hui.`;
       const L=[["velo","🚴 Vélo"],["course","🏃 Course"],["nat","🏊 Natation"],["muscu","🏋️ Muscu"]].filter(([s])=>(c.planH||{})[s]!=null);
       why.push(`<table class="rt"><tr><th></th><th>Prévu</th><th>Fait</th><th>Écart</th></tr>${L.map(([s,l])=>{const p=c.planH[s]||0,d=(c.doneH||{})[s]||0;return `<tr><td>${l}</td><td>${hm2(p)}</td><td>${hm2(d)}</td><td>${d>=p?"+":"−"}${hm2(Math.abs(d-p))}</td></tr>`}).join("")}</table>`);
       const big=L.map(([s,l])=>[l,((c.doneH||{})[s]||0)-((c.planH||{})[s]||0)]).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]))[0];
       if(big&&Math.abs(big[1])>.5)why.push(`L'écart vient surtout ${({"🚴 Vélo":"du vélo","🏃 Course":"de la course","🏊 Natation":"de la natation","🏋️ Muscu":"de la muscu"})[big[0]]} (${big[1]>=0?"+":"−"}${hm2(Math.abs(big[1]))}).`);
+      missFor(null);
       todo.push(warn?"Ne rattrape pas les heures perdues : reprends le programme tel quel, c'est la régularité qui compte.":up?"Tu en fais plus que prévu : garde les séances faciles vraiment faciles et surveille ta fatigue.":"Continue comme ça : le volume suit le programme.");
       break}
-    case"ftp":{how=`FTP estimée à partir de tes séances récentes (${c.ftpSrc||"—"}), comparée à la trajectoire prévue : 255 W au test de septembre, 280 W visés.`;
-      why.push(`Ton dernier test : ${INP.ftp} W. Les puissances tenues en sweet spot et en seuil donnent ${r.real} aujourd'hui.`);
-      if(warn)why.push("Les blocs de sweet spot ou de seuil ont été faits un peu sous la cible, ou il y en a eu moins que prévu.");
+    case"ftp":{how=`FTP estimée à partir de tes séances récentes (${c.ftpSrc||"—"}), comparée à la trajectoire prévue (objectif ${esc((r.goal||"").split(" · ")[0])}).`;
+      why.push(`Ton dernier test : ${INP.ftp} W. Estimation actuelle : ${r.real}.`);
+      if((c.ss||[]).length)why.push("Tes blocs sweet spot des 30 derniers jours :"+tbl(["Date","Blocs","Puissance","FC"],c.ss.map(x=>[fd(x.d),String(x.n),x.w+" W",x.hr+(x.ok?"":" ⚠️")])));
+      if((c.ss||[]).some(x=>!x.ok))why.push("⚠️ = FC au-dessus du plafond : bloc non compté dans l'estimation.");
+      else if(!(c.ss||[]).length)why.push("Pas encore assez de blocs sweet spot analysés sur 30 jours : l'estimation vient de "+esc(c.ftpSrc||"—")+".");
+      if(warn)why.push("Les blocs ont été faits sous la cible, ou il y en a eu moins que prévu.");
       const t=nextTest();todo.push(t?`Prochain test : ${t.n} le ${fdate(t.d).replace(/\.$/,"")}. C'est lui qui fixera la nouvelle FTP.`:"Garde le sweet spot du lundi : c'est la séance qui fait monter la FTP.");
       todo.push(up?"Si les blocs passent facilement 2 semaines de suite, Ironmax te proposera d'augmenter les cibles.":warn?"Vise la puissance cible sur les blocs (au besoin un bloc de moins plutôt qu'une puissance plus basse).":"Tiens les cibles des blocs, sans les dépasser.");
       chart=anIn("ef");break}
@@ -2170,24 +2187,29 @@ function vpDetail(idx){
       why.push(`Elle dépend surtout de ta FTP (${c.ftp||"—"} W) et de ta plus longue sortie récente (${c.longRide!=null?hm2(c.longRide):"—"}).`);
       todo.push("Elle progressera avec la FTP (sweet spot du lundi) et l'allongement des sorties longues en Base 2.");break}
     case"longride":{how="Plus longue sortie vélo des 6 dernières semaines, comparée à la durée prévue à ce stade.";
-      why.push(warn?"Les sorties longues récentes ont été plus courtes que prévu (météo, semaine allégée, groupe).":up?"Tu as fait une sortie plus longue que prévu.":"Les sorties longues suivent le programme.");
+      if((c.rides||[]).length)why.push("Tes plus longues sorties (6 sem.) :"+tbl(["Date","Durée"],c.rides.map(x=>[fd(x.date),hm2(x.h)])));
+      why.push(warn?"La plus longue est sous la durée prévue à ce stade.":up?"Tu as fait plus long que prévu.":"Les sorties longues suivent le programme.");missFor(["velo"]);
       const s=ns(["long","brick","sim"],21);if(s)todo.push("Prochaine sortie longue : "+s+".");
       todo.push("Tiens la durée en Z2, plafond 135 bpm hors blocs : c'est la durée qui compte, pas la vitesse.");break}
-    case"p140":{how="Ton allure de course ramenée à 140 bpm (sorties continues), comparée à la progression prévue vers 5:00/km.";
-      why.push(up?"Tu progresses plus vite que prévu : le volume en Z2 et le seuil du mercredi paient.":warn?"Les dernières sorties ont été faites fatigué ou au chaud, ou trop peu de Z2 continue.":"Ta progression suit le programme.");
+    case"p140":{how="Ton allure de course ramenée à 140 bpm (sorties continues), comparée à la progression prévue (objectif "+esc(r.goal||"")+").";
+      if((c.z2||[]).length)why.push("Tes dernières sorties en Z2 (ramenées à 140 bpm) :"+tbl(["Date","FC moy.","Allure à 140"],c.z2.map(x=>[fd(x.d),x.hr+" bpm",paceKm(3600/x.p)+"/km"])));
+      else why.push("Pas encore de sortie Z2 continue analysée récemment : la valeur vient de tes sorties précédentes.");
+      why.push(up?"Tu progresses plus vite que prévu : la Z2 régulière et le seuil du mercredi paient.":warn?"Les dernières sorties ont été faites fatigué ou au chaud, ou trop peu de Z2 continue.":"Ta progression suit le programme.");
       todo.push("Fais tes footings et ta sortie longue sous 140 bpm, même si ça oblige à ralentir.");chart=anIn("run");break}
     case"longrun":{how="Plus longue sortie de course des 6 dernières semaines, comparée à la distance prévue.";
       const s=ns(["lrun"],14);if(s)todo.push("Prochaine sortie longue : "+s+".");
-      why.push(warn?"La sortie longue a été raccourcie ou sautée récemment.":"Les sorties longues suivent le programme.");
+      if((c.runs||[]).length)why.push("Tes plus longues sorties (6 sem.) :"+tbl(["Date","Distance"],c.runs.map(x=>[fd(x.date),String(x.km.toFixed(1)).replace(".",",")+" km"])));
+      why.push(warn?"La plus longue est sous la distance prévue à ce stade.":up?"Tu as fait plus long que prévu.":"Les sorties longues suivent le programme.");missFor(["course"]);
       todo.push("N'augmente pas de plus de 10 % par semaine : le genou et les tendons s'adaptent plus lentement que le cœur.");break}
     case"km":{how="Kilomètres de course par semaine (moyenne des 4 dernières), comparés au volume prévu.";
-      why.push(warn?"Une ou plusieurs séances de course manquent sur les 4 dernières semaines.":up?"Tu cours plus que prévu.":"Le volume de course suit le programme.");
+      why.push("Tes 4 dernières semaines :"+tbl(["Semaine du","Km"],(c.kmW||[]).map(x=>[fd(addDays(x.d,1)),String(x.km.toFixed(1)).replace(".",",")])));
+      why.push(warn?"Le volume moyen est sous le prévu.":up?"Tu cours plus que prévu.":"Le volume de course suit le programme.");missFor(["course"]);
       todo.push(up?"Garde le surplus en Z2, et pas plus de 10 % de plus par semaine.":"Fais les séances prévues ; ne rattrape pas les kilomètres manqués.");break}
     case"runim":{how="Allure marathon Ironman estimée à partir de ton allure à 140 bpm et de ton volume de course.";
       why.push("Elle bouge avec l'allure à 140 bpm (moteur aérobie) et la sortie longue (endurance).");
       todo.push("Elle progressera surtout avec la Z2 régulière et la sortie longue du dimanche.");chart=anIn("run");break}
     case"ctl":{how="Charge de fond : moyenne de ta charge des 6 dernières semaines, comparée à la trajectoire prévue jusqu'à la cible de fin mai.";
-      why.push(`Charge de fond ${c.ctl!=null?Math.round(c.ctl):"—"}, charge récente ${c.atl!=null?Math.round(c.atl):"—"}.`);
+      why.push(`Charge de fond ${Math.round(c.ctl)} aujourd'hui${c.c14!=null?` (${Math.round(c.c14)} il y a 14 jours, soit ${c.ctl-c.c14>=0?"+":"−"}${Math.abs(Math.round(c.ctl-c.c14))} ; le plan prévoyait ${c.expCtl-c.expCtl14>=0?"+":"−"}${Math.abs(Math.round(c.expCtl-c.expCtl14))})`:""}. Charge récente ${Math.round(c.atl)}.`);missFor(null);
       why.push(warn?"Les semaines récentes ont été plus légères que prévu (semaine allégée, fatigue ou séances sautées).":up?"Tu as plus chargé que prévu ces dernières semaines.":"La charge suit le programme.");
       todo.push(up?"Pas besoin d'en rajouter : si la fatigue monte, allège une séance plutôt que d'accumuler.":warn?"Reprends les séances prévues ; la charge de fond remonte en 2 à 3 semaines.":"Continue : monte de 3 à 6 points par semaine au maximum.");chart=anIn("charge");break}
     case"efv":case"efc":case"efn":{const sp={efv:"vélo",efc:"course",efn:"natation"}[k];how=`Gain d'efficacité cardiaque en ${sp} depuis le début du bloc (même effort pour une FC plus basse), comparé au gain attendu.`;
