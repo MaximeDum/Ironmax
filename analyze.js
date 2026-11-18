@@ -72,12 +72,23 @@
       return res;
     }
     // --- séance fractionnée
-    const reps = detectReps(val, plan);
+    let reps = detectReps(val, plan);
+    // tours de la montre : complètent la détection auto (ex. bloc ralenti par le GPS), sans la remplacer (tours souvent appuyés en retard)
+    if (st.laps && st.laps.length && reps.length < plan.n) {
+      const ov = (x, y) => Math.max(0, Math.min(x[1], y[1]) - Math.max(x[0], y[0]));
+      (() => { const pw = st.power, rp = pw && reps.length ? mean(reps.map(r => mean(pw.slice(r[0], r[1]).filter(x => x > 0)))) : null;
+        return st.laps.filter(l => { const d = l[1] - l[0]; if (d < plan.repSec * 0.7 || d > plan.repSec * 1.3) return false;
+          const v = mean(val.slice(l[0], l[1])), p = rp ? mean(pw.slice(l[0], l[1]).filter(x => x > 0)) : null;
+          return v >= plan.target * 0.8 || (p && p >= rp * 0.93); }); })()
+        .forEach(l => { if (reps.length < plan.n && !reps.some(r => ov(r, l) > (l[1] - l[0]) * 0.3)) { reps.push([l[0], l[1]]); } });
+      reps.sort((x, y) => x[0] - y[0]);
+    }
     reps.forEach((s, i) => {
       const seg = val.slice(s[0], s[1]), h = hr.slice(s[0] + 60, s[1]).filter(x => x > 30);   // FC hors 1re minute (temps de réponse)
       const avgV = mean(seg), third = Math.max(30, Math.floor((s[1] - s[0] - 60) / 3));
       const hStart = mean(hr.slice(s[0] + 60, s[0] + 60 + third).filter(x => x > 30)), hEnd = mean(hr.slice(s[1] - third, s[1]).filter(x => x > 30));
-      res.reps.push({ i: i + 1, dur: s[1] - s[0], v: avgV, pct: avgV / plan.target * 100, hr: mean(h), hrEnd: hEnd, intra: hEnd - hStart });
+      const pw = st.power ? mean(st.power.slice(s[0], s[1]).filter(x => x > 0)) : null;
+      res.reps.push({ i: i + 1, dur: s[1] - s[0], v: avgV, pct: avgV / plan.target * 100, hr: mean(h), hrEnd: hEnd, intra: hEnd - hStart, pw });
       const next = reps[i + 1] ? reps[i + 1][0] : Math.min(val.length, s[1] + (plan.recSec || 300));
       if (reps[i + 1] || plan.recSec) {
         const peak = Math.max(...hr.slice(Math.max(0, s[1] - 10), Math.min(hr.length, s[1] + 15)).filter(x => x > 30));
@@ -90,6 +101,13 @@
     { const inRep = new Uint8Array(val.length); reps.forEach(s => { for (let k = s[0]; k < Math.min(val.length, s[1] + 180); k++) inRep[k] = 1; });
       const idx = []; for (let k = 600; k < val.length - 600; k++) if (!inRep[k] && val[k] > 0) idx.push(k);
       if (idx.length >= 600) { const v = mean(idx.map(k => val[k])), h = mean(idx.map(k => hr[k]).filter(x => x > 30)); res.z2 = [idx.length, v, h]; } }
+    // contrôle GPS (course) : un bloc nettement plus lent avec la même puissance, la même FC → allure estimée depuis la puissance
+    if (!isBike && res.reps.length >= 3 && res.reps.every(x => x.pw > 0)) {
+      const med = arr => { const s = arr.slice().sort((x, y) => x - y); return s[s.length >> 1]; };
+      const mV = med(res.reps.map(x => x.v)), mP = med(res.reps.map(x => x.pw)), mH = med(res.reps.map(x => x.hr));
+      res.reps.forEach(x => { if (Math.abs(x.v / mV - 1) > 0.025 && Math.abs(x.pw / mP - 1) < 0.03 && Math.abs(x.hr - mH) < 5) { x.gps = 1; x.vMeas = x.v; x.v = mV * x.pw / mP; x.pct = x.v / plan.target * 100; } });
+      const g = res.reps.filter(x => x.gps); if (g.length) res.gps = g.map(x => `bloc ${x.i} mesuré à ${pace(x.vMeas)} mais même puissance que les autres → ≈ ${pace(x.v)} (GPS)`);
+    }
     const n = res.reps.length, pct = mean(res.reps.map(x => x.pct)), first = res.reps[0], last = res.reps[n - 1];
     const drift = n > 1 ? (last.hr / first.hr - 1) * 100 : (first ? first.intra / first.hr * 100 : 0);
     const shortReps = res.reps.filter(x => x.dur < plan.repSec * 0.9).length;
@@ -116,7 +134,7 @@
     }
     res.verdict = warn.length ? "warn" : (pct > 103 || (drift < 2 && (!res.sum.hard || drop >= 30))) ? "up" : "ok";
     const concl = warn.length ? `À surveiller : ${warn.join(", ")}.` : res.verdict === "up" ? "Séance maîtrisée avec de la marge : la cible pourra monter si ça se confirme." : "Séance maîtrisée.";
-    res.comment = bits.join(" · ") + ". " + concl;
+    res.comment = bits.join(" · ") + ". " + concl + (res.gps ? " ⚠ " + res.gps.join(" ; ") + "." : "");
     return res;
   }
 
