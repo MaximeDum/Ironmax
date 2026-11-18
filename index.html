@@ -758,7 +758,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.75 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.76 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -1559,7 +1559,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.75",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.76",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1663,6 +1663,20 @@ function withExtra(list){
   return list.concat(ex.filter(e=>!list.some(a=>sportOfA(a)===sportOfA(e)&&Math.abs(t(a)-t(e))<20*60e3)).map(e=>Object.assign({extra:true},e)));
 }
 const extraKey=()=>((DATA&&DATA.extra)||[]).map(e=>e.id).join(",");
+/* Estimations communes (tableau de bord, pages détail, graphiques) */
+// FTP d'un bloc : puissance ÷ 0,90 (sweet spot) ou ÷ 0,97 (seuil) ; si la FC est au-dessus de l'habituel, correction par la FC (FC de réserve ∝ puissance, FC seuil = repos + 85 % de la réserve)
+function ftpOfRep(w,hr){const R0=INP.fcmax-INP.fcrest,lt=INP.fcrest+.85*R0,pct=w/INP.ftp,base=w/(pct<=.97?.90:.97);
+  const byHr=hr>INP.fcrest+20?w*(lt-INP.fcrest)/(hr-INP.fcrest):base,est=hr>INP.fcrest+.70*R0;return {v:Math.min(base,byHr),est,corr:byHr<base}}
+// allure ramenée à 140 bpm : vitesse ∝ FC de réserve ; continu = mesure directe, sinon estimation
+function run140Of(a){const v=a.distance/a.moving_time,v140=v*(140-INP.fcrest)/(a.average_heartrate-INP.fcrest),
+  itv=/\d\s*[x×]\s*[\d(]/i.test(a.name||"")||(ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length>1)||/vma|seuil|fraction|tri|man ·|kiné|enchaîn|brick|tapis/i.test(a.name||"");
+  const cont=!itv&&a.average_heartrate>=128&&a.average_heartrate<=152&&(a.moving_time||0)>=1800;return {p:1000/v140,cont,est:!cont}}
+const run140Ok=a=>a.sp==="course"&&!a.noChart&&!a.trainer&&!/tapis|treadmill/i.test(a.name||"")&&(a.moving_time||0)>=1200&&a.distance>2500&&a.average_heartrate>=110&&a.average_heartrate<=180;
+// niveau actuel : moyenne pondérée des 5 derniers points (mesure = 1, estimation = 0,5)
+const wLevel=pts=>{const l=pts.slice(-5);if(!l.length)return null;let s=0,w=0;l.forEach(p=>{const k=p.est?.5:1;s+=p.v*k;w+=k});return s/w};
+// séances Intervals + historique (Strava) pour les jours qu'Intervals ne couvre pas
+function withHist(list){const first=list.filter(a=>!/^s/.test(String(a.id))).reduce((m,a)=>a.date<m?a.date:m,"9999");
+  return list.concat(((DATA&&DATA.hist&&DATA.hist.acts)||[]).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a),hist:1})).filter(a=>a.date<first))}
 function recompute(){
   const raw=lsGet(LSK.raw,null)||(DATA&&DATA.extra&&DATA.extra.length?{acts:[],well:[]}:null);if(!raw)return;
   const B=(DATA&&DATA.base)||null;
@@ -1755,7 +1769,8 @@ function recompute(){
   const longRide=Math.max(0,...ridesAll.filter(r=>r.date>=d42).map(r=>r.h));
   // allure ramenée à 140 bpm sur les sorties Z2 (FC moyenne 125–150, > 30 min) : 2,5 s/km par bpm d'écart
   const z2p=actsN.filter(a=>a.sp==="course"&&a.average_heartrate>=125&&a.average_heartrate<=150&&(!a.max_heartrate||a.max_heartrate<=152)&&a.moving_time>=1800&&a.distance>3000) // sorties Z2 seulement : un bloc tempo ou un test fait monter la FC max.sort((a,b)=>a.date<b.date?-1:1).map(a=>a.moving_time/(a.distance/1000)-(140-a.average_heartrate)*2.5);
-  const p140s=(B&&B.p140?[B.p140.s]:[]).concat(z2p).slice(-5);const p140=p140s.length?p140s.slice().sort((a,b)=>a-b)[Math.floor(p140s.length/2)]:330;
+  const r140=withHist(acts).filter(a=>a.date>=dkey(new Date(Date.now()-120*864e5))&&run140Ok(a)).sort((a,b)=>a.date<b.date?-1:1).map(a=>{const x=run140Of(a);return {d:a.date,v:x.p,est:x.est,hr:Math.round(a.average_heartrate),pace:a.moving_time/(a.distance/1000)}});
+  const p140=r140.length?wLevel(r140):((B&&B.p140)?B.p140.s:330);
   // Trajectoire attendue : le niveau qu'il faut avoir à chaque date pour être prêt le 27 juin (départ 28 sept., pic de volume fin mai)
   const T0=new Date("2026-09-28").getTime(),TR=new Date("2027-06-27").getTime(),TP=new Date("2027-05-30").getTime();
   const expAt=ms=>{const uu=clamp((ms-T0)/(TR-T0),0,1),up=clamp((ms-T0)/(TP-T0),0,1);return {ftp:255+25*uu,longRide:3+2.5*up,p140:340-40*uu,longRun:14+16*up,km4w:25+20*up,ctl:58+(INP.ctlTarget-58)*up,swim:130-4*uu}};
@@ -1765,10 +1780,10 @@ function recompute(){
   // FTP estimée : sweet spot tenu à FC normale (puissance des répétitions ÷ 0,90), sinon eFTP Intervals.icu, sinon estimation du socle
   const eftp0=Math.max(0,...acts.filter(a=>a.icu_eftp&&a.date>=dkey(new Date(Date.now()-30*864e5))).map(a=>a.icu_eftp));
   const R0=INP.fcmax-INP.fcrest,since30=dkey(new Date(Date.now()-30*864e5)),cand=[];
-  Object.values(ANA).forEach(an=>{if(an.sport!=="velo"||an.date<since30||!an.reps)return;an.reps.forEach(r=>{const pct=r[1]/INP.ftp;if(pct>=.86&&pct<=.97&&r[0]>=480&&r[2]<=INP.fcrest+.70*R0)cand.push(r[1]/.90)})});
+  Object.values(ANA).forEach(an=>{if(an.sport!=="velo"||an.date<since30||!an.reps)return;an.reps.forEach(r=>{const pct=r[1]/INP.ftp;if(pct>=.86&&pct<=1.05&&r[0]>=480&&r[2])cand.push(ftpOfRep(r[1],r[2]).v)})});
   cand.sort((a,b)=>a-b);
   const ftpEst=cand.length>=2?cand[Math.floor(cand.length/2)]:(eftp0?eftp0:(B&&B.ftpEst&&(Date.now()-new Date(B.asof).getTime())<42*864e5?B.ftpEst:INP.ftp));
-  const ftpSrc=cand.length>=2?"sweet spot récents":eftp0?"eFTP Intervals.icu":(B&&B.ftpEst?"estimation du socle":"test");
+  const ftpSrc=cand.length>=2?"blocs sweet spot / seuil récents":eftp0?"eFTP Intervals.icu":(B&&B.ftpEst?"estimation du socle":"test");
   const ftpLvl=Math.round(ftpEst);
   const bikeV=.7*lin(ftpLvl,215,280)+.3*lin(longRide,2,5.5);
   const runV=.5*lin(-p140,-370,-300)+.25*lin(longRun,10,30)+.25*lin(km4w,15,45);
@@ -1832,8 +1847,8 @@ function recompute(){
   // preuves pour les pages détail (recalculées à chaque actualisation)
   const top=(a,f,n)=>a.slice().sort((x,y)=>f(y)-f(x)).slice(0,n),d14=dkey(new Date(Date.now()-14*864e5));
   const kmW=[3,2,1,0].map(i=>{const a=dkey(new Date(Date.now()-(i+1)*7*864e5)),b=dkey(new Date(Date.now()-i*7*864e5));return {d:a,km:runsAll.filter(r=>r.date>a&&r.date<=b).reduce((x,r)=>x+r.km,0)}});
-  const z2L=actsN.filter(a=>a.sp==="course"&&a.average_heartrate>=125&&a.average_heartrate<=150&&(!a.max_heartrate||a.max_heartrate<=152)&&a.moving_time>=1800&&a.distance>3000).sort((a,b)=>a.date<b.date?-1:1).slice(-5).map(a=>({d:a.date,hr:Math.round(a.average_heartrate),p:a.moving_time/(a.distance/1000)-(140-a.average_heartrate)*2.5}));
-  const ssL=[];Object.values(ANA).forEach(an=>{if(an.sport!=="velo"||an.date<since30||!an.reps)return;const rr=an.reps.filter(r=>r[1]/INP.ftp>=.86&&r[1]/INP.ftp<=.97&&r[0]>=480);if(rr.length)ssL.push({d:an.date,w:Math.round(rr.reduce((x,r)=>x+r[1],0)/rr.length),hr:Math.round(rr.reduce((x,r)=>x+r[2],0)/rr.length),n:rr.length,ok:rr.every(r=>r[2]<=INP.fcrest+.70*R0)})});ssL.sort((a,b)=>a.d<b.d?-1:1);
+  const z2L=r140.slice(-5).map(x=>({d:x.d,hr:x.hr,p:x.v,pace:x.pace,est:x.est}));
+  const ssL=[];Object.values(ANA).forEach(an=>{if(an.sport!=="velo"||an.date<since30||!an.reps)return;const rr=an.reps.filter(r=>r[1]/INP.ftp>=.86&&r[1]/INP.ftp<=1.05&&r[0]>=480&&r[2]);if(rr.length){const f=rr.map(r=>ftpOfRep(r[1],r[2]));ssL.push({d:an.date,w:Math.round(rr.reduce((x,r)=>x+r[1],0)/rr.length),hr:Math.round(rr.reduce((x,r)=>x+r[2],0)/rr.length),n:rr.length,ftp:Math.round(f.reduce((x,y)=>x+y.v,0)/f.length),ok:!f.some(y=>y.est),corr:f.some(y=>y.corr)})}});ssL.sort((a,b)=>a.d<b.d?-1:1);
   const miss=[];if(PLAN)PLAN.weeks.filter(w=>addDays(w.start,7)>d14&&w.start<=today).forEach(w=>{let ss=[];try{ss=dueSessions(weekSessions(w).filter(x=>!x.p.cancel),today)}catch(e){}ss.forEach(x=>{if(x.date<d14||(B&&x.date<=B.asof)||x.d==="mob"||!x.min)return;miss.push({d:x.date,sp:x.d,t:x.title,min:x.min})})});
   {const used=new Set();miss.sort((a,b)=>a.d<b.d?-1:1);for(let i=miss.length-1;i>=0;i--){const x=miss[i];   // séance faite le jour même ou décalée d'un jour = faite
     const a=acts.find(a=>a.sp===x.sp&&!used.has(a.id)&&Math.abs((new Date(a.date)-new Date(x.d))/864e5)<=1);if(a){used.add(a.id);miss.splice(i,1)}}}
@@ -2176,8 +2191,8 @@ function vpDetail(idx){
       break}
     case"ftp":{how=`FTP estimée à partir de tes séances récentes (${c.ftpSrc||"—"}), comparée à la trajectoire prévue (objectif ${esc((r.goal||"").split(" · ")[0])}).`;
       why.push(`Ton dernier test : ${INP.ftp} W. Estimation actuelle : ${r.real}.`);
-      if((c.ss||[]).length)why.push("Tes blocs sweet spot des 30 derniers jours :"+tbl(["Date","Blocs","Puissance","FC"],c.ss.map(x=>[fd(x.d),String(x.n),x.w+" W",x.hr+(x.ok?"":" ⚠️")])));
-      if((c.ss||[]).some(x=>!x.ok))why.push("⚠️ = FC au-dessus du plafond : bloc non compté dans l'estimation.");
+      if((c.ss||[]).length)why.push("Tes blocs sweet spot / seuil des 30 derniers jours :"+tbl(["Date","Blocs","Puissance","FC","FTP ≈"],c.ss.map(x=>[fd(x.d),String(x.n),x.w+" W",x.hr+(x.ok?"":" *"),x.ftp+" W"])));
+      if((c.ss||[]).some(x=>!x.ok))why.push("* FC au-dessus de l'habituel : le bloc compte quand même, la FTP est estimée en tenant compte de ta FC"+((c.ss||[]).some(x=>x.corr)?" (et revue à la baisse)":" (ici sans baisse : la FC reste cohérente avec l'effort)")+".");
       else if(!(c.ss||[]).length)why.push("Pas encore assez de blocs sweet spot analysés sur 30 jours : l'estimation vient de "+esc(c.ftpSrc||"—")+".");
       if(warn)why.push("Les blocs ont été faits sous la cible, ou il y en a eu moins que prévu.");
       const t=nextTest();todo.push(t?`Prochain test : ${t.n} le ${fdate(t.d).replace(/\.$/,"")}. C'est lui qui fixera la nouvelle FTP.`:"Garde le sweet spot du lundi : c'est la séance qui fait monter la FTP.");
@@ -2191,9 +2206,9 @@ function vpDetail(idx){
       why.push(warn?"La plus longue est sous la durée prévue à ce stade.":up?"Tu as fait plus long que prévu.":"Les sorties longues suivent le programme.");missFor(["velo"]);
       const s=ns(["long","brick","sim"],21);if(s)todo.push("Prochaine sortie longue : "+s+".");
       todo.push("Tiens la durée en Z2, plafond 135 bpm hors blocs : c'est la durée qui compte, pas la vitesse.");break}
-    case"p140":{how="Ton allure de course ramenée à 140 bpm (sorties continues), comparée à la progression prévue (objectif "+esc(r.goal||"")+").";
-      if((c.z2||[]).length)why.push("Tes dernières sorties en Z2 (ramenées à 140 bpm) :"+tbl(["Date","FC moy.","Allure à 140"],c.z2.map(x=>[fd(x.d),x.hr+" bpm",paceKm(3600/x.p)+"/km"])));
-      else why.push("Pas encore de sortie Z2 continue analysée récemment : la valeur vient de tes sorties précédentes.");
+    case"p140":{how="Ton allure de course ramenée à 140 bpm (toutes tes sorties, estimées si fractionné ou FC hors Z2 ; moyenne des 5 dernières), comparée à la progression prévue (objectif "+esc(r.goal||"")+").";
+      if((c.z2||[]).length)why.push("Tes 5 dernières sorties, ramenées à 140 bpm :"+tbl(["Date","Allure","FC","À 140 bpm"],c.z2.map(x=>[fd(x.d),toMMSS(x.pace),x.hr+"",(x.est?"≈ ":"")+toMMSS(x.p)])));
+        if(c.z2.some(x=>x.est))why.push("≈ = estimation (fractionné, tempo, FC hors Z2) : compte pour moitié dans le niveau actuel.");
       why.push(up?"Tu progresses plus vite que prévu : la Z2 régulière et le seuil du mercredi paient.":warn?"Les dernières sorties ont été faites fatigué ou au chaud, ou trop peu de Z2 continue.":"Ta progression suit le programme.");
       todo.push("Fais tes footings et ta sortie longue sous 140 bpm, même si ça oblige à ralentir.");chart=anIn("run");break}
     case"longrun":{how="Plus longue sortie de course des 6 dernières semaines, comparée à la distance prévue.";
@@ -2312,28 +2327,28 @@ const slope=pts=>{if(pts.length<4)return null;const xs=pts.map(p=>new Date(p.d)/
 function anBikeEF(){
   const W=a=>a.average_watts||a.icu_average_watts||a.icu_weighted_avg_watts||a.estW;
   const all=anActs(RG(84)).filter(a=>a.sp==="velo"&&(a.moving_time||0)>=1800&&W(a)&&a.average_heartrate>90).sort((x,y)=>x.date<y.date?-1:1);
-  const pts=all.map(a=>{const est=!!a.west,tr=!est&&!/vo2|test/i.test(a.name||"");
-    return {d:a.date,v:W(a)/a.average_heartrate,tr,hollow:est,c:est?"#8A93A1":a.trainer?"#4EA8FF":"#9DD1FF",tip:`${fdate(a.date)} · ${a.name||"Vélo"} : ${est?"≈ ":""}${Math.round(W(a))} W${est?" (estimés, pas de capteur)":""} pour ${Math.round(a.average_heartrate)} bpm → ${frn((W(a)/a.average_heartrate).toFixed(2))} W/bpm`}});
+  const pts=all.map(a=>{const est=!!a.west,tr=!/vo2|test/i.test(a.name||"");
+    return {d:a.date,v:W(a)/a.average_heartrate,tr,est,hollow:est,c:est?"#8A93A1":a.trainer?"#4EA8FF":"#9DD1FF",tip:`${fdate(a.date)} · ${a.name||"Vélo"} : ${est?"≈ ":""}${Math.round(W(a))} W${est?" (estimés, pas de capteur)":""} pour ${Math.round(a.average_heartrate)} bpm → ${frn((W(a)/a.average_heartrate).toFixed(2))} W/bpm`}});
   const tp=pts.filter(p=>p.tr);
   if(tp.length<3)return anCard("Vélo · efficacité aérobie","watts produits par battement de cœur","",anEmpty("Il faut au moins 3 sorties de plus de 30 min avec puissance et FC."));
-  const rec=tp.filter(p=>p.d>=addDays(today(),-84)),sl=slope(rec.length>=4?rec:tp),last=mean(tp.slice(-3).map(p=>p.v)),ch=sl!=null?sl*42/last*100:0;
+  const rec=tp.filter(p=>p.d>=addDays(today(),-84)),sl=slope(rec.length>=4?rec:tp),last=wLevel(tp),ch=sl!=null?sl*42/last*100:0;
   const read=ch>2?`En hausse (+${frn1(ch)} % sur 6 semaines) : tu produis plus de watts pour le même effort cardiaque.`:ch<-2?`En baisse (${frn1(ch)} % sur 6 semaines) : fatigue, chaleur ou séances plus dures. À recouper avec ta récupération.`:`Stable sur 6 semaines. Ça bougera surtout avec le volume en Z2.`;
-  return anCard("Vélo · efficacité aérobie","puissance moyenne ÷ FC moyenne · toutes les sorties ≥ 30 min",anKey(frn(last.toFixed(2)),"W/bpm","moyenne des 3 dernières sorties avec capteur"),
-    trendChart(pts,{fmt:v=>v.toFixed(2).replace(".",","),roll:4,c:"#4EA8FF"})+`<div class="legend2"><span><i style="background:#4EA8FF"></i>Zwift</span><span><i style="background:#9DD1FF"></i>Extérieur (capteur)</span><span><i style="background:none;border:2px solid #8A93A1"></i>Extérieur, puissance estimée</span><span><i style="background:var(--txt);height:2px"></i>Tendance (sorties avec capteur)</span></div>`,read);
+  return anCard("Vélo · efficacité aérobie","puissance moyenne ÷ FC moyenne · toutes les sorties ≥ 30 min",anKey(frn(last.toFixed(2)),"W/bpm","5 dernières sorties (puissance estimée comptée pour moitié)"),
+    trendChart(pts,{fmt:v=>v.toFixed(2).replace(".",","),roll:4,c:"#4EA8FF"})+`<div class="legend2"><span><i style="background:#4EA8FF"></i>Zwift</span><span><i style="background:#9DD1FF"></i>Extérieur (capteur)</span><span><i style="background:none;border:2px solid #8A93A1"></i>Extérieur, puissance estimée</span><span><i style="background:var(--txt);height:2px"></i>Tendance (toutes les sorties)</span></div>`,read);
 }
 
 /* --- 3. Course : allure ramenée à 140 bpm --- */
 function anRun140(){
   const R=140,itv=a=>/\d\s*[x×]\s*[\d(]/i.test(a.name||"")||(ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length>1)||/vma|seuil|fraction|tri|man ·|kiné|enchaîn|brick|tapis/i.test(a.name||"");
-  const all=anActs(RG(84)).filter(a=>a.sp==="course"&&!a.noChart&&!a.trainer&&!/tapis|treadmill/i.test(a.name||"")&&(a.moving_time||0)>=1200&&a.distance>2500&&a.average_heartrate>=110&&a.average_heartrate<=180).sort((x,y)=>x.date<y.date?-1:1);
-  const pts=all.map(a=>{const v=a.distance/a.moving_time,v140=v*(R-INP.fcrest)/(a.average_heartrate-INP.fcrest),p=1000/v140,cont=!itv(a)&&a.average_heartrate>=128&&a.average_heartrate<=152&&(a.moving_time||0)>=1800;
-      return {d:a.date,v:p,tr:cont,hollow:!cont,c:cont?"#3DDC84":"#8A93A1",tip:`${fdate(a.date)} · ${a.name||"Course"} · ${(a.distance/1000).toFixed(1).replace(".",",")} km à ${toMMSS(1000/v)}/km pour ${Math.round(a.average_heartrate)} bpm → ${cont?"":"≈ "}${toMMSS(p)}/km à 140 bpm${cont?"":" (fractionné, enchaînement ou course : estimation moins fiable)"}`}});
-  const tp=pts.filter(p=>p.tr);
+  const all=anActs(RG(84)).filter(run140Ok).sort((x,y)=>x.date<y.date?-1:1);
+  const pts=all.map(a=>{const v=a.distance/a.moving_time,x=run140Of(a),p=x.p,cont=x.cont;
+      return {d:a.date,v:p,tr:true,est:!cont,hollow:!cont,c:cont?"#3DDC84":"#8A93A1",tip:`${fdate(a.date)} · ${a.name||"Course"} · ${(a.distance/1000).toFixed(1).replace(".",",")} km à ${toMMSS(1000/v)}/km pour ${Math.round(a.average_heartrate)} bpm → ${cont?"":"≈ "}${toMMSS(p)}/km à 140 bpm${cont?"":" (estimation : fractionné, tempo ou FC hors Z2)"}`}});
+  const tp=pts;
   if(tp.length<3)return anCard("Course · allure à 140 bpm","ton allure ramenée à la même FC","",anEmpty("Il faut au moins 3 sorties de plus de 30 min avec FC."));
-  const rec=tp.filter(p=>p.d>=addDays(today(),-84)),sl=slope(rec.length>=4?rec:tp),last=mean(tp.slice(-3).map(p=>p.v)),ch=sl!=null?sl*42:0;
+  const rec=tp.filter(p=>p.d>=addDays(today(),-84)),sl=slope(rec.length>=4?rec:tp),last=wLevel(tp),ch=sl!=null?sl*42:0;
   const read=ch<-3?`Tu gagnes ${Math.round(-ch)} s/km à 140 bpm sur 6 semaines : ton moteur aérobie progresse.`:ch>3?`Tu perds ${Math.round(ch)} s/km à 140 bpm sur 6 semaines : souvent la fatigue ou la chaleur. Regarde ta récupération.`:`Stable sur 6 semaines.`;
-  return anCard("Course · allure à 140 bpm","toutes tes sorties ramenées à 140 bpm · plus haut = plus rapide",anKey(toMMSS(last),"/km","moyenne des 3 dernières sorties continues · repère marathon IM ≈ 5:45"),
-    trendChart(pts,{fmt:v=>toMMSS(v),inv:1,roll:4,c:"#3DDC84"})+`<div class="legend2"><span><i style="background:#3DDC84"></i>Sorties continues</span><span><i style="background:none;border:2px solid #8A93A1"></i>Fractionné, enchaînement, course</span><span><i style="background:#3DDC84;height:2px"></i>Tendance (sorties continues)</span></div>`,read);
+  return anCard("Course · allure à 140 bpm","toutes tes sorties ramenées à 140 bpm · plus haut = plus rapide",anKey(toMMSS(last),"/km","5 dernières sorties (estimations comptées pour moitié) · repère marathon IM ≈ 5:45"),
+    trendChart(pts,{fmt:v=>toMMSS(v),inv:1,roll:4,c:"#3DDC84"})+`<div class="legend2"><span><i style="background:#3DDC84"></i>Sorties continues</span><span><i style="background:none;border:2px solid #8A93A1"></i>Fractionné, enchaînement, course</span><span><i style="background:#3DDC84;height:2px"></i>Tendance (toutes les sorties)</span></div>`,read);
 }
 
 /* --- 4. Dérive cardiaque des séances longues --- */
