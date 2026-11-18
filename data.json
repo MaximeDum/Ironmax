@@ -926,8 +926,2237 @@
   }
  },
  "hist": {
-  "note": "Séances du 28 sept. au 10 nov. (vélo, course, natation, muscu, mobilité) reprises de Strava par Claude, en attendant l'historique Intervals.",
+  "note": "Séances depuis le 28 févr. 2026 reprises de Strava par Claude (FC et puissance échantillonnées), en attendant l'historique Intervals.",
   "acts": [
+   {
+    "id": "s17573914734",
+    "start_date_local": "2026-02-28T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 4201,
+    "distance": 24548,
+    "icu_training_load": 11
+   },
+   {
+    "id": "s17573896605",
+    "start_date_local": "2026-03-01T09:00:00",
+    "type": "Run",
+    "name": "Course sur tapis",
+    "moving_time": 1927,
+    "distance": 7242
+   },
+   {
+    "id": "s17573889946",
+    "start_date_local": "2026-03-02T09:00:00",
+    "type": "WeightTraining",
+    "name": "Upper 1",
+    "moving_time": 3463
+   },
+   {
+    "id": "s17585057946",
+    "start_date_local": "2026-03-03T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4358
+   },
+   {
+    "id": "s17588700196",
+    "start_date_local": "2026-03-03T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 1746,
+    "distance": 1250
+   },
+   {
+    "id": "s17600335321",
+    "start_date_local": "2026-03-04T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 6990,
+    "distance": 41600,
+    "icu_training_load": 27
+   },
+   {
+    "id": "s17614011336",
+    "start_date_local": "2026-03-05T08:00:00",
+    "type": "Run",
+    "name": "Afternoon Run",
+    "moving_time": 2791,
+    "distance": 5889,
+    "average_heartrate": 132.7,
+    "hz": [
+     2791,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s17609993797",
+    "start_date_local": "2026-03-05T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3873
+   },
+   {
+    "id": "s17622833239",
+    "start_date_local": "2026-03-06T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2167,
+    "distance": 900
+   },
+   {
+    "id": "s17682037688",
+    "start_date_local": "2026-03-11T08:00:00",
+    "type": "Run",
+    "name": "Morning Run",
+    "moving_time": 3817,
+    "distance": 8210,
+    "average_heartrate": 132.4,
+    "hz": [
+     3817,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s17730819067",
+    "start_date_local": "2026-03-15T08:00:00",
+    "type": "Run",
+    "name": "Lunch Run",
+    "moving_time": 2707,
+    "distance": 6475,
+    "average_heartrate": 139.4,
+    "hz": [
+     2105,
+     602,
+     0
+    ]
+   },
+   {
+    "id": "s17739295964",
+    "start_date_local": "2026-03-16T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4329
+   },
+   {
+    "id": "s17751677413",
+    "start_date_local": "2026-03-17T09:00:00",
+    "type": "Run",
+    "name": "10×1' fractionné",
+    "moving_time": 2690,
+    "distance": 7234
+   },
+   {
+    "id": "s17763324337",
+    "start_date_local": "2026-03-18T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3222
+   },
+   {
+    "id": "s17768622283",
+    "start_date_local": "2026-03-18T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 3618,
+    "distance": 21742,
+    "icu_training_load": 22
+   },
+   {
+    "id": "s17775755185",
+    "start_date_local": "2026-03-19T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3212
+   },
+   {
+    "id": "s17800028360",
+    "start_date_local": "2026-03-21T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 5876,
+    "distance": 41506,
+    "icu_training_load": 27
+   },
+   {
+    "id": "s17811765856",
+    "start_date_local": "2026-03-22T08:00:00",
+    "type": "Run",
+    "name": "Morning Run",
+    "moving_time": 4047,
+    "distance": 9430,
+    "average_heartrate": 137.7,
+    "hz": [
+     3597,
+     450,
+     0
+    ]
+   },
+   {
+    "id": "s17824549833",
+    "start_date_local": "2026-03-23T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3492
+   },
+   {
+    "id": "s17830227288",
+    "start_date_local": "2026-03-23T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3241,
+    "distance": 1400
+   },
+   {
+    "id": "s17837619845",
+    "start_date_local": "2026-03-24T09:00:00",
+    "type": "Run",
+    "name": "3×8' @5:15",
+    "moving_time": 3299,
+    "distance": 9126
+   },
+   {
+    "id": "s17850150730",
+    "start_date_local": "2026-03-25T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3376
+   },
+   {
+    "id": "s17854167452",
+    "start_date_local": "2026-03-25T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3219,
+    "distance": 1800
+   },
+   {
+    "id": "s17862222362",
+    "start_date_local": "2026-03-26T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3530
+   },
+   {
+    "id": "s17863400660",
+    "start_date_local": "2026-03-26T09:00:00",
+    "type": "Ride",
+    "name": "Technogym 5×(4'+3')",
+    "moving_time": 3603,
+    "distance": 26970,
+    "icu_training_load": 22
+   },
+   {
+    "id": "s17885580064",
+    "start_date_local": "2026-03-28T08:00:00",
+    "type": "Run",
+    "name": "Morning Run",
+    "moving_time": 4750,
+    "distance": 10984,
+    "average_heartrate": 144.4,
+    "hz": [
+     3167,
+     1583,
+     0
+    ]
+   },
+   {
+    "id": "s17902742892",
+    "start_date_local": "2026-03-29T09:00:00",
+    "type": "Ride",
+    "name": "Technogym Z2",
+    "moving_time": 7200,
+    "distance": 53500,
+    "icu_training_load": 40
+   },
+   {
+    "id": "s17909838694",
+    "start_date_local": "2026-03-30T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 672,
+    "distance": 400
+   },
+   {
+    "id": "s17912496411",
+    "start_date_local": "2026-03-30T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 2543
+   },
+   {
+    "id": "s17921801244",
+    "start_date_local": "2026-03-31T08:00:00",
+    "type": "Run",
+    "name": "Morning Run (fractionné)",
+    "moving_time": 3804,
+    "distance": 10825,
+    "average_heartrate": 151.7,
+    "hz": [
+     1691,
+     1268,
+     845
+    ]
+   },
+   {
+    "id": "s17934058651",
+    "start_date_local": "2026-04-01T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3720
+   },
+   {
+    "id": "s17938805918",
+    "start_date_local": "2026-04-01T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3591,
+    "distance": 1775
+   },
+   {
+    "id": "s17946400031",
+    "start_date_local": "2026-04-02T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 4268,
+    "distance": 29742,
+    "icu_training_load": 38
+   },
+   {
+    "id": "s17949758471",
+    "start_date_local": "2026-04-02T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3559
+   },
+   {
+    "id": "s17970484225",
+    "start_date_local": "2026-04-04T08:00:00",
+    "type": "Run",
+    "name": "Morning Run",
+    "moving_time": 5271,
+    "distance": 12795,
+    "average_heartrate": 137.7,
+    "hz": [
+     5271,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s17984130087",
+    "start_date_local": "2026-04-05T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 8816,
+    "distance": 59660,
+    "icu_training_load": 99
+   },
+   {
+    "id": "s17988143753",
+    "start_date_local": "2026-04-05T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 2730
+   },
+   {
+    "id": "s17996000413",
+    "start_date_local": "2026-04-06T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3328,
+    "distance": 1700
+   },
+   {
+    "id": "s18088088406",
+    "start_date_local": "2026-04-13T08:00:00",
+    "type": "Run",
+    "name": "Morning Run (vallonné)",
+    "moving_time": 3061,
+    "distance": 9150,
+    "average_heartrate": 147.0,
+    "hz": [
+     1020,
+     2041,
+     0
+    ]
+   },
+   {
+    "id": "s18145808271",
+    "start_date_local": "2026-04-17T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 2431,
+    "distance": 17328,
+    "icu_training_load": 28
+   },
+   {
+    "id": "s18145807492",
+    "start_date_local": "2026-04-17T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 899,
+    "distance": 2919
+   },
+   {
+    "id": "s18153232773",
+    "start_date_local": "2026-04-18T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3370
+   },
+   {
+    "id": "s18161055219",
+    "start_date_local": "2026-04-18T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 1636,
+    "distance": 975
+   },
+   {
+    "id": "s18169873943",
+    "start_date_local": "2026-04-19T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 8058,
+    "distance": 50218,
+    "icu_training_load": 46
+   },
+   {
+    "id": "s18184127327",
+    "start_date_local": "2026-04-20T08:00:00",
+    "type": "Run",
+    "name": "Z2 post natation",
+    "moving_time": 2688,
+    "distance": 5851,
+    "average_heartrate": 136.7,
+    "hz": [
+     2688,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s18181354546",
+    "start_date_local": "2026-04-20T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2947,
+    "distance": 1800
+   },
+   {
+    "id": "s18193491997",
+    "start_date_local": "2026-04-21T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3667
+   },
+   {
+    "id": "s18193821832",
+    "start_date_local": "2026-04-21T09:00:00",
+    "type": "Ride",
+    "name": "Technogym",
+    "moving_time": 2714,
+    "distance": 21468,
+    "icu_training_load": 26
+   },
+   {
+    "id": "s18212488630",
+    "start_date_local": "2026-04-22T08:00:00",
+    "type": "Run",
+    "name": "Course sur tapis (fractionné)",
+    "moving_time": 3010,
+    "distance": 8262,
+    "average_heartrate": 162.1,
+    "hz": [
+     669,
+     334,
+     2007
+    ]
+   },
+   {
+    "id": "s18226463358",
+    "start_date_local": "2026-04-23T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2434,
+    "distance": 1350
+   },
+   {
+    "id": "s18235312811",
+    "start_date_local": "2026-04-24T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3935
+   },
+   {
+    "id": "s18248900836",
+    "start_date_local": "2026-04-25T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo 55 km",
+    "moving_time": 8531,
+    "distance": 55360,
+    "icu_training_load": 66
+   },
+   {
+    "id": "s18249165081",
+    "start_date_local": "2026-04-25T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 916,
+    "distance": 2830
+   },
+   {
+    "id": "s18262212544",
+    "start_date_local": "2026-04-26T08:00:00",
+    "type": "Run",
+    "name": "Post bricks 55k",
+    "moving_time": 3217,
+    "distance": 7229,
+    "average_heartrate": 138.9,
+    "hz": [
+     3217,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s18274878915",
+    "start_date_local": "2026-04-27T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4158
+   },
+   {
+    "id": "s18279256027",
+    "start_date_local": "2026-04-27T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2915,
+    "distance": 2025
+   },
+   {
+    "id": "s18289037604",
+    "start_date_local": "2026-04-28T08:00:00",
+    "type": "Run",
+    "name": "Morning Run (fractionné)",
+    "moving_time": 3840,
+    "distance": 10451,
+    "average_heartrate": 151.9,
+    "hz": [
+     1280,
+     1707,
+     853
+    ]
+   },
+   {
+    "id": "s18302080641",
+    "start_date_local": "2026-04-29T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3209
+   },
+   {
+    "id": "s18306402198",
+    "start_date_local": "2026-04-29T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2889,
+    "distance": 1800
+   },
+   {
+    "id": "s18316690561",
+    "start_date_local": "2026-04-30T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3460
+   },
+   {
+    "id": "s18317197703",
+    "start_date_local": "2026-04-30T09:00:00",
+    "type": "Ride",
+    "name": "Technogym",
+    "moving_time": 2713,
+    "distance": 19462,
+    "icu_training_load": 25
+   },
+   {
+    "id": "s18341538301",
+    "start_date_local": "2026-05-02T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 3346,
+    "distance": 23640,
+    "icu_training_load": 42
+   },
+   {
+    "id": "s18341759420",
+    "start_date_local": "2026-05-02T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 1578,
+    "distance": 5005
+   },
+   {
+    "id": "s18368219695",
+    "start_date_local": "2026-05-04T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3738
+   },
+   {
+    "id": "s18369926659",
+    "start_date_local": "2026-05-04T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3227,
+    "distance": 2075
+   },
+   {
+    "id": "s18382203871",
+    "start_date_local": "2026-05-05T08:00:00",
+    "type": "Run",
+    "name": "Morning Run",
+    "moving_time": 2726,
+    "distance": 6720,
+    "average_heartrate": 134.1,
+    "hz": [
+     2726,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s18399308433",
+    "start_date_local": "2026-05-06T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2995,
+    "distance": 2275
+   },
+   {
+    "id": "s18408467725",
+    "start_date_local": "2026-05-07T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3609
+   },
+   {
+    "id": "s18434841716",
+    "start_date_local": "2026-05-09T08:00:00",
+    "type": "Run",
+    "name": "Morning Run (enchaînement, dur)",
+    "moving_time": 2632,
+    "distance": 8226,
+    "average_heartrate": 169.7,
+    "hz": [
+     0,
+     292,
+     2340
+    ]
+   },
+   {
+    "id": "s18434277813",
+    "start_date_local": "2026-05-09T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 5524,
+    "distance": 38977,
+    "icu_training_load": 88
+   },
+   {
+    "id": "s18447466268",
+    "start_date_local": "2026-05-10T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4058
+   },
+   {
+    "id": "s18461105614",
+    "start_date_local": "2026-05-11T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2889,
+    "distance": 1950
+   },
+   {
+    "id": "s18473819698",
+    "start_date_local": "2026-05-12T08:00:00",
+    "type": "Run",
+    "name": "Morning Run (fractionné)",
+    "moving_time": 4005,
+    "distance": 11479,
+    "average_heartrate": 151.0,
+    "hz": [
+     890,
+     3115,
+     0
+    ]
+   },
+   {
+    "id": "s18487121472",
+    "start_date_local": "2026-05-13T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3872
+   },
+   {
+    "id": "s18487683036",
+    "start_date_local": "2026-05-13T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 2830,
+    "distance": 20547,
+    "icu_training_load": 46
+   },
+   {
+    "id": "s18504284249",
+    "start_date_local": "2026-05-14T09:00:00",
+    "type": "Swim",
+    "name": "Eau libre",
+    "moving_time": 2322,
+    "distance": 1150
+   },
+   {
+    "id": "s18525428762",
+    "start_date_local": "2026-05-16T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 6215,
+    "distance": 44331,
+    "icu_training_load": 147
+   },
+   {
+    "id": "s18525900589",
+    "start_date_local": "2026-05-16T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 1814,
+    "distance": 6010
+   },
+   {
+    "id": "s18538834694",
+    "start_date_local": "2026-05-17T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4313
+   },
+   {
+    "id": "s18551858222",
+    "start_date_local": "2026-05-18T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2084,
+    "distance": 1675
+   },
+   {
+    "id": "s18565077715",
+    "start_date_local": "2026-05-19T08:00:00",
+    "type": "Run",
+    "name": "Morning Run (fractionné)",
+    "moving_time": 3587,
+    "distance": 10385,
+    "average_heartrate": 152.3,
+    "hz": [
+     1594,
+     797,
+     1196
+    ]
+   },
+   {
+    "id": "s18578214411",
+    "start_date_local": "2026-05-20T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 3242,
+    "distance": 22779,
+    "icu_training_load": 49
+   },
+   {
+    "id": "s18582745248",
+    "start_date_local": "2026-05-20T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2542,
+    "distance": 1675
+   },
+   {
+    "id": "s18595844526",
+    "start_date_local": "2026-05-21T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4133
+   },
+   {
+    "id": "s18616970287",
+    "start_date_local": "2026-05-23T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 4018,
+    "distance": 27050,
+    "icu_training_load": 25
+   },
+   {
+    "id": "s18617168569",
+    "start_date_local": "2026-05-23T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 914,
+    "distance": 3010
+   },
+   {
+    "id": "s18632743595",
+    "start_date_local": "2026-05-24T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3451
+   },
+   {
+    "id": "s18644828015",
+    "start_date_local": "2026-05-25T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2066,
+    "distance": 1250
+   },
+   {
+    "id": "s18664352904",
+    "start_date_local": "2026-05-26T09:00:00",
+    "type": "Run",
+    "name": "Evening Run",
+    "moving_time": 1788,
+    "distance": 4147
+   },
+   {
+    "id": "s18671340384",
+    "start_date_local": "2026-05-27T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4488
+   },
+   {
+    "id": "s18685669688",
+    "start_date_local": "2026-05-28T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 3249,
+    "distance": 22302,
+    "icu_training_load": 38
+   },
+   {
+    "id": "s18710672316",
+    "start_date_local": "2026-05-30T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 1272,
+    "distance": 8551,
+    "icu_training_load": 10
+   },
+   {
+    "id": "s18726216190",
+    "start_date_local": "2026-05-31T09:00:00",
+    "type": "Swim",
+    "name": "Triathlon Monumental · natation",
+    "moving_time": 1409,
+    "distance": 1500
+   },
+   {
+    "id": "s18726216292",
+    "start_date_local": "2026-05-31T09:00:00",
+    "type": "Ride",
+    "name": "Triathlon Monumental · vélo",
+    "moving_time": 5110,
+    "distance": 39537,
+    "icu_training_load": 196
+   },
+   {
+    "id": "s18726216258",
+    "start_date_local": "2026-05-31T09:00:00",
+    "type": "Run",
+    "name": "Triathlon Monumental · course",
+    "moving_time": 3172,
+    "distance": 10002
+   },
+   {
+    "id": "s18770427565",
+    "start_date_local": "2026-06-03T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 2955
+   },
+   {
+    "id": "s18770982180",
+    "start_date_local": "2026-06-03T09:00:00",
+    "type": "Ride",
+    "name": "Technogym récup",
+    "moving_time": 2727,
+    "distance": 20013,
+    "icu_training_load": 10
+   },
+   {
+    "id": "s18794385219",
+    "start_date_local": "2026-06-05T09:00:00",
+    "type": "Run",
+    "name": "Récup post tri",
+    "moving_time": 1958,
+    "distance": 4662
+   },
+   {
+    "id": "s18811694153",
+    "start_date_local": "2026-06-06T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 7488,
+    "distance": 48662,
+    "icu_training_load": 52
+   },
+   {
+    "id": "s18819250565",
+    "start_date_local": "2026-06-07T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4348
+   },
+   {
+    "id": "s18833627749",
+    "start_date_local": "2026-06-08T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2714,
+    "distance": 1975
+   },
+   {
+    "id": "s18848952796",
+    "start_date_local": "2026-06-09T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 2610
+   },
+   {
+    "id": "s18849451806",
+    "start_date_local": "2026-06-09T09:00:00",
+    "type": "Ride",
+    "name": "Technogym",
+    "moving_time": 2104,
+    "distance": 14874,
+    "icu_training_load": 8
+   },
+   {
+    "id": "s18865225484",
+    "start_date_local": "2026-06-10T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3322,
+    "distance": 2800
+   },
+   {
+    "id": "s18874442707",
+    "start_date_local": "2026-06-11T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3621
+   },
+   {
+    "id": "s18887491352",
+    "start_date_local": "2026-06-12T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo 68 km",
+    "moving_time": 10390,
+    "distance": 68407,
+    "icu_training_load": 95
+   },
+   {
+    "id": "s18926381005",
+    "start_date_local": "2026-06-15T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 4656,
+    "distance": 3425
+   },
+   {
+    "id": "s18930355342",
+    "start_date_local": "2026-06-15T09:00:00",
+    "type": "Run",
+    "name": "Afternoon Run",
+    "moving_time": 1864,
+    "distance": 4529
+   },
+   {
+    "id": "s18939303893",
+    "start_date_local": "2026-06-16T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo",
+    "moving_time": 3253,
+    "distance": 23253,
+    "icu_training_load": 15
+   },
+   {
+    "id": "s18943508889",
+    "start_date_local": "2026-06-16T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3465
+   },
+   {
+    "id": "s18958364022",
+    "start_date_local": "2026-06-17T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3687,
+    "distance": 3100
+   },
+   {
+    "id": "s18967625553",
+    "start_date_local": "2026-06-18T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo Z2",
+    "moving_time": 4172,
+    "distance": 29040,
+    "icu_training_load": 23
+   },
+   {
+    "id": "s18971353540",
+    "start_date_local": "2026-06-18T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3823
+   },
+   {
+    "id": "s18993823363",
+    "start_date_local": "2026-06-20T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo 79 km",
+    "moving_time": 10836,
+    "distance": 78915,
+    "icu_training_load": 56
+   },
+   {
+    "id": "s19005508219",
+    "start_date_local": "2026-06-21T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3672
+   },
+   {
+    "id": "s19038031582",
+    "start_date_local": "2026-06-23T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - 15min varied tempo",
+    "moving_time": 3666,
+    "distance": 30138,
+    "average_heartrate": 142.1,
+    "average_watts": 173.7,
+    "hz": [
+     815,
+     2444,
+     407
+    ]
+   },
+   {
+    "id": "s19046684692",
+    "start_date_local": "2026-06-24T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3194
+   },
+   {
+    "id": "s19051058702",
+    "start_date_local": "2026-06-24T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Z1/2 1h",
+    "moving_time": 3608,
+    "distance": 24254,
+    "average_heartrate": 113.6,
+    "average_watts": 119.6,
+    "hz": [
+     3608,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s19063293653",
+    "start_date_local": "2026-06-25T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2136,
+    "distance": 1675
+   },
+   {
+    "id": "s19083608208",
+    "start_date_local": "2026-06-27T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sortie (trop) longue",
+    "moving_time": 8712,
+    "distance": 65201,
+    "average_heartrate": 138.1,
+    "average_watts": 149.0,
+    "hz": [
+     5808,
+     2904,
+     0
+    ]
+   },
+   {
+    "id": "s19101660133",
+    "start_date_local": "2026-06-28T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité et renforcement",
+    "moving_time": 1493
+   },
+   {
+    "id": "s19106576349",
+    "start_date_local": "2026-06-29T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3848,
+    "distance": 2800
+   },
+   {
+    "id": "s19113430359",
+    "start_date_local": "2026-06-29T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - SEF 3x8' 175W",
+    "moving_time": 3462,
+    "distance": 21806,
+    "average_heartrate": 116.1,
+    "average_watts": 144.2,
+    "hz": [
+     3462,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s19120489586",
+    "start_date_local": "2026-06-30T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu + CAP",
+    "moving_time": 6664
+   },
+   {
+    "id": "s19124725390",
+    "start_date_local": "2026-06-30T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 3x15' @195W",
+    "moving_time": 4597,
+    "distance": 36085,
+    "average_heartrate": 140.6,
+    "average_watts": 174.8,
+    "hz": [
+     1532,
+     3065,
+     0
+    ]
+   },
+   {
+    "id": "s19146518253",
+    "start_date_local": "2026-07-02T09:00:00",
+    "type": "Swim",
+    "name": "Natation 5×300 seuil",
+    "moving_time": 3296,
+    "distance": 2900
+   },
+   {
+    "id": "s19153475709",
+    "start_date_local": "2026-07-02T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 2961
+   },
+   {
+    "id": "s19159403727",
+    "start_date_local": "2026-07-03T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3164
+   },
+   {
+    "id": "s19165669169",
+    "start_date_local": "2026-07-03T09:00:00",
+    "type": "Run",
+    "name": "CAP kiné",
+    "moving_time": 1190,
+    "distance": 2699
+   },
+   {
+    "id": "s19166071121",
+    "start_date_local": "2026-07-03T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 1223
+   },
+   {
+    "id": "s19174034322",
+    "start_date_local": "2026-07-04T09:00:00",
+    "type": "Ride",
+    "name": "Sortie bourbier",
+    "moving_time": 12600,
+    "distance": 81036,
+    "icu_training_load": 155
+   },
+   {
+    "id": "s19190319786",
+    "start_date_local": "2026-07-05T09:00:00",
+    "type": "Run",
+    "name": "CAP kiné",
+    "moving_time": 1494,
+    "distance": 3471
+   },
+   {
+    "id": "s19190740026",
+    "start_date_local": "2026-07-05T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 1821
+   },
+   {
+    "id": "s19196983337",
+    "start_date_local": "2026-07-06T09:00:00",
+    "type": "Run",
+    "name": "CAP kiné",
+    "moving_time": 1790,
+    "distance": 4371
+   },
+   {
+    "id": "s19204388131",
+    "start_date_local": "2026-07-06T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 3x17' @195W",
+    "moving_time": 4568,
+    "distance": 34355,
+    "average_heartrate": 139.0,
+    "average_watts": 170.8,
+    "hz": [
+     2030,
+     2030,
+     508
+    ]
+   },
+   {
+    "id": "s19210180021",
+    "start_date_local": "2026-07-07T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3903
+   },
+   {
+    "id": "s19217095579",
+    "start_date_local": "2026-07-07T09:00:00",
+    "type": "Run",
+    "name": "CAP kiné",
+    "moving_time": 2400,
+    "distance": 5685
+   },
+   {
+    "id": "s19224590357",
+    "start_date_local": "2026-07-08T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 2225
+   },
+   {
+    "id": "s19227570115",
+    "start_date_local": "2026-07-08T09:00:00",
+    "type": "Swim",
+    "name": "Natation 5×300 seuil",
+    "moving_time": 3271,
+    "distance": 3000
+   },
+   {
+    "id": "s19232192039",
+    "start_date_local": "2026-07-08T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Z1/2 1h",
+    "moving_time": 3610,
+    "distance": 26504,
+    "average_heartrate": 125.0,
+    "average_watts": 130.3,
+    "hz": [
+     3610,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s19238051944",
+    "start_date_local": "2026-07-09T09:00:00",
+    "type": "Run",
+    "name": "CAP kiné",
+    "moving_time": 2700,
+    "distance": 6512
+   },
+   {
+    "id": "s19238196432",
+    "start_date_local": "2026-07-09T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité / Renfo",
+    "moving_time": 1029
+   },
+   {
+    "id": "s19266334787",
+    "start_date_local": "2026-07-11T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo 103 km",
+    "moving_time": 15400,
+    "distance": 102887,
+    "icu_training_load": 164
+   },
+   {
+    "id": "s19270951306",
+    "start_date_local": "2026-07-11T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 1482,
+    "distance": 3986
+   },
+   {
+    "id": "s19277688944",
+    "start_date_local": "2026-07-12T09:00:00",
+    "type": "Run",
+    "name": "CAP kiné",
+    "moving_time": 2962,
+    "distance": 7179
+   },
+   {
+    "id": "s19290516362",
+    "start_date_local": "2026-07-13T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 5249
+   },
+   {
+    "id": "s19297523114",
+    "start_date_local": "2026-07-13T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 3x17' @195W",
+    "moving_time": 4658,
+    "distance": 39453,
+    "average_heartrate": 136.9,
+    "average_watts": 173.1,
+    "hz": [
+     1553,
+     3105,
+     0
+    ]
+   },
+   {
+    "id": "s19304748382",
+    "start_date_local": "2026-07-14T09:00:00",
+    "type": "Run",
+    "name": "CAP kiné",
+    "moving_time": 3583,
+    "distance": 9075
+   },
+   {
+    "id": "s19309241043",
+    "start_date_local": "2026-07-14T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - SEF 3x8' 190W",
+    "moving_time": 3482,
+    "distance": 26061,
+    "average_heartrate": 126.7,
+    "average_watts": 156.9,
+    "hz": [
+     2321,
+     1161,
+     0
+    ]
+   },
+   {
+    "id": "s19326386294",
+    "start_date_local": "2026-07-15T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 1882
+   },
+   {
+    "id": "s19339496779",
+    "start_date_local": "2026-07-16T09:00:00",
+    "type": "Run",
+    "name": "CAP kiné",
+    "moving_time": 3960,
+    "distance": 10041
+   },
+   {
+    "id": "s19360185141",
+    "start_date_local": "2026-07-18T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo 73 km",
+    "moving_time": 10703,
+    "distance": 73225,
+    "icu_training_load": 104
+   },
+   {
+    "id": "s19373122543",
+    "start_date_local": "2026-07-19T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3851,
+    "distance": 3075
+   },
+   {
+    "id": "s19376452903",
+    "start_date_local": "2026-07-19T09:00:00",
+    "type": "Run",
+    "name": "CAP kiné post natation",
+    "moving_time": 4501,
+    "distance": 11900
+   },
+   {
+    "id": "s19386971867",
+    "start_date_local": "2026-07-20T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4580
+   },
+   {
+    "id": "s19391889425",
+    "start_date_local": "2026-07-20T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 3x18' @205W",
+    "moving_time": 4571,
+    "distance": 32739,
+    "average_heartrate": 139.9,
+    "average_watts": 178.7,
+    "hz": [
+     1524,
+     3047,
+     0
+    ]
+   },
+   {
+    "id": "s19397913095",
+    "start_date_local": "2026-07-21T08:00:00",
+    "type": "Run",
+    "name": "30' non stop",
+    "moving_time": 1801,
+    "distance": 5977,
+    "average_heartrate": 160.3,
+    "hz": [
+     0,
+     1201,
+     600
+    ]
+   },
+   {
+    "id": "s19406285283",
+    "start_date_local": "2026-07-21T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - SEF 3x8' 195W",
+    "moving_time": 3064,
+    "distance": 25294,
+    "average_heartrate": 127.9,
+    "average_watts": 176.8,
+    "hz": [
+     2724,
+     340,
+     0
+    ]
+   },
+   {
+    "id": "s19412952352",
+    "start_date_local": "2026-07-22T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 1260
+   },
+   {
+    "id": "s19416023059",
+    "start_date_local": "2026-07-22T09:00:00",
+    "type": "Swim",
+    "name": "Natation 4×400 seuil",
+    "moving_time": 3449,
+    "distance": 3000
+   },
+   {
+    "id": "s19427517914",
+    "start_date_local": "2026-07-23T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4150
+   },
+   {
+    "id": "s19430212196",
+    "start_date_local": "2026-07-23T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 3023
+   },
+   {
+    "id": "s19441085783",
+    "start_date_local": "2026-07-24T09:00:00",
+    "type": "Run",
+    "name": "CAP kiné",
+    "moving_time": 4201,
+    "distance": 11349
+   },
+   {
+    "id": "s19471703872",
+    "start_date_local": "2026-07-26T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo 100 km",
+    "moving_time": 13689,
+    "distance": 100091,
+    "icu_training_load": 172
+   },
+   {
+    "id": "s19481324669",
+    "start_date_local": "2026-07-27T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4188
+   },
+   {
+    "id": "s19488486376",
+    "start_date_local": "2026-07-27T09:00:00",
+    "type": "VirtualRide",
+    "name": "Zwift - Moulinette",
+    "moving_time": 2886,
+    "distance": 22640,
+    "icu_training_load": 9
+   },
+   {
+    "id": "s19494869820",
+    "start_date_local": "2026-07-28T08:00:00",
+    "type": "Run",
+    "name": "35' non stop",
+    "moving_time": 2118,
+    "distance": 6734,
+    "average_heartrate": 149.9,
+    "hz": [
+     706,
+     1177,
+     235
+    ]
+   },
+   {
+    "id": "s19513409075",
+    "start_date_local": "2026-07-29T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3386,
+    "distance": 3250
+   },
+   {
+    "id": "s19517587489",
+    "start_date_local": "2026-07-29T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 2107
+   },
+   {
+    "id": "s19524599138",
+    "start_date_local": "2026-07-30T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3879
+   },
+   {
+    "id": "s19538557455",
+    "start_date_local": "2026-07-31T09:00:00",
+    "type": "Workout",
+    "name": "Kiné (mobilité)",
+    "moving_time": 2864
+   },
+   {
+    "id": "s19553296775",
+    "start_date_local": "2026-08-01T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo 111 km",
+    "moving_time": 15866,
+    "distance": 111444,
+    "icu_training_load": 265
+   },
+   {
+    "id": "s19553803505",
+    "start_date_local": "2026-08-01T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 1783,
+    "distance": 5603
+   },
+   {
+    "id": "s19565079182",
+    "start_date_local": "2026-08-02T08:00:00",
+    "type": "Run",
+    "name": "Z2 sous fatigue",
+    "moving_time": 3573,
+    "distance": 10027,
+    "average_heartrate": 140.6,
+    "hz": [
+     3176,
+     397,
+     0
+    ]
+   },
+   {
+    "id": "s19578434979",
+    "start_date_local": "2026-08-03T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 2120
+   },
+   {
+    "id": "s19585509461",
+    "start_date_local": "2026-08-03T09:00:00",
+    "type": "VirtualRide",
+    "name": "Zwift - Sweet spot deload",
+    "moving_time": 2837,
+    "distance": 21899,
+    "icu_training_load": 29
+   },
+   {
+    "id": "s19592305119",
+    "start_date_local": "2026-08-04T08:00:00",
+    "type": "Run",
+    "name": "Morning Run",
+    "moving_time": 2496,
+    "distance": 7347,
+    "average_heartrate": 137.8,
+    "hz": [
+     2496,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s19610492826",
+    "start_date_local": "2026-08-05T09:00:00",
+    "type": "Swim",
+    "name": "Natation Z2",
+    "moving_time": 2436,
+    "distance": 1950
+   },
+   {
+    "id": "s19622346127",
+    "start_date_local": "2026-08-06T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 2157
+   },
+   {
+    "id": "s19625216371",
+    "start_date_local": "2026-08-06T09:00:00",
+    "type": "Workout",
+    "name": "Mobilité",
+    "moving_time": 1917
+   },
+   {
+    "id": "s19636241497",
+    "start_date_local": "2026-08-07T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 1126,
+    "distance": 3288
+   },
+   {
+    "id": "s19636086657",
+    "start_date_local": "2026-08-07T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - très matinal",
+    "moving_time": 7336,
+    "distance": 58744,
+    "average_heartrate": 123.8,
+    "average_watts": 163.8,
+    "hz": [
+     7336,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s19651341909",
+    "start_date_local": "2026-08-08T08:00:00",
+    "type": "Run",
+    "name": "Morning Run",
+    "moving_time": 4103,
+    "distance": 10165,
+    "average_heartrate": 139.9,
+    "hz": [
+     3191,
+     912,
+     0
+    ]
+   },
+   {
+    "id": "s19677052293",
+    "start_date_local": "2026-08-10T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 5001
+   },
+   {
+    "id": "s19683699496",
+    "start_date_local": "2026-08-10T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 3x18' @205W",
+    "moving_time": 4583,
+    "distance": 39770,
+    "average_heartrate": 137.4,
+    "average_watts": 179.6,
+    "hz": [
+     2037,
+     2546,
+     0
+    ]
+   },
+   {
+    "id": "s19690739606",
+    "start_date_local": "2026-08-11T08:00:00",
+    "type": "Run",
+    "name": "Morning Run (fractionné)",
+    "moving_time": 3204,
+    "distance": 10391,
+    "average_heartrate": 160.2,
+    "hz": [
+     356,
+     1068,
+     1780
+    ]
+   },
+   {
+    "id": "s19699159322",
+    "start_date_local": "2026-08-11T09:00:00",
+    "type": "VirtualRide",
+    "name": "Zwift - SEF 3x8' 200W",
+    "moving_time": 2835,
+    "distance": 19856,
+    "icu_training_load": 16
+   },
+   {
+    "id": "s19706540102",
+    "start_date_local": "2026-08-12T09:00:00",
+    "type": "Workout",
+    "name": "Kiné (mobilité)",
+    "moving_time": 2296
+   },
+   {
+    "id": "s19709395631",
+    "start_date_local": "2026-08-12T09:00:00",
+    "type": "Swim",
+    "name": "Natation 4×400 seuil",
+    "moving_time": 3162,
+    "distance": 2800
+   },
+   {
+    "id": "s19720826897",
+    "start_date_local": "2026-08-13T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4092
+   },
+   {
+    "id": "s19740953714",
+    "start_date_local": "2026-08-14T09:00:00",
+    "type": "Workout",
+    "name": "Kiné (mobilité)",
+    "moving_time": 1422
+   },
+   {
+    "id": "s19749707569",
+    "start_date_local": "2026-08-15T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo 113 km",
+    "moving_time": 15608,
+    "distance": 113113,
+    "icu_training_load": 278
+   },
+   {
+    "id": "s19750067959",
+    "start_date_local": "2026-08-15T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 1146,
+    "distance": 3378
+   },
+   {
+    "id": "s19762050585",
+    "start_date_local": "2026-08-16T08:00:00",
+    "type": "Run",
+    "name": "Jambes bien lourdes",
+    "moving_time": 4626,
+    "distance": 12288,
+    "average_heartrate": 139.3,
+    "hz": [
+     4626,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s19775298402",
+    "start_date_local": "2026-08-17T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4065
+   },
+   {
+    "id": "s19782344838",
+    "start_date_local": "2026-08-17T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 3x20' @200W",
+    "moving_time": 4338,
+    "distance": 38114,
+    "average_heartrate": 149.2,
+    "average_watts": 176.2,
+    "hz": [
+     964,
+     2892,
+     482
+    ]
+   },
+   {
+    "id": "s19788800548",
+    "start_date_local": "2026-08-18T08:00:00",
+    "type": "Run",
+    "name": "Morning Run (seuil)",
+    "moving_time": 2980,
+    "distance": 10055,
+    "average_heartrate": 161.3,
+    "hz": [
+     331,
+     662,
+     1987
+    ]
+   },
+   {
+    "id": "s19797265730",
+    "start_date_local": "2026-08-18T09:00:00",
+    "type": "VirtualRide",
+    "name": "Zwift - Moulinette",
+    "moving_time": 2874,
+    "distance": 23288,
+    "icu_training_load": 10
+   },
+   {
+    "id": "s19807348201",
+    "start_date_local": "2026-08-19T09:00:00",
+    "type": "Swim",
+    "name": "Natation technique",
+    "moving_time": 3423,
+    "distance": 2800
+   },
+   {
+    "id": "s19818933576",
+    "start_date_local": "2026-08-20T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3507
+   },
+   {
+    "id": "s19822128797",
+    "start_date_local": "2026-08-20T09:00:00",
+    "type": "Workout",
+    "name": "Kiné (mobilité)",
+    "moving_time": 3302
+   },
+   {
+    "id": "s19846444058",
+    "start_date_local": "2026-08-22T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo (crevaison)",
+    "moving_time": 1346,
+    "distance": 7531,
+    "icu_training_load": 7
+   },
+   {
+    "id": "s19849756562",
+    "start_date_local": "2026-08-22T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 1225,
+    "distance": 3581
+   },
+   {
+    "id": "s19849406080",
+    "start_date_local": "2026-08-22T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sortie longue",
+    "moving_time": 11571,
+    "distance": 87042,
+    "average_heartrate": 135.7,
+    "average_watts": 152.2,
+    "hz": [
+     9000,
+     2571,
+     0
+    ]
+   },
+   {
+    "id": "s19860031232",
+    "start_date_local": "2026-08-23T08:00:00",
+    "type": "Run",
+    "name": "Sortie longue sous fatigue",
+    "moving_time": 6351,
+    "distance": 17642,
+    "average_heartrate": 135.0,
+    "hz": [
+     6351,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "s19873811745",
+    "start_date_local": "2026-08-24T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3698
+   },
+   {
+    "id": "s19881203743",
+    "start_date_local": "2026-08-24T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 4x15' @210W",
+    "moving_time": 4763,
+    "distance": 43589,
+    "average_heartrate": 145.9,
+    "average_watts": 199.2,
+    "hz": [
+     1786,
+     2977,
+     0
+    ]
+   },
+   {
+    "id": "s19887923864",
+    "start_date_local": "2026-08-25T09:00:00",
+    "type": "Workout",
+    "name": "Kiné (mobilité)",
+    "moving_time": 1315
+   },
+   {
+    "id": "s19896612371",
+    "start_date_local": "2026-08-25T09:00:00",
+    "type": "VirtualRide",
+    "name": "Zwift - Recup",
+    "moving_time": 2886,
+    "distance": 24700,
+    "icu_training_load": 11
+   },
+   {
+    "id": "s19903215882",
+    "start_date_local": "2026-08-26T09:00:00",
+    "type": "Run",
+    "name": "Seuil",
+    "moving_time": 3080,
+    "distance": 10504
+   },
+   {
+    "id": "s19906695742",
+    "start_date_local": "2026-08-26T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 3094,
+    "distance": 2700
+   },
+   {
+    "id": "s19920547097",
+    "start_date_local": "2026-08-27T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3693
+   },
+   {
+    "id": "s19933030921",
+    "start_date_local": "2026-08-28T09:00:00",
+    "type": "Run",
+    "name": "Brick",
+    "moving_time": 1079,
+    "distance": 3326
+   },
+   {
+    "id": "s19932870301",
+    "start_date_local": "2026-08-28T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sortie longue",
+    "moving_time": 12632,
+    "distance": 108738,
+    "average_heartrate": 132.1,
+    "average_watts": 154.1,
+    "hz": [
+     11228,
+     1404,
+     0
+    ]
+   },
+   {
+    "id": "s19974131717",
+    "start_date_local": "2026-08-31T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2935,
+    "distance": 2500
+   },
+   {
+    "id": "s19979209543",
+    "start_date_local": "2026-08-31T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 1368,
+    "distance": 4370
+   },
+   {
+    "id": "s19978798813",
+    "start_date_local": "2026-08-31T18:00:00",
+    "type": "VirtualRide",
+    "trainer": true,
+    "name": "Zwift - Sweet spot 4x16' @210W",
+    "moving_time": 4996,
+    "distance": 44734,
+    "average_heartrate": 144.2,
+    "average_watts": 201.8,
+    "hz": [
+     555,
+     4441,
+     0
+    ]
+   },
+   {
+    "id": "s19985625523",
+    "start_date_local": "2026-09-01T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4358
+   },
+   {
+    "id": "s19993739368",
+    "start_date_local": "2026-09-01T09:00:00",
+    "type": "VirtualRide",
+    "name": "Zwift - Recup",
+    "moving_time": 2862,
+    "distance": 20821,
+    "icu_training_load": 8
+   },
+   {
+    "id": "s20000465199",
+    "start_date_local": "2026-09-02T08:00:00",
+    "type": "Run",
+    "name": "Morning Run (seuil)",
+    "moving_time": 3516,
+    "distance": 11725,
+    "average_heartrate": 160.7,
+    "hz": [
+     391,
+     391,
+     2735
+    ]
+   },
+   {
+    "id": "s20022799179",
+    "start_date_local": "2026-09-03T08:00:00",
+    "type": "Run",
+    "name": "Sous fatigue du kiné",
+    "moving_time": 2569,
+    "distance": 7429,
+    "average_heartrate": 146.3,
+    "hz": [
+     1713,
+     856,
+     0
+    ]
+   },
+   {
+    "id": "s20018382394",
+    "start_date_local": "2026-09-03T09:00:00",
+    "type": "Workout",
+    "name": "Lunch Workout (mobilité)",
+    "moving_time": 3016
+   },
+   {
+    "id": "s20029367562",
+    "start_date_local": "2026-09-04T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 4393
+   },
+   {
+    "id": "s20045322792",
+    "start_date_local": "2026-09-05T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo 105 km",
+    "moving_time": 15028,
+    "distance": 105262,
+    "icu_training_load": 135
+   },
+   {
+    "id": "s20046267873",
+    "start_date_local": "2026-09-05T09:00:00",
+    "type": "Run",
+    "name": "Enchaînement",
+    "moving_time": 1697,
+    "distance": 5173
+   },
+   {
+    "id": "s20056281421",
+    "start_date_local": "2026-09-06T08:00:00",
+    "type": "Run",
+    "name": "Dernière sortie longue",
+    "moving_time": 6454,
+    "distance": 18190,
+    "average_heartrate": 138.4,
+    "hz": [
+     5737,
+     717,
+     0
+    ]
+   },
+   {
+    "id": "s20069791830",
+    "start_date_local": "2026-09-07T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 2370,
+    "distance": 2100
+   },
+   {
+    "id": "s20138821936",
+    "start_date_local": "2026-09-12T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu",
+    "moving_time": 3752
+   },
+   {
+    "id": "s20153837475",
+    "start_date_local": "2026-09-13T09:00:00",
+    "type": "Ride",
+    "name": "Sortie vélo J-7",
+    "moving_time": 10298,
+    "distance": 77065,
+    "icu_training_load": 145
+   },
+   {
+    "id": "s20154140988",
+    "start_date_local": "2026-09-13T09:00:00",
+    "type": "Run",
+    "name": "Brick",
+    "moving_time": 999,
+    "distance": 3320
+   },
+   {
+    "id": "s20166436751",
+    "start_date_local": "2026-09-14T09:00:00",
+    "type": "Swim",
+    "name": "Natation",
+    "moving_time": 1521,
+    "distance": 1325
+   },
+   {
+    "id": "s20180460482",
+    "start_date_local": "2026-09-15T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu affûtage",
+    "moving_time": 1993
+   },
+   {
+    "id": "s20187304306",
+    "start_date_local": "2026-09-15T09:00:00",
+    "type": "VirtualRide",
+    "name": "Affûtage J-5",
+    "moving_time": 1584,
+    "distance": 10450,
+    "icu_training_load": 14
+   },
+   {
+    "id": "s20195193623",
+    "start_date_local": "2026-09-16T09:00:00",
+    "type": "Run",
+    "name": "Footing + 2×3'",
+    "moving_time": 2305,
+    "distance": 7032
+   },
+   {
+    "id": "s20237332472",
+    "start_date_local": "2026-09-19T09:00:00",
+    "type": "Swim",
+    "name": "Eau libre",
+    "moving_time": 971,
+    "distance": 916
+   },
+   {
+    "id": "s20242914389",
+    "start_date_local": "2026-09-19T09:00:00",
+    "type": "Ride",
+    "name": "Activation",
+    "moving_time": 1416,
+    "distance": 10802,
+    "icu_training_load": 35
+   },
+   {
+    "id": "s20253565973",
+    "start_date_local": "2026-09-20T09:00:00",
+    "type": "Swim",
+    "name": "Extrememan · natation",
+    "moving_time": 2149,
+    "distance": 1900
+   },
+   {
+    "id": "s20253565340",
+    "start_date_local": "2026-09-20T09:00:00",
+    "type": "Ride",
+    "name": "Extrememan · vélo",
+    "moving_time": 9865,
+    "distance": 81657,
+    "icu_training_load": 283
+   },
+   {
+    "id": "s20253565943",
+    "start_date_local": "2026-09-20T09:00:00",
+    "type": "Run",
+    "name": "Extrememan · course",
+    "moving_time": 7173,
+    "distance": 20625
+   },
+   {
+    "id": "s20319880774",
+    "start_date_local": "2026-09-25T09:00:00",
+    "type": "WeightTraining",
+    "name": "Muscu reprise",
+    "moving_time": 3188
+   },
+   {
+    "id": "s20332447694",
+    "start_date_local": "2026-09-26T08:00:00",
+    "type": "Run",
+    "name": "Blabla run",
+    "moving_time": 3827,
+    "distance": 9489,
+    "average_heartrate": 133.6,
+    "hz": [
+     2977,
+     850,
+     0
+    ]
+   },
+   {
+    "id": "s20353092538",
+    "start_date_local": "2026-09-27T09:00:00",
+    "type": "VirtualRide",
+    "name": "Zwift - FTP Ramp Test",
+    "moving_time": 1091,
+    "distance": 8458,
+    "icu_training_load": 20
+   },
    {
     "id": "s20360068151",
     "start_date_local": "2026-09-28T07:10:00",

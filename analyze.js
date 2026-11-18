@@ -11,7 +11,7 @@
   const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN;
   const median = a => { if (!a.length) return NaN; const b = a.slice().sort((x, y) => x - y), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
   const fmtT = s => { s = Math.round(s); return Math.floor(s / 60) + "'" + (s % 60 ? String(s % 60).padStart(2, "0") + "\"" : ""); };
-  const pace = v => { if (!v) return "—"; const s = 1000 / v; return Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0") + "/km"; };
+  const pace = v => { if (!v) return "—"; const s = Math.round(1000 / v); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0") + "/km"; };
 
   // Rééchantillonne à 1 Hz (les fichiers peuvent avoir des trous).
   function resample(st) {

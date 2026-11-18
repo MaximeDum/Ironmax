@@ -757,7 +757,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.68 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.70 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -850,7 +850,7 @@ function drawPlayer(full){
 }
 
 /* ============ EVENTS ============ */
-document.addEventListener("click",ev=>{const tp=ev.target.closest&&ev.target.closest("[data-tip]");if(tp){const c=tp.closest(".an"),l=c&&c.querySelector(".tipline");if(l)l.textContent=tp.dataset.tip;c&&c.querySelectorAll(".tipon").forEach(x=>x.classList.remove("tipon"));tp.classList.add("tipon")}},true);
+document.addEventListener("click",ev=>{const tp=ev.target.closest&&ev.target.closest("[data-tip]");if(!tp&&!(ev.target.closest&&ev.target.closest("#andet"))){document.querySelectorAll(".tipon").forEach(x=>x.classList.remove("tipon"));document.querySelectorAll(".an .tipline").forEach(l=>l.textContent="")}if(tp){const c=tp.closest(".an"),l=c&&c.querySelector(".tipline");if(l)l.textContent=tp.dataset.tip;c&&c.querySelectorAll(".tipon").forEach(x=>x.classList.remove("tipon"));tp.classList.add("tipon")}},true);
 document.addEventListener("click",ev=>{
   const tb=ev.target.closest("nav.tabs button");if(tb){UI.tab=tb.dataset.tab;if(UI.tab==="programme"){UI.pw=null;UI.openSes=null}UI.confirmDel=null;render();window.scrollTo(0,0);return}
   if(ev.target.id==="ov"){closeSheet();return}
@@ -912,7 +912,8 @@ document.addEventListener("click",ev=>{
     case"theme":UI.theme=v;UI.vr=0;render();break;
     case"knee":UI.knee=v;render();break;
     case"suivisub":UI.sub=v;render();window.scrollTo(0,0);break;
-    case"andetail":anDetail(v);break;
+    case"andetail":AN_RANGE=90;anDetail(v);break;
+    case"anrange":{const [i,d]=v.split("|");AN_RANGE=+d;anDetail(i);break}
     case"andclose":{const el=$("#andet");if(el)el.classList.remove("show");document.body.style.overflow="";break}
     case"vary":UI.vr=(UI.vr||0)+1;render();break;
     case"scale":S.prefs.scale=v;pushSettings();render();break;
@@ -1180,7 +1181,7 @@ let INH=lsGet(LSK.inp+".hist",[]);
 let ADJ=lsGet(LSK.adj,{});
 let PLAN=null,LIVE=lsGet(LSK.live,null),REFRESH={busy:false,err:""};
 const mmss=s=>{const p=String(s).trim().split(":");return p.length===2?(+p[0])*60+(+p[1]):NaN};
-const toMMSS=sec=>Math.floor(sec/60)+":"+pad(Math.round(sec%60));
+const toMMSS=sec=>{const t=Math.round(sec);return Math.floor(t/60)+":"+pad(t%60)};
 const paceKm=kmh=>toMMSS(3600/kmh);
 const hm=min=>{min=Math.round(min);return Math.floor(min/60)+"h"+pad(min%60)};
 function loadPlan(){fetch("plan.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{PLAN=j;maybeRecompute();render()}).catch(()=>{})}
@@ -1551,7 +1552,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.68",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.70",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -1585,7 +1586,7 @@ async function refreshData(){
   if(!CFG.athlete||!CFG.key){UI.tab="reglages";render();toast("Renseigne d'abord ta connexion Intervals.icu");return}
   if(REFRESH.busy)return;REFRESH={busy:true,err:""};render();
   try{
-    const d=new Date();const old=new Date(d);old.setDate(old.getDate()-150);const ow=new Date(d);ow.setDate(ow.getDate()-70);
+    const d=new Date();const old=new Date(d);old.setDate(old.getDate()-400);const ow=new Date(d);ow.setDate(ow.getDate()-370);
     const [acts,well]=await Promise.all([apiGet("/activities?oldest="+dkey(old)+"&newest="+dkey(d)+"&fields="+FIELDS),apiGet("/wellness?oldest="+dkey(ow)+"&newest="+dkey(d))]);
     lsSet(LSK.raw,{acts,well,at:Date.now()});recompute();
     await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>fixAct(Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)})))));recompute();queueNewSessions((LIVE&&LIVE.acts)||[]);toast("Données actualisées");zwAutoPush().then(()=>{render();ghPush(false)});UI.nightAsked=0;if(FEELQ.length||needNight())setTimeout(nextFeel,300);
@@ -2119,13 +2120,15 @@ const mean=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
 const sd=a=>{const m=mean(a);return a.length>1?Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1)):0};
 const frn1=v=>String(Math.round(v*10)/10).replace(".",",");
 /* ============ Page détail d'un graphique : graphique en grand, pancarte au toucher, liste de tous les points ============ */
-let AN_CUR=null,AN_BIG=false;
+let AN_CUR=null,AN_BIG=false,AN_RANGE=90;
+const RG=d=>AN_BIG?AN_RANGE:d;
+const RANGES=[[14,"2 sem."],[30,"1 mois"],[90,"3 mois"],[182,"6 mois"],[365,"1 an"]];
 const AN_BUILD={charge:()=>anLoadStatus(),intens:()=>anIntensity(),weeks:()=>anEasyWeeks(),ef:()=>anBikeEF(),run:()=>anRun140(),drift:()=>anDrift(),recup:()=>anRecovery(),sleep:()=>anSleep(),swim:()=>anSwim()};
 function an(id){AN_CUR=id;const h=AN_BUILD[id]();AN_CUR=null;return h}
 function anDetail(id){
   AN_BIG=true;AN_CUR=id;let h="";try{h=AN_BUILD[id]()}finally{AN_BIG=false;AN_CUR=null}
   let el=$("#andet");if(!el){el=document.createElement("div");el.id="andet";document.body.appendChild(el)}
-  el.innerHTML=`<div class="andh"><button class="btn" data-act="andclose">‹ Retour</button></div><div class="andb">${h}</div><div class="andl"></div>`;
+  el.innerHTML=`<div class="andh"><button class="btn" data-act="andclose">‹ Retour</button><div class="seg" style="margin-top:8px">${RANGES.map(r=>`<button class="${AN_RANGE===r[0]?"on acc":""}" data-act="anrange" data-v="${id}|${r[0]}">${r[1]}</button>`).join("")}</div></div><div class="andb">${h}</div><div class="andl"></div>`;
   el.classList.add("show");el.scrollTop=0;document.body.style.overflow="hidden";
   // liste de tous les points, du plus récent au plus ancien
   const card=el.querySelector(".an"),marks=[...card.querySelectorAll("svg [data-tip]")];
@@ -2143,7 +2146,8 @@ function pkShow(mark){
 }
 document.addEventListener("click",ev=>{const el=document.getElementById("andet");if(!el||!el.classList.contains("show"))return;
   const r=ev.target.closest(".androw");if(r){const m=el.querySelectorAll(".an svg [data-tip]")[+r.dataset.pk];if(m){el.scrollTo({top:0,behavior:"smooth"});setTimeout(()=>pkShow(m),250)}ev.stopPropagation();return}
-  const m=ev.target.closest(".an svg [data-tip], .an [data-tip]");if(m&&el.contains(m)){pkShow(m);ev.stopPropagation()}},true);
+  const m=ev.target.closest(".an svg [data-tip], .an [data-tip]");if(m&&el.contains(m)){pkShow(m);ev.stopPropagation();return}
+  const pk=el.querySelector(".pk");if(pk&&pk.style.display==="block"){pk.style.display="none";el.querySelectorAll(".tipon").forEach(x=>x.classList.remove("tipon"))}},true);
 function anCard(title,sub,key,body,read){const id=AN_CUR;return `<div class="dc an"><div class="dl" style="position:relative;padding-right:${id&&!AN_BIG?64:0}px">${title}<small>${sub}</small>${id&&!AN_BIG?`<button class="anmore" data-act="andetail" data-v="${id}">Détails ›</button>`:""}</div>${key||""}${body}<div class="tipline muted" style="font-size:12px;min-height:16px;margin-top:4px"></div>${read?`<div class="anread">${read}</div>`:""}</div>`}
 function anKey(v,unit,lab){return `<div class="big" style="font-size:32px;margin:6px 0 0">${v}<small>${unit}</small></div>${lab?`<div class="muted" style="font-size:12px">${lab}</div>`:""}`}
 function anEmpty(txt){return `<div class="hint" style="margin-top:8px">${txt}</div>`}
@@ -2161,7 +2165,7 @@ function zoneSplit(a){
   return o;
 }
 function anIntensity(){
-  const acts=anActs(28).filter(a=>["velo","course","nat"].includes(a.sp));
+  const acts=anActs(RG(28)).filter(a=>["velo","course","nat"].includes(a.sp));
   const by={velo:{lo:0,mid:0,hi:0},course:{lo:0,mid:0,hi:0},nat:{lo:0,mid:0,hi:0}};let est=0,tot={lo:0,mid:0,hi:0};
   let estT=0,n=0,first=today();acts.forEach(a=>{const z=zoneSplit(a);if(!z)return;n++;if(a.date<first)first=a.date;const zt=z.lo+z.mid+z.hi;est+=z.est;if(z.est)estT+=zt;["lo","mid","hi"].forEach(k=>{by[a.sp][k]+=z[k];tot[k]+=z[k]})});
   const T=tot.lo+tot.mid+tot.hi;if(T<3600)return anCard("Répartition des intensités","4 dernières semaines · temps par zone de FC","",anEmpty("Pas encore assez de séances avec FC sur 4 semaines."));
@@ -2182,7 +2186,7 @@ function anIntensity(){
 /* --- graphique générique : points dans le temps + moyenne glissante --- */
 function trendChart(pts,o){
   // pts: [{d,v,tip}] ; o: {fmt, inv, days, band:[lo,hi], ref:{v,lab}, roll}
-  const t1=today();if(AN_BIG){o=Object.assign({},o,{h:(o.h||140)*1.7,days:Math.max(o.days||84,150)})}const first=pts.reduce((m,p)=>p.d<m?p.d:m,t1),span=Math.round((new Date(t1)-new Date(first))/864e5)+4,days=Math.max(14,Math.min(o.days||84,span)),t0=addDays(t1,-days),W=330,H=o.h||140,pl=34,pb=16,pt=8;
+  const t1=today();if(AN_BIG){o=Object.assign({},o,{h:(o.h||140)*1.7,days:AN_RANGE,fixed:1})}const first=pts.reduce((m,p)=>p.d<m?p.d:m,t1),span=Math.round((new Date(t1)-new Date(first))/864e5)+4,days=o.fixed?o.days:Math.max(14,Math.min(o.days||84,span)),t0=addDays(t1,-days),W=330,H=o.h||140,pl=34,pb=16,pt=8;
   const vals=pts.map(p=>p.v).concat(o.band||[]).concat(o.ref?[o.ref.v]:[]);let mn=Math.min(...vals),mx=Math.max(...vals);const pad=(mx-mn)*.15||Math.abs(mx)*.05||1;mn-=pad;mx+=pad;
   const tx=d=>(new Date(d+"T12:00:00")-new Date(t0+"T12:00:00"))/864e5,X=d=>pl+(W-pl-6)*tx(d)/days,Y=v=>{const r=(v-mn)/(mx-mn);return pt+(H-pb-pt)*(o.inv?r:1-r)};
   let s=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;
@@ -2200,7 +2204,7 @@ const slope=pts=>{if(pts.length<4)return null;const xs=pts.map(p=>new Date(p.d)/
 /* --- 2. Vélo : efficacité aérobie (puissance normalisée / FC) --- */
 function anBikeEF(){
   const W=a=>a.average_watts||a.icu_average_watts||a.icu_weighted_avg_watts;
-  const pts=anActs(84).filter(a=>a.sp==="velo"&&(a.moving_time||0)>=2400&&W(a)&&a.average_heartrate>100&&!/vo2/i.test(a.name||""))
+  const pts=anActs(RG(84)).filter(a=>a.sp==="velo"&&(a.moving_time||0)>=2400&&W(a)&&a.average_heartrate>100&&!/vo2/i.test(a.name||""))
     .map(a=>({d:a.date,v:W(a)/a.average_heartrate,c:a.trainer?"#4EA8FF":"#9DD1FF",tip:`${fdate(a.date)} · ${a.name||"Vélo"} : ${Math.round(W(a))} W de moyenne pour ${Math.round(a.average_heartrate)} bpm → ${frn((W(a)/a.average_heartrate).toFixed(2))} W/bpm`}));
   if(pts.length<3)return anCard("Vélo · efficacité aérobie","watts produits par battement de cœur","",anEmpty("Il faut au moins 3 sorties de plus de 40 min avec puissance et FC."));
   const sl=slope(pts),last=mean(pts.slice(-3).map(p=>p.v)),ch=sl!=null?sl*42/last*100:0;
@@ -2211,7 +2215,7 @@ function anBikeEF(){
 
 /* --- 3. Course : allure ramenée à 140 bpm --- */
 function anRun140(){
-  const R=140,itv=a=>/\d\s*[x×]\s*\d/i.test(a.name||"")||(ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length>1)||/vma|seuil/i.test(a.name||"");const pts=anActs(84).filter(a=>a.sp==="course"&&(a.moving_time||0)>=1800&&a.distance>3000&&a.average_heartrate>=128&&a.average_heartrate<=152&&!itv(a))
+  const R=140,itv=a=>/\d\s*[x×]\s*\d/i.test(a.name||"")||(ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length>1)||/vma|seuil|fraction/i.test(a.name||"");const pts=anActs(RG(84)).filter(a=>a.sp==="course"&&(a.moving_time||0)>=1800&&a.distance>3000&&a.average_heartrate>=128&&a.average_heartrate<=152&&!itv(a))
     .map(a=>{const v=a.distance/a.moving_time,v140=v*(R-INP.fcrest)/(a.average_heartrate-INP.fcrest),p=1000/v140;
       return {d:a.date,v:p,tip:`${fdate(a.date)} · ${(a.distance/1000).toFixed(1).replace(".",",")} km à ${toMMSS(1000/v)}/km pour ${Math.round(a.average_heartrate)} bpm → ${toMMSS(p)}/km à 140 bpm`}});
   if(pts.length<3)return anCard("Course · allure à 140 bpm","ton allure ramenée à la même FC","",anEmpty("Il faut au moins 3 sorties de plus de 30 min avec FC."));
@@ -2223,7 +2227,7 @@ function anRun140(){
 
 /* --- 4. Dérive cardiaque des séances longues --- */
 function anDrift(){
-  const acts=anActs(56).filter(a=>["velo","course"].includes(a.sp)&&(a.moving_time||0)>=3600&&a.decoupling!=null&&isFinite(a.decoupling)).sort((a,b)=>a.date<b.date?-1:1).slice(-12);
+  const acts=anActs(RG(56)).filter(a=>["velo","course"].includes(a.sp)&&(a.moving_time||0)>=3600&&a.decoupling!=null&&isFinite(a.decoupling)).sort((a,b)=>a.date<b.date?-1:1).slice(AN_BIG?-60:-12);
   if(acts.length<2)return anCard("Dérive cardiaque","séances de plus d'1 h","",anEmpty("Disponible dès 2 séances de plus d'1 h synchronisées depuis Intervals."));
   const W=330,H=140,pl=30,pb=16,mx=Math.max(12,...acts.map(a=>Math.abs(a.decoupling)))*1.1,bw=(W-pl-4)/acts.length,Y=v=>H-pb-(H-pb-8)*Math.max(0,v)/mx;
   const col=v=>v<5?ST.good:v<10?ST.warn:ST.bad;
@@ -2237,20 +2241,20 @@ function anDrift(){
 
 /* --- 5. Récupération : variabilité cardiaque et FC au repos --- */
 function anRecovery(){
-  const w=anWell(70).filter(x=>x.hrv);if(w.length<7)return anCard("Récupération","variabilité cardiaque de nuit","",anEmpty("Il faut au moins 7 nuits avec la variabilité cardiaque."));
+  const w=anWell(RG(70)).filter(x=>x.hrv);if(w.length<7)return anCard("Récupération","variabilité cardiaque de nuit","",anEmpty("Il faut au moins 7 nuits avec la variabilité cardiaque."));
   const all=w.map(x=>x.hrv),base=mean(all),s=sd(all),last7=w.slice(-7),h7=mean(last7.map(x=>x.hrv));
   const pts=w.map(x=>({d:x.id,v:x.hrv,c:"#B892FF",tip:`Nuit du ${fdate(x.id)} : ${Math.round(x.hrv)} ms${x.restingHR?" · FC repos "+x.restingHR:""}${x.sleepSecs?" · sommeil "+hm(x.sleepSecs/60):""}`}));
   const z=(h7-base)/(s||1);
   const read=z>=-.5?"Dans ta zone habituelle : tu récupères bien.":z>=-1.2?"Un peu sous ta zone habituelle : la charge se fait sentir, garde les séances faciles vraiment faciles.":"Nettement sous ta zone habituelle : signe de fatigue ou de maladie. Allège 1–2 jours.";
-  const rh=anWell(70).filter(x=>x.restingHR),rpts=rh.map(x=>({d:x.id,v:x.restingHR,c:"#FF8FA3",tip:`Nuit du ${fdate(x.id)} : FC repos ${x.restingHR} bpm`})),rb=mean(rh.map(x=>x.restingHR));
+  const rh=anWell(RG(70)).filter(x=>x.restingHR),rpts=rh.map(x=>({d:x.id,v:x.restingHR,c:"#FF8FA3",tip:`Nuit du ${fdate(x.id)} : FC repos ${x.restingHR} bpm`})),rb=mean(rh.map(x=>x.restingHR));
   return anCard("Récupération","variabilité cardiaque (VFC) de nuit · bande = ta zone habituelle (10 semaines)",anKey(Math.round(h7),"ms","moyenne 7 jours · habituelle "+Math.round(base-s)+"–"+Math.round(base+s)+" ms"),
-    trendChart(pts,{fmt:v=>Math.round(v),band:[base-s,base+s],bandC:"#B892FF",roll:7,c:"#B892FF",days:70})+`<div class="legend2"><span><i style="background:#B892FF"></i>VFC par nuit</span><span><i style="background:#B892FF;height:2px"></i>Moyenne 7 jours</span></div>`
-    +(rpts.length>=7?`<div class="dl" style="margin-top:12px">FC au repos<small>habituelle ${Math.round(rb)} bpm · une hausse de 5 bpm ou plus sur plusieurs nuits = fatigue</small></div>`+trendChart(rpts,{fmt:v=>Math.round(v),ref:{v:rb,lab:"habituelle"},c:"#FF8FA3",days:70,h:110,roll:3}):""),read);
+    trendChart(pts,{fmt:v=>Math.round(v),band:[base-s,base+s],bandC:"#B892FF",roll:7,c:"#B892FF",days:RG(70)})+`<div class="legend2"><span><i style="background:#B892FF"></i>VFC par nuit</span><span><i style="background:#B892FF;height:2px"></i>Moyenne 7 jours</span></div>`
+    +(rpts.length>=7?`<div class="dl" style="margin-top:12px">FC au repos<small>habituelle ${Math.round(rb)} bpm · une hausse de 5 bpm ou plus sur plusieurs nuits = fatigue</small></div>`+trendChart(rpts,{fmt:v=>Math.round(v),ref:{v:rb,lab:"habituelle"},c:"#FF8FA3",days:RG(70),h:110,roll:3}):""),read);
 }
 
 /* --- 6. Natation : allure moyenne --- */
 function anSwim(){
-  const pts=anActs(84).filter(a=>a.sp==="nat"&&a.distance>800&&a.moving_time&&!a.hist).map(a=>{const sp=swimPace(a);if(!sp)return null;const b=sp.src==="blocs";
+  const pts=anActs(RG(84)).filter(a=>a.sp==="nat"&&a.distance>800&&a.moving_time&&!a.hist).map(a=>{const sp=swimPace(a);if(!sp)return null;const b=sp.src==="blocs";
     return {d:a.date,v:sp.p,c:b?"#2EC4B6":"#8FE3DA",tip:`${fdate(a.date)} · ${Math.round(a.distance)} m · ${toMMSS(sp.p)}/100 m${b?" sur les blocs de travail":" (séance entière, pauses comprises)"}`}}).filter(Boolean);
   if(!pts.length)return anCard("Natation · allure","allure /100 m","",anEmpty("Corrige les distances de tes séances (bouton 🏊 Corriger) pour suivre ton allure sur les blocs de travail."));
   const css=INP.css||"1:55";
@@ -2259,8 +2263,8 @@ function anSwim(){
 }
 /* --- 7. Part de facile semaine par semaine --- */
 function anEasyWeeks(){
-  const cur=mondayOf(today()),wk=[];for(let i=7;i>=0;i--)wk.push(addDays(cur,-7*i));
-  const acts=anActs(63).filter(a=>["velo","course","nat"].includes(a.sp));
+  const cur=mondayOf(today()),wk=[],NW=AN_BIG?Math.max(2,Math.ceil(AN_RANGE/7)):8;for(let i=NW-1;i>=0;i--)wk.push(addDays(cur,-7*i));
+  const acts=anActs(NW*7+7).filter(a=>["velo","course","nat"].includes(a.sp));
   const data=wk.map(s=>{const e=addDays(s,7),z={lo:0,mid:0,hi:0};acts.filter(a=>a.date>=s&&a.date<e).forEach(a=>{const q=zoneSplit(a);if(q)["lo","mid","hi"].forEach(k=>z[k]+=q[k])});const T=z.lo+z.mid+z.hi;return {s,T,p:T?z.lo/T*100:null,z}}).filter(x=>x.T>1800);
   if(data.length<3)return "";
   const W=330,H=140,pl=30,pb=16,bw=(W-pl-4)/data.length,Y=v=>H-pb-(H-pb-8)*v/100;
@@ -2276,7 +2280,7 @@ function anEasyWeeks(){
 }
 /* --- 8. Sommeil --- */
 function anSleep(){
-  const w=anWell(28).filter(x=>x.sleepSecs);if(w.length<7)return "";
+  const w=anWell(RG(28)).filter(x=>x.sleepSecs);if(w.length<7)return "";
   const W=330,H=130,pl=30,pb=16,mx=Math.max(9.5,...w.map(x=>x.sleepSecs/3600))+.3,bw=(W-pl-4)/w.length,Y=v=>H-pb-(H-pb-8)*v/mx;
   let o=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;[0,6,7.5,9].forEach(v=>o+=`<line x1="${pl}" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v===7.5?"var(--txt)":"var(--line)"}" ${v===7.5?'stroke-dasharray="3 3" opacity=".6"':""}/><text x="${pl-4}" y="${Y(v)+3}" text-anchor="end">${String(v).replace(".",",")}h</text>`);
   w.forEach((x,i)=>{const h=x.sleepSecs/3600,X=pl+i*bw+bw*.15,ww=Math.max(2,bw*.7),c=h>=7.5?"#7B8CFF":h>=6.5?"#A9B4FF":ST.warn;
@@ -2291,7 +2295,7 @@ function anSleep(){
    < 0,8 repos · 0,8–1,0 maintien · 1,0–1,5 productif · > 1,5 excessif. Toutes les séances comptent, muscu et mobilité comprises. */
 const LST=[[0,.8,"Repos","#6B7A90","la charge récente est sous ta tolérance : tu récupères, mais tu ne progresses pas si ça dure."],[.8,1,"Maintien","#4EA8FF","tu entretiens ta forme sans vraiment la faire monter."],[1,1.5,"Productif","#3DDC84","la charge récente stimule la progression sans dépasser ce que tu tolères."],[1.5,9,"Excessif","#E4002B","la charge récente dépasse nettement ta tolérance : risque de fatigue qui s'installe, allège."]];
 function loadStatusSeries(){
-  const acts=anActs(160),by={};acts.forEach(a=>{const l=a.load!=null?a.load:actLoad(a);by[a.date]=(by[a.date]||0)+(l||0)});
+  const acts=anActs(420),by={};acts.forEach(a=>{const l=a.load!=null?a.load:actLoad(a);by[a.date]=(by[a.date]||0)+(l||0)});
   const ds=Object.keys(by).sort();if(!ds.length)return [];
   const t=today();let d=ds[0];const days=[];while(d<=t){days.push([d,by[d]||0]);d=addDays(d,1)}
   const seed=mean(days.slice(0,21).map(x=>x[1]))||0;let a7=seed,a28=seed;const k7=1-Math.exp(-1/7),k28=1-Math.exp(-1/28);
@@ -2299,7 +2303,7 @@ function loadStatusSeries(){
 }
 function lsOf(r){return LST.find(z=>r>=z[0]&&r<z[1])||LST[0]}
 function anLoadStatus(){
-  const s=loadStatusSeries().slice(-70);if(s.length<10)return anCard("Statut de charge","charge récente ÷ tolérance","",anEmpty("Il faut au moins un mois de séances."));
+  const s=loadStatusSeries().slice(-RG(70));if(s.length<10)return anCard("Statut de charge","charge récente ÷ tolérance","",anEmpty("Il faut au moins un mois de séances."));
   const cur=s[s.length-1],z=lsOf(cur.r),W=330,H=170,pl=30,pb=16,lo=.4,hi=2,Y=v=>pb/2+(H-pb-pb/2)*(1-(Math.min(hi,Math.max(lo,v))-lo)/(hi-lo)),X=i=>pl+(W-pl-6)*i/(s.length-1);
   let o=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;
   LST.forEach(b=>{const y1=Y(Math.min(hi,b[1])),y2=Y(Math.max(lo,b[0]));o+=`<rect x="${pl}" y="${y1}" width="${W-pl-6}" height="${y2-y1}" fill="${b[3]}" opacity=".13"/><text x="${W-8}" y="${y1+12}" text-anchor="end" style="fill:${b[3]};font-weight:700">${b[2]}</text>`});
