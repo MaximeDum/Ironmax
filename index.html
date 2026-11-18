@@ -200,6 +200,14 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .chart{width:100%;display:block;margin-top:10px}
 .chart text{fill:var(--mut);font-size:10px;font-family:-apple-system,system-ui}
 .subnav{display:flex;overflow-x:auto;gap:4px;scrollbar-width:none;margin-bottom:6px}.subnav::-webkit-scrollbar{display:none}.subnav button{flex:0 0 auto;white-space:nowrap}
+#andet{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;display:none;padding:calc(env(safe-area-inset-top) + 8px) 12px calc(env(safe-area-inset-bottom) + 24px)}#andet.show{display:block}
+.andh{position:sticky;top:0;z-index:2;background:var(--bg);padding:4px 0 8px}
+.anmore{position:absolute;right:0;top:-2px;font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--txt)}
+.pk{position:absolute;display:none;z-index:3;max-width:240px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:1.4;box-shadow:0 6px 20px rgba(0,0,0,.45);pointer-events:none}
+.pk b{display:block;margin-bottom:2px}
+.androw{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:6px 0;color:var(--txt);font-size:13px;line-height:1.4}
+.androw b{display:block;font-size:13.5px}.androw span{color:var(--mut)}
+svg [data-tip].tipon{stroke:var(--txt);stroke-width:2}
 .anread{font-size:13px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);line-height:1.45}
 .tipline{color:var(--txt)}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
@@ -706,9 +714,9 @@ function vSuivi(){
   const tip=`<div class="muted" style="font-size:12.5px;margin:2px 2px 8px">Touche un point ou une barre pour voir le détail.</div>`;
   let b="";
   if(UI.sub==="bilan")b=vBilan();
-  else if(UI.sub==="charge")b=tip+anLoadStatus()+`<div class="dc"><div class="dl">Volume par semaine<small>12 dernières semaines · trait pointillé = prévu</small></div>${volChart()}</div><div class="dc"><div class="dl">Charge de fond et charge récente</div>${loadChart()}</div>`+anIntensity()+anEasyWeeks();
-  else if(UI.sub==="progres")b=tip+anBikeEF()+anRun140()+anDrift()+anSwim()+vWkg();
-  else if(UI.sub==="recup")b=tip+anRecovery()+anSleep();
+  else if(UI.sub==="charge")b=tip+an("charge")+`<div class="dc"><div class="dl">Volume par semaine<small>12 dernières semaines · trait pointillé = prévu</small></div>${volChart()}</div><div class="dc"><div class="dl">Charge de fond et charge récente</div>${loadChart()}</div>`+an("intens")+an("weeks");
+  else if(UI.sub==="progres")b=tip+an("ef")+an("run")+an("drift")+an("swim")+vWkg();
+  else if(UI.sub==="recup")b=tip+an("recup")+an("sleep");
   else if(UI.sub==="objectifs")b=vReady();
   else b=vSuiviMob();
   return nav+b;
@@ -749,7 +757,7 @@ function vReglages(){
   <div class="row" style="margin-top:12px"><button class="btn" data-act="export">Copier mes données</button><button class="btn" data-act="showimport">Importer</button></div>
   <div id="imp" style="display:none"><textarea id="impt" placeholder="Colle ici une sauvegarde…"></textarea><button class="btn" style="margin-top:8px" data-act="import">Valider l'import</button></div></div>
   <h2>Installer sur l'iPhone</h2><div class="card muted" style="font-size:14px">Dans Safari : bouton Partager → « Sur l'écran d'accueil ». L'appli s'ouvre alors en plein écran comme une vraie app.</div>
-  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.67 · ${EX.length} exercices</div>`;
+  <div class="muted" style="font-size:12px;text-align:center;margin-top:20px">Ironmax v1.68 · ${EX.length} exercices</div>`;
 }
 
 /* ============ SHEET ============ */
@@ -904,6 +912,8 @@ document.addEventListener("click",ev=>{
     case"theme":UI.theme=v;UI.vr=0;render();break;
     case"knee":UI.knee=v;render();break;
     case"suivisub":UI.sub=v;render();window.scrollTo(0,0);break;
+    case"andetail":anDetail(v);break;
+    case"andclose":{const el=$("#andet");if(el)el.classList.remove("show");document.body.style.overflow="";break}
     case"vary":UI.vr=(UI.vr||0)+1;render();break;
     case"scale":S.prefs.scale=v;pushSettings();render();break;
     case"ex":openEx(b.dataset.id);break;
@@ -1541,7 +1551,7 @@ function zwStatus(w){
 const LSG="ironmax.gh";let GH=lsGet(LSG,{repo:"MaximeDum/ironmax-data",token:"",at:0,err:""}),GHBUSY=false;
 function ghSnapshot(){
   const L=k=>lsGet(k,null);
-  return {app:"Ironmax",version:"v1.67",ev:EV,at:new Date().toISOString(),
+  return {app:"Ironmax",version:"v1.68",ev:EV,at:new Date().toISOString(),
     athlete:CFG.athlete||null,inputs:INP,adjust:L(LSK.adj),
     intervals:L(LSK.raw),live:LIVE,capHist:L(LSK.caph),analyses:L("ironmax.ana"),feel:L("ironmax.feel"),
     programme:{edits:L("ironmax.wkedit"),sched:L("ironmax.sched"),deload:L("ironmax.deload")},
@@ -2108,7 +2118,33 @@ function anWell(days){const t=today(),from=addDays(t,-days),raw=lsGet(LSK.raw,nu
 const mean=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
 const sd=a=>{const m=mean(a);return a.length>1?Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1)):0};
 const frn1=v=>String(Math.round(v*10)/10).replace(".",",");
-function anCard(title,sub,key,body,read){return `<div class="dc an"><div class="dl">${title}<small>${sub}</small></div>${key||""}${body}<div class="tipline muted" style="font-size:12px;min-height:16px;margin-top:4px"></div>${read?`<div class="anread">${read}</div>`:""}</div>`}
+/* ============ Page détail d'un graphique : graphique en grand, pancarte au toucher, liste de tous les points ============ */
+let AN_CUR=null,AN_BIG=false;
+const AN_BUILD={charge:()=>anLoadStatus(),intens:()=>anIntensity(),weeks:()=>anEasyWeeks(),ef:()=>anBikeEF(),run:()=>anRun140(),drift:()=>anDrift(),recup:()=>anRecovery(),sleep:()=>anSleep(),swim:()=>anSwim()};
+function an(id){AN_CUR=id;const h=AN_BUILD[id]();AN_CUR=null;return h}
+function anDetail(id){
+  AN_BIG=true;AN_CUR=id;let h="";try{h=AN_BUILD[id]()}finally{AN_BIG=false;AN_CUR=null}
+  let el=$("#andet");if(!el){el=document.createElement("div");el.id="andet";document.body.appendChild(el)}
+  el.innerHTML=`<div class="andh"><button class="btn" data-act="andclose">‹ Retour</button></div><div class="andb">${h}</div><div class="andl"></div>`;
+  el.classList.add("show");el.scrollTop=0;document.body.style.overflow="hidden";
+  // liste de tous les points, du plus récent au plus ancien
+  const card=el.querySelector(".an"),marks=[...card.querySelectorAll("svg [data-tip]")];
+  const rows=marks.map((m,i)=>({i,t:m.dataset.tip})).reverse();
+  el.querySelector(".andl").innerHTML=rows.length?`<h2 style="margin-top:14px">Détail des ${rows.length} points</h2>`+rows.map(r=>{const [h1,...rest]=pkParts(r.t);return `<button class="androw" data-pk="${r.i}"><b>${esc(h1)}</b><span>${rest.map(esc).join("<br>")}</span></button>`}).join(""):"";
+  card.querySelector(".tipline")&&card.querySelector(".tipline").remove();
+}
+function pkParts(t){const p=t.split(/ · | : (?=[^:]*$)/);return p.length>1?p:[t]}
+function pkShow(mark){
+  const el=$("#andet"),card=el.querySelector(".an");card.querySelectorAll(".tipon").forEach(x=>x.classList.remove("tipon"));mark.classList.add("tipon");
+  let pk=card.querySelector(".pk");if(!pk){pk=document.createElement("div");pk.className="pk";card.style.position="relative";card.appendChild(pk)}
+  const [h1,...rest]=pkParts(mark.dataset.tip);pk.innerHTML=`<b>${esc(h1)}</b>${rest.map(x=>`<div>${esc(x)}</div>`).join("")}`;
+  const cb=card.getBoundingClientRect(),mb=mark.getBoundingClientRect(),x=mb.left+mb.width/2-cb.left,y=mb.top-cb.top;
+  pk.style.display="block";const w=pk.offsetWidth;pk.style.left=Math.max(6,Math.min(cb.width-w-6,x-w/2))+"px";pk.style.top=Math.max(4,y-pk.offsetHeight-8)+"px";
+}
+document.addEventListener("click",ev=>{const el=document.getElementById("andet");if(!el||!el.classList.contains("show"))return;
+  const r=ev.target.closest(".androw");if(r){const m=el.querySelectorAll(".an svg [data-tip]")[+r.dataset.pk];if(m){el.scrollTo({top:0,behavior:"smooth"});setTimeout(()=>pkShow(m),250)}ev.stopPropagation();return}
+  const m=ev.target.closest(".an svg [data-tip], .an [data-tip]");if(m&&el.contains(m)){pkShow(m);ev.stopPropagation()}},true);
+function anCard(title,sub,key,body,read){const id=AN_CUR;return `<div class="dc an"><div class="dl" style="position:relative;padding-right:${id&&!AN_BIG?64:0}px">${title}<small>${sub}</small>${id&&!AN_BIG?`<button class="anmore" data-act="andetail" data-v="${id}">Détails ›</button>`:""}</div>${key||""}${body}<div class="tipline muted" style="font-size:12px;min-height:16px;margin-top:4px"></div>${read?`<div class="anread">${read}</div>`:""}</div>`}
 function anKey(v,unit,lab){return `<div class="big" style="font-size:32px;margin:6px 0 0">${v}<small>${unit}</small></div>${lab?`<div class="muted" style="font-size:12px">${lab}</div>`:""}`}
 function anEmpty(txt){return `<div class="hint" style="margin-top:8px">${txt}</div>`}
 
@@ -2146,7 +2182,7 @@ function anIntensity(){
 /* --- graphique générique : points dans le temps + moyenne glissante --- */
 function trendChart(pts,o){
   // pts: [{d,v,tip}] ; o: {fmt, inv, days, band:[lo,hi], ref:{v,lab}, roll}
-  const t1=today(),first=pts.reduce((m,p)=>p.d<m?p.d:m,t1),span=Math.round((new Date(t1)-new Date(first))/864e5)+4,days=Math.max(14,Math.min(o.days||84,span)),t0=addDays(t1,-days),W=330,H=o.h||140,pl=34,pb=16,pt=8;
+  const t1=today();if(AN_BIG){o=Object.assign({},o,{h:(o.h||140)*1.7,days:Math.max(o.days||84,150)})}const first=pts.reduce((m,p)=>p.d<m?p.d:m,t1),span=Math.round((new Date(t1)-new Date(first))/864e5)+4,days=Math.max(14,Math.min(o.days||84,span)),t0=addDays(t1,-days),W=330,H=o.h||140,pl=34,pb=16,pt=8;
   const vals=pts.map(p=>p.v).concat(o.band||[]).concat(o.ref?[o.ref.v]:[]);let mn=Math.min(...vals),mx=Math.max(...vals);const pad=(mx-mn)*.15||Math.abs(mx)*.05||1;mn-=pad;mx+=pad;
   const tx=d=>(new Date(d+"T12:00:00")-new Date(t0+"T12:00:00"))/864e5,X=d=>pl+(W-pl-6)*tx(d)/days,Y=v=>{const r=(v-mn)/(mx-mn);return pt+(H-pb-pt)*(o.inv?r:1-r)};
   let s=`<svg class="chart" viewBox="0 0 ${W} ${H}">`;
