@@ -177,7 +177,8 @@ textarea{width:100%;min-height:90px;background:var(--card2);color:var(--txt);bor
 .ses{display:flex;gap:8px;align-items:baseline;padding:4px 0;font-size:13.5px}.ses .sl{flex:1}.ses b{font-family:var(--disp);white-space:nowrap}
 .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.kv small{display:block;font-size:11px;color:var(--mut)}.kv b{font-family:var(--disp);font-size:16px}.feels{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.fchip{padding:8px 11px;border-radius:99px;background:var(--card2);font-size:13px}.fchip.sel{background:var(--acc);color:#fff}.feelb{margin-top:6px;font-size:12px;color:var(--mut);padding:4px 10px;border-radius:99px;background:var(--card2)}.st.just{background:rgba(199,125,255,.16);color:#C77DFF}
 .brow{display:flex;align-items:center;font-size:13px;padding:4px 0}.brow>span{width:96px}.brow b{font-family:var(--disp);font-size:14px;white-space:nowrap}.legend2{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--mut);margin-top:4px}.legend2 i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}.ck{display:flex;width:100%;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);text-align:left;font-size:13.5px}.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:0 0 auto}.ck.on .box{background:#3DDC84;border-color:#3DDC84}.ck.on .ct{color:var(--mut);text-decoration:line-through}.ck .ct{flex:1}.ck .cd{font-size:11px;color:var(--mut);white-space:nowrap}.ck .cd.late{color:#F5A524;font-weight:700}
-.hero{background:linear-gradient(135deg,rgba(78,168,255,.11),rgba(78,168,255,.02));border:1px solid rgba(78,168,255,.22);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}.hero .hh{font-family:var(--disp);font-weight:800;font-size:20px;margin-bottom:6px}.hero .hl{font-size:14px;margin-top:3px}.hero .hq{font-size:12px;color:var(--mut);margin-top:10px;font-style:italic}
+.hero .hq{cursor:pointer;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}.hqk{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}.hqt{font-size:19px;line-height:1.3;font-weight:800;letter-spacing:-.01em;font-style:normal}
+.hero{background:linear-gradient(135deg,rgba(78,168,255,.11),rgba(78,168,255,.02));border:1px solid rgba(78,168,255,.22);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}.hero .hh{font-family:var(--disp);font-weight:800;font-size:20px;margin-bottom:6px}.hero .hl{font-size:14px;margin-top:3px}
 .dc{background:var(--card);border-radius:var(--r);padding:18px;margin-top:12px}
 .dl{font-size:13px;color:var(--mut);font-weight:600}
 .dl small{display:block;font-weight:400;font-size:11.5px;margin-top:1px}
@@ -920,6 +921,7 @@ document.addEventListener("click",ev=>{
     case"knee":UI.knee=v;render();break;
     case"suivisub":UI.sub=v;render();window.scrollTo(0,0);break;
     case"vpdet":vpDetail(+v);break;
+    case"quote":QOFF++;render();break;
     case"andetail":AN_RANGE=90;anDetail(v);break;
     case"anrange":{const [i,d]=v.split("|");AN_RANGE=+d;anDetail(i);break}
     case"andclose":{const el=$("#andet");if(el)el.classList.remove("show");document.body.style.overflow="";break}
@@ -1019,7 +1021,8 @@ function mobilityWeek(){
   const B=DATA&&DATA.base;if(B&&B.mobWeek&&B.mobWeek.start===m&&!(LIVE&&LIVE.acts&&LIVE.acts.some(a=>a.sp==="mob"&&a.date<=B.asof&&a.date>=m))){n+=B.mobWeek.n;min+=B.mobWeek.min}
   return {n,min,last};
 }
-const QUOTES=["Chaque séance régulière vaut mieux qu'un exploit isolé.","Le diesel chauffe doucement, puis il ne s'arrête plus.","La forme se construit à l'entraînement, elle se révèle le jour J.","Petit à petit, la ligne d'arrivée se rapproche.","Ce qui se fait aujourd'hui se ressent en juin.","Récupérer fait partie de l'entraînement.","Une décharge bien faite, c'est de la vitesse en réserve."];
+// « I just heard someone say… » : une phrase par jour, touche-la pour en voir une autre
+const QUOTES=["If you don't feel great in the crowd, maybe you belong on the stage.", "The \"why am I doing this\" feeling today is nothing compared to the \"I did it\" feeling at the finish line.", "The pain at kilometre 30 is rented. The finish line is yours forever.", "Nobody remembers the cold pool at 6 a.m. Everybody remembers the finish arch.", "You're not tired. You're being upgraded.", "The version of you crossing that line in June is being built tonight, one boring Z2 minute at a time.", "Discomfort is just the entry fee. The finish line is the show.", "One day you'll hear \"You are an Ironman\", and every alarm clock will have been worth it.", "The legs ask the questions. The heart answers them.", "Easy days aren't weak days. They're where the engine gets assembled.", "Your future self is already cheering at the finish. Don't keep them waiting.", "The wall at 35 km isn't a wall. It's a door with a heavy handle.", "Race day doesn't make champions. It just reads the receipt.", "They'll see 13 hours on the clock. They'll never see the 400 hours behind it.", "When it hurts, smile. Your body can't tell you're faking, and it works.", "Swim calm. Ride smart. Run brave.", "Somewhere, someone is still sleeping. That's your head start.", "It's not 180 km. It's one pedal stroke, repeated with intent.", "The mind quits a hundred times before the body does. Outlast the mind.", "Race day is just training with a crowd. Make your training worth watching.", "Patience in the first half buys you a hero's second half.", "That voice telling you to stop has never crossed a finish line. Don't take its advice.", "Heart rate low. Ambition high.", "Rain on the bike today, tears of joy at the finish later. Fair trade.", "Your comfort zone has a great view of other people's finish lines.", "Fatigue is temporary. Finisher is a title for life.", "Be the one who trains when nobody's posting about it.", "Every Z2 hour is a brick. In June, you'll see the house.", "The swim start is chaos. Be the calm in it.", "If your legs are shaking, good. That's the old you leaving.", "Your watch measures pace. It can't measure heart.", "Show up tired, leave proud. Repeat until June.", "Nobody is coming to run that marathon for you. Good. It's all yours.", "The finish line feeling can't be bought. Only earned, minute by minute.", "Tired is a feeling. Finisher is a fact.", "Quiet mornings. Loud finish lines.", "The race is long. Make your \"why\" longer.", "When your body begs for mercy, give it rhythm instead.", "Strong is built in the sessions you almost skipped.", "Somewhere in the last 10 km you'll meet who you really are. Train so you like them.", "The training is the hard part. The race is your victory lap.", "Eat, drink, pedal, repeat. Glory hides in the boring details.", "Cold water. Warm heart. Iron will.", "One day this will be the story you tell. Make it a good one.", "The finish chute is 200 metres long. You'll want it to last forever.", "Some people watch Ironman on YouTube. You're writing yours.", "The clock is ticking either way. Might as well be ticking towards a finish line.", "Doubt shows up at every start line. Let it watch you go."];let QOFF=0;
 /* Séances du jour : faites (par sport, dans l'ordre) / restantes */
 function splitToday(list,date){
   const used={},done=[],left=[];
@@ -1045,6 +1048,8 @@ function heroBanner(D,extra){
   const SP=["velo","course","nat","muscu"],td=SP.map(s=>doneOn(tk,s)).flat(),yd=SP.map(s=>doneOn(yk,s)).flat();
   const fb=(list,when,plannedList)=>{const v=list.find(x=>x.verdict&&x.sport!=="muscu")||list.find(x=>x.verdict)||list[list.length-1];
     const pl=(plannedList||[]).find(x=>x.d===v.sport),ti=(pl&&pl.title)||v.title||"séance";
+    let g="";try{g=gradeOf(withClaude(Object.assign({},v)))}catch(e){}
+    if(g==="Incroyable")return `${when} : ${ti} incroyable ✨ séance d'exception !`;
     return v.verdict==="just"?`${when} : ${ti} faite malgré tout, bravo 👏`:v.verdict==="warn"?`${when} : ${ti} un peu difficile, on regarde ça de près.`:v.verdict==="up"?`${when} : ${ti} maîtrisée, avec de la marge 💪`:v.verdict==="ok"?`${when} : ${ti} maîtrisée ✅`:`${when} : ${ti} faite ✅`};
   if(td.length)lines.push(fb(td,hrs>=17?"Ce soir":"Aujourd'hui",todayS));
   else if(yd.length){let ys=[];try{const w=PLAN.weeks.find(x=>x.start<=yk&&addDays(x.start,7)>yk);if(w)ys=weekSessions(w).filter(s=>s.date===yk)}catch(e){}lines.push(fb(yd,"Hier",ys))}
@@ -1065,8 +1070,8 @@ function heroBanner(D,extra){
   const nt=D.physio&&D.physio.nextTest;if(nt){const n=daysTo(nt.d);if(n>0&&n<=14)lines.push(`${nt.n} dans ${n} jour${n>1?"s":""}.`)}
   try{const longS=todayS.find(s=>!todayDone&&nutriPlan(s,(PLAN.weeks.find(x=>x.start<=tk&&addDays(x.start,7)>tk)||{}).phase));if(longS){const np=nutriPlan(longS,(PLAN.weeks.find(x=>x.start<=tk&&addDays(x.start,7)>tk)||{}).phase);lines.push("Ravito : "+np.lines.join(", ")+".")}}catch(e){}
   try{const st=readyState(),n=st.filter(x=>x.done).length,late=st.filter(x=>!x.done&&x.r[3]<tk).length;if(late)lines.push(`Check-list Ironman : ${late} point${late>1?"s":""} en retard.`)}catch(e){}
-  const q=QUOTES[Math.floor(Date.now()/864e5)%QUOTES.length];
-  return `<div class="hero"><div class="hh">${hello} Maxime 👋</div>${lines.map(l=>`<div class="hl">${esc(l)}</div>`).join("")}${extra||""}<div class="hq">« ${esc(q)} »</div></div>`;
+  const q=QUOTES[(Math.floor(Date.now()/864e5)*7+QOFF)%QUOTES.length];
+  return `<div class="hero"><div class="hh">${hello} Maxime 👋</div>${lines.map(l=>`<div class="hl">${esc(l)}</div>`).join("")}${extra||""}<div class="hq" data-act="quote"><div class="hqk">🎧 I just heard someone say…</div><div class="hqt">“${esc(q)}”</div></div></div>`;
 }
 
 /* ============ FEU DU JOUR ============
@@ -1182,7 +1187,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v1.83"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v1.84"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
