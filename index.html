@@ -1182,7 +1182,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v1.82"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v1.83"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1239,7 +1239,7 @@ const AV=5; // version de l'analyse : une séance analysée avec une version plu
 async function analyzeRecent(acts){
   const since=dkey(new Date(Date.now()-21*864e5));
   for(const a of acts){
-    const needV=a.sp==="course"&&(a.moving_time||0)>=1200&&!(ANA[a.id]&&ANA[a.id].v140!==undefined);
+    const needV=false; // allure à 140 : calculée depuis les blocs (modèle FC personnel), plus besoin des flux
     if(a.date<since||(!needV&&ANA[a.id]&&((ANA[a.id].sport==="nat"&&!(a.fixed&&ANA[a.id].sum&&ANA[a.id].sum.dist!==a.distance))||ANA[a.id].av===AV)))continue;
     if(a.sp==="nat"){const r=swimAna(a);if(r)ANA[a.id]=r;continue}
     if(!(a.sp==="velo"||a.sp==="course")||(a.moving_time||0)<1200)continue;
@@ -1259,7 +1259,7 @@ async function analyzeRecent(acts){
       let laps=null;if(a.sp==="course"){try{const d=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.id)+"?intervals=true");const arr=(d&&(d.icu_intervals||d.laps))||[],tt=st.time||[];
         laps=arr.map(x=>{const s0=x.start_time!=null?x.start_time:(x.start_index!=null?tt[x.start_index]:null),s1=x.end_time!=null?x.end_time:(x.end_index!=null?tt[x.end_index]:null);return s0!=null&&s1!=null?[Math.round(s0),Math.round(s1)]:null}).filter(Boolean)}catch(e){}}
       const res=IronAnalyze.analyze(plan,{time:st.time,hr:st.heartrate,watts:a.sp==="velo"?st.watts:null,speed:a.sp==="course"?st.velocity_smooth:null,power:a.sp==="course"?st.watts:null,laps},{fcmax:INP.fcmax,fcrest:INP.fcrest});
-      ANA[a.id]={title:ps.title,comment:res.comment,verdict:res.verdict,reps:(res.z2?[[res.z2[0],Math.round(res.z2[1]*100)/100,Math.round(res.z2[2]),0,"Z2"]]:[]).concat(res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr),0,null,r.gps?1:0])),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV,v140:a.sp==="course"&&st.velocity_smooth?IronAnalyze.speedAtHR({time:st.time,hr:st.heartrate,speed:st.velocity_smooth},140,{slope:RUNSLOPE}):undefined};
+      ANA[a.id]={title:ps.title,comment:res.comment,verdict:res.verdict,reps:(res.z2?[[res.z2[0],Math.round(res.z2[1]*100)/100,Math.round(res.z2[2]),0,"Z2"]]:[]).concat(res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr),0,null,r.gps?1:0])),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV};
     }catch(e){}
   }
   const keys=Object.keys(ANA).sort((x,y)=>(ANA[x].date<ANA[y].date?1:-1));keys.slice(80).forEach(k=>delete ANA[k]);lsSet("ironmax.ana",ANA);
@@ -1680,31 +1680,37 @@ function ftpOfRep(w,hr){const R0=INP.fcmax-INP.fcrest,lt=INP.fcrest+.85*R0,pct=w
   // FC attendue pour ce % de FTP (FC seuil − 0,9 bpm par % sous la FTP, rapporté à ta réserve) + 4 bpm de dérive normale sur un long bloc
   const expHr=lt+(pct-1)*.9*(lt-INP.fcrest)+4,over=Math.max(0,hr-expHr),v=base*(1-over*.9/(lt-INP.fcrest));
   return {v,est:over>0,corr:over>0}}
-// allure ramenée à 140 bpm, par ordre de fiabilité :
-//  1. calculée sur les portions stables de la séance (flux seconde par seconde, cf. IronAnalyze.speedAtHR)
-//  2. sortie continue proche de 140 bpm : moyenne de la séance + pente personnelle vitesse/FC
-//  3. sinon (fractionné, tempo, historique sans flux) : même calcul sur la moyenne, corrigé par ton biais personnel (RUNCAL)
-let RUNSLOPE=.021,RUNCAL=1,RUNCALN=0;
-function run140Raw(a){const v=a.distance/a.moving_time;return 1000/(v+RUNSLOPE*(140-a.average_heartrate))}
-function run140Of(a){
-  const itv=/\d\s*[x×]\s*[\d(]/i.test(a.name||"")||(ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.filter(r=>r[4]!=="Z2").length>1)||/vma|seuil|fraction|tempo|tri|man ·|kiné|enchaîn|brick|tapis|\d+\s*['’]\s*@/i.test(((a.name||"")+" "+(a.description||"")));
-  const cont=!itv&&a.average_heartrate>=128&&a.average_heartrate<=152&&(a.moving_time||0)>=1800;
-  const V=ANA[a.id]&&ANA[a.id].v140;
-  if(V&&V.v>1.5)return {p:1000/V.v,cont,est:false,src:"stable"};
+// Allure ramenée à 140 bpm. Un seul modèle personnel FC = a + b × vitesse + c × rang du bloc, appris sur 150 jours :
+// tes blocs analysés (seuil, tempo, Z2…) et tes sorties continues. Chaque séance est ensuite placée par son écart à ce modèle :
+// une séance où ta FC est sous ce que le modèle prévoit donne une allure à 140 plus rapide, et inversement.
+//  ◆ séance avec blocs : écart moyen de ses blocs (fractionné compris, la FC de l'échauffement et du retour au calme ne compte pas)
+//  · sortie continue : sa moyenne
+//  ≈ sans blocs ni continuité (historique) : sa moyenne, corrigée du biais appris sur les séances à blocs
+let RUNM={a:140-40*3,b:40,c:2},RUNSLOPE=.025,RUNCAL=1,RUNCALN=0;
+function runIsCont(a){const itv=/\d\s*[x×]\s*[\d(]/i.test(a.name||"")||/vma|seuil|fraction|tempo|tri|man ·|kiné|enchaîn|brick|tapis|\d+\s*['’]\s*@/i.test(((a.name||"")+" "+(a.description||"")));
+  return !itv&&a.average_heartrate>=128&&a.average_heartrate<=152&&(a.moving_time||0)>=1800}
+function runBlocRows(a){const pool=repPool("course"),reps=pool[a.date];if(!reps)return null;let k=0;
+  const rows=reps.filter(r=>r[2]>60&&r[1]>1.5&&r[1]<7).map(r=>{const z2=r[4]==="Z2";return {v:r[1],hr:r[2],i:z2?k:k++}});return rows.length?rows:null}
+const runModelHr=(v,i)=>RUNM.a+RUNM.b*v+RUNM.c*i;
+function run140Raw(a){const v=a.distance/a.moving_time;return 1000/(v+(140-a.average_heartrate)/RUNM.b)}
+function run140Of(a){const cont=runIsCont(a),rows=runBlocRows(a);
+  if(rows){const res=rows.reduce((t,r)=>t+r.hr-runModelHr(r.v,r.i),0)/rows.length;return {p:1000/((140-RUNM.a-res)/RUNM.b),cont,est:false,src:"stable"}}
   if(cont)return {p:run140Raw(a),cont,est:false,src:"moyenne"};
   return {p:run140Raw(a)*RUNCAL,cont,est:true,src:"corrigé"}}
-// pente personnelle (médiane des séances avec assez d'écart de FC) et biais des estimations sur moyenne,
-// appris sur tes propres séances qui ont les flux seconde par seconde (Intervals)
 function runCalibrate(list){
-  const sl=Object.values(ANA).map(x=>x&&x.v140&&x.v140.slope).filter(Boolean).sort((a,b)=>a-b);RUNSLOPE=sl.length>=3?sl[sl.length>>1]:.021;
-  const runs=list.filter(run140Ok),cls=runs.map(a=>({a,x:(()=>{const c=RUNCAL;RUNCAL=1;const r=run140Of(a);RUNCAL=c;return r})()}));
-  const rat=[];
-  // courses officielles et enchaînements exclus : la fatigue du vélo fausse la comparaison
-  const race=a=>/brick|enchaîn|man\b|man ·|triathlon|course ·|paris|semi|marathon|10 ?km officiel/i.test(a.name||"");
-  cls.forEach(({a,x})=>{if(x.src==="stable"&&!x.cont&&!race(a))rat.push(x.p/run140Raw(a))});
-  // pas de flux (historique Strava) : on applique le biais appris sur les séances qui en ont ; correction prudente tant qu'il y en a peu (n/(n+1) du biais mesuré)
-  rat.sort((a,b)=>a-b);RUNCALN=rat.length;RUNCAL=rat.length?Math.min(1.06,Math.max(.94,1+(rat[rat.length>>1]-1)*rat.length/(rat.length+1))):1}
-const run140Ok=a=>a.sp==="course"&&!a.noChart&&!a.trainer&&!/tapis|treadmill/i.test(a.name||"")&&(a.moving_time||0)>=1200&&a.distance>2500&&a.average_heartrate>=110&&a.average_heartrate<=180;
+  const since=dkey(new Date(Date.now()-150*864e5)),runs=list.filter(a=>a.date>=since&&run140Ok(a)),pts=[];
+  runs.forEach(a=>{const rows=runBlocRows(a);if(rows)rows.forEach(r=>pts.push([r.v,r.i,r.hr]));else if(runIsCont(a))pts.push([a.distance/a.moving_time,0,a.average_heartrate])});
+  RUNM={a:140-40*3,b:40,c:2};
+  if(pts.length>=8){const A=[[0,0,0],[0,0,0],[0,0,0]],B=[0,0,0];pts.forEach(([v,i,h])=>{const x=[1,v,i];for(let p=0;p<3;p++){B[p]+=x[p]*h;for(let q=0;q<3;q++)A[p][q]+=x[p]*x[q]}});
+    const det=M=>M[0][0]*(M[1][1]*M[2][2]-M[1][2]*M[2][1])-M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0])+M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]);
+    const D=det(A),[a,b,c]=[0,1,2].map(k=>det(A.map((row,r)=>row.map((x,q)=>q===k?B[r]:x)))/D);
+    if(isFinite(b)&&b>=1/.035&&b<=1/.015&&c>=0&&c<=5)RUNM={a,b,c};
+    else{const b0=40,c0=2;RUNM={a:pts.map(([v,i,h])=>h-b0*v-c0*i).sort((x,y)=>x-y)[pts.length>>1],b:b0,c:c0}}}
+  RUNSLOPE=1/RUNM.b;
+  const rat=[];runs.forEach(a=>{if(runBlocRows(a)&&!runIsCont(a))rat.push(run140Of(a).p/run140Raw(a))});rat.sort((x,y)=>x-y);
+  RUNCALN=rat.length;RUNCAL=rat.length?Math.min(1.06,Math.max(.92,1+(rat[rat.length>>1]-1)*rat.length/(rat.length+.25))):1}
+// course après le vélo (triathlon, enchaînement) exclue : la fatigue du vélo fausse la relation FC/allure
+const run140Ok=a=>a.sp==="course"&&!a.noChart&&!a.trainer&&!/tapis|treadmill|brick|enchaîn|extrememan|monumental|triathlon|man · course/i.test(a.name||"")&&(a.moving_time||0)>=1200&&a.distance>2500&&a.average_heartrate>=110&&a.average_heartrate<=180;
 // niveau actuel : moyenne pondérée des 5 derniers points (mesure = 1, estimation = 0,5)
 const wLevel=pts=>{const l=pts.slice(-5);if(!l.length)return null;let s=0,w=0;l.forEach(p=>{const k=p.est?.75:1;s+=p.v*k;w+=k});return s/w};
 // séances Intervals + historique (Strava) pour les jours qu'Intervals ne couvre pas
@@ -2282,7 +2288,7 @@ function vpDetail(idx){
       todo.push("Tiens la durée en Z2, plafond 135 bpm hors blocs : c'est la durée qui compte, pas la vitesse.");break}
     case"p140":{how="Ton allure de course ramenée à 140 bpm sur toutes tes sorties (fractionné compris), moyenne des 5 dernières, comparée à la progression prévue (objectif "+esc(r.goal||"")+").";
       if((c.z2||[]).length)why.push("Tes 5 dernières sorties, ramenées à 140 bpm :"+tbl(["Date","Allure","FC","À 140 bpm"],c.z2.map(x=>[fd(x.d),toMMSS(x.pace),x.hr+"",(x.src==="moyenne"?"":x.src==="stable"?"◆ ":"≈ ")+toMMSS(x.p)])));
-        why.push("Sans signe : sortie continue proche de 140 bpm. ◆ : calculée sur les portions stables de la séance (fractionné compris). ≈ : estimée sur la moyenne de la séance avec ta pente FC/vitesse"+(RUNCALN?`, puis corrigée de ton biais personnel (${RUNCAL>=1?"+":"−"}${Math.abs(Math.round((RUNCAL-1)*100))} %, appris sur ${RUNCALN} séance${RUNCALN>1?"s":""})`:"")+" ; elle compte un peu moins dans le niveau actuel.");
+        why.push("Sans signe : sortie continue proche de 140 bpm. ◆ : calculée sur tes blocs, d'après l'écart de ta FC à ce que ton modèle personnel prévoit (fractionné compris). ≈ : estimée sur la moyenne de la séance avec ta pente FC/vitesse"+(RUNCALN?`, puis corrigée de ton biais personnel (${RUNCAL>=1?"+":"−"}${Math.abs(Math.round((RUNCAL-1)*100))} %, appris sur ${RUNCALN} séance${RUNCALN>1?"s":""})`:"")+" ; elle compte un peu moins dans le niveau actuel.");
       why.push(up?"Tu progresses plus vite que prévu : la Z2 régulière et le seuil du mercredi paient.":warn?"Les dernières sorties ont été faites fatigué ou au chaud, ou trop peu de Z2 continue.":"Ta progression suit le programme.");
       todo.push("Fais tes footings et ta sortie longue sous 140 bpm, même si ça oblige à ralentir.");chart=anIn("run");break}
     case"longrun":{how="Plus longue sortie de course des 6 dernières semaines, comparée à la distance prévue.";
@@ -2416,13 +2422,13 @@ function anRun140(){
   const R=140,itv=a=>/\d\s*[x×]\s*[\d(]/i.test(a.name||"")||(ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length>1)||/vma|seuil|fraction|tri|man ·|kiné|enchaîn|brick|tapis/i.test(a.name||"");
   const all=anActs(RG(84)).filter(run140Ok).sort((x,y)=>x.date<y.date?-1:1);
   const pts=all.map(a=>{const v=a.distance/a.moving_time,x=run140Of(a),p=x.p,cont=!x.est;
-      return {d:a.date,v:p,tr:true,est:x.est,hollow:x.est,c:x.src==="stable"?"#B7F0CE":cont?"#3DDC84":"#8A93A1",tip:`${fdate(a.date)} · ${a.name||"Course"} · ${(a.distance/1000).toFixed(1).replace(".",",")} km à ${toMMSS(1000/v)}/km pour ${Math.round(a.average_heartrate)} bpm → ${cont?"":"≈ "}${toMMSS(p)}/km à 140 bpm${x.src==="stable"?" (calculée sur les portions stables)":x.est?" (estimée sur la moyenne, biais corrigé)":""}`}});
+      return {d:a.date,v:p,tr:true,est:x.est,hollow:x.est,c:x.src==="stable"?"#B7F0CE":cont?"#3DDC84":"#8A93A1",tip:`${fdate(a.date)} · ${a.name||"Course"} · ${(a.distance/1000).toFixed(1).replace(".",",")} km à ${toMMSS(1000/v)}/km pour ${Math.round(a.average_heartrate)} bpm → ${cont?"":"≈ "}${toMMSS(p)}/km à 140 bpm${x.src==="stable"?" (calculée sur tes blocs)":x.est?" (estimée sur la moyenne, biais corrigé)":""}`}});
   const tp=pts;
   if(tp.length<3)return anCard("Course · allure à 140 bpm","ton allure ramenée à la même FC","",anEmpty("Il faut au moins 3 sorties de plus de 30 min avec FC."));
   const rec=tp.filter(p=>p.d>=addDays(today(),-84)),sl=slope(rec.length>=4?rec:tp),last=wLevel(tp),ch=sl!=null?sl*42:0;
   const read=ch<-3?`Tu gagnes ${Math.round(-ch)} s/km à 140 bpm sur 6 semaines : ton moteur aérobie progresse.`:ch>3?`Tu perds ${Math.round(ch)} s/km à 140 bpm sur 6 semaines : souvent la fatigue ou la chaleur. Regarde ta récupération.`:`Stable sur 6 semaines.`;
   return anCard("Course · allure à 140 bpm","toutes tes sorties ramenées à 140 bpm · plus haut = plus rapide",anKey(toMMSS(last),"/km","5 dernières sorties · repère marathon IM ≈ 5:45"),
-    trendChart(pts,{fmt:v=>toMMSS(v),inv:1,roll:4,c:"#3DDC84"})+`<div class="legend2"><span><i style="background:#3DDC84"></i>Sortie continue</span><span><i style="background:#B7F0CE"></i>Calculée sur les portions stables</span><span><i style="background:none;border:2px solid #8A93A1"></i>Estimée (moyenne, biais corrigé)</span><span><i style="background:#3DDC84;height:2px"></i>Tendance (toutes les sorties)</span></div>`,read);
+    trendChart(pts,{fmt:v=>toMMSS(v),inv:1,roll:4,c:"#3DDC84"})+`<div class="legend2"><span><i style="background:#3DDC84"></i>Sortie continue</span><span><i style="background:#B7F0CE"></i>Calculée sur tes blocs</span><span><i style="background:none;border:2px solid #8A93A1"></i>Estimée (moyenne, biais corrigé)</span><span><i style="background:#3DDC84;height:2px"></i>Tendance (toutes les sorties)</span></div>`,read);
 }
 
 /* --- 4. Dérive cardiaque des séances longues --- */
