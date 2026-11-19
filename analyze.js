@@ -132,8 +132,11 @@
       if (hard && drop < 20) warn.push("récupération cardiaque lente");
       res.sum.hard = hard;
     }
-    res.verdict = warn.length ? "warn" : (pct > 103 || (drift < 2 && (!res.sum.hard || drop >= 30))) ? "up" : "ok";
-    const concl = warn.length ? `À surveiller : ${warn.join(", ")}.` : res.verdict === "up" ? "Séance maîtrisée avec de la marge : la cible pourra monter si ça se confirme." : "Séance maîtrisée.";
+    const margin = pct > 103 || (drift < 2 && (!res.sum.hard || drop >= 30));
+    // exécution parfaite : toutes les répétitions, cible tenue à ±3 %, FC qui monte peu d'un bloc à l'autre, récup correcte
+    const perfect = n >= plan.n && pct >= 97 && pct <= 103 && drift <= 5 && (!res.recs.length || drop >= 18);
+    res.verdict = warn.length ? "warn" : (margin || perfect) ? "up" : "ok";
+    const concl = warn.length ? `À surveiller : ${warn.join(", ")}.` : margin ? "Séance maîtrisée avec de la marge : la cible pourra monter si ça se confirme." : perfect ? "Séance exécutée parfaitement : cible tenue, FC sous contrôle." : "Séance maîtrisée.";
     res.comment = bits.join(" · ") + ". " + concl + (res.gps ? " ⚠ " + res.gps.join(" ; ") + "." : "");
     return res;
   }
