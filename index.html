@@ -213,7 +213,11 @@ svg [data-tip].tipon{stroke:var(--txt);stroke-width:2}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .tile{background:var(--card);border-radius:16px;padding:12px}.tile span{font-size:11.5px;color:var(--mut)}.tile b{display:block;font-family:var(--disp);font-weight:800;font-size:26px;line-height:1.1;margin-top:4px}.tile b small{font-size:12px;color:var(--mut);margin-left:2px}.tile em{font-style:normal;font-size:11px;color:var(--mut)}
 .vp{padding:14px 0;border-top:3px solid var(--line)}.vg{display:grid;grid-template-columns:1fr 1fr .8fr;gap:6px;margin-top:8px}.vg small{display:block;font-size:10.5px;color:var(--mut)}.vg b{font-family:var(--disp);font-size:15px}.vg b.up{color:#3DDC84}.vg b.ok{color:#4EA8FF}.vg b.warn{color:#F5A524}.emk{position:absolute;top:-4px;width:3px;height:16px;margin-left:-1.5px;background:var(--txt);border-radius:2px}.vp:first-of-type{border:0}
-.vp{cursor:pointer;position:relative}.vp .t span:first-child::after{content:" ›";color:var(--mut)}
+.vp{cursor:pointer;position:relative}
+.hrg{color:#3DDC84;font-weight:700}.hrb{color:#FF9F1C;font-weight:700}
+@keyframes rb{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.st.inc{background:linear-gradient(90deg,#ff4d6d,#ff9f1c,#ffe14d,#3ddc84,#2ec4ff,#a66cff,#ff4d6d);background-size:300% 100%;color:#14161b!important;font-weight:800;animation:rb 2.4s linear infinite;box-shadow:0 0 12px rgba(255,225,77,.45)}
+.lc.inc{border-left:3px solid transparent;border-image:linear-gradient(180deg,#ff4d6d,#ffe14d,#3ddc84,#2ec4ff,#a66cff) 1;background:linear-gradient(135deg,rgba(255,77,109,.12),rgba(255,225,77,.10),rgba(61,220,132,.10),rgba(46,196,255,.12),rgba(166,108,255,.12))}.vp .t span:first-child::after{content:" ›";color:var(--mut)}
 .vp .t{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-weight:600;font-size:14px}
 .vp .x{font-size:12.5px;color:var(--mut);margin-top:2px}
 .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
@@ -1153,7 +1157,7 @@ function vDash(){
   const parts=C.parts.map(p=>`<div class="bar"><div class="h"><span style="font-weight:500">${p.n}</span><b style="font-size:15px;color:${pc(p.v)}">${p.v} %${p.e!=null?`<small class="muted" style="font-size:11px;font-weight:500"> · attendu ${p.e} %</small>`:""}</b></div><div class="trk" style="position:relative;overflow:visible"><i style="width:${p.v}%;background:${pc(p.v)}"></i>${p.e!=null?`<span class="emk" style="left:${p.e}%"></span>`:""}</div></div>`).join("");
   const vp=(D.vsPlan||[]).map((r,ix)=>r.delta!==undefined?`<div class="vp" data-act="vpdet" data-v="${ix}"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="vg"><div><small>Attendu aujourd'hui</small><b>${esc(r.exp)}</b></div><div><small>Réel</small><b>${esc(r.real)}</b></div><div><small>Écart</small><b class="${r.s}">${esc(r.delta||"—")}</b></div></div>${r.goal?`<div class="x">Objectif final : ${esc(r.goal)}</div>`:""}</div>`:`<div class="vp" data-act="vpdet" data-v="${ix}"><div class="t"><span>${esc(r.i)}</span><span class="st ${r.s}">${esc(r.t)}</span></div><div class="x">Attendu ${esc(r.exp)} · Réel ${esc(r.real)}</div></div>`).join("");
   const lastS=LIVE?(LIVE.acts||[]).slice().sort((a,b)=>a.start_date_local<b.start_date_local?1:-1).filter(a=>a.sp!=="mob").slice(0,2).map(a=>{const an=ANA[a.id],j=isJustified(a),nc=nightCtx(a.date);return {id:a.id,date:a.date,sport:a.sp,out:outdoorRide(a),bike:BIKE[a.id]||null,reps:an&&an.reps,recs:an&&an.recs,crep:an&&an.crep,title:a.name,metrics:autoComment(a),comment:(an?an.comment:"")+(nc?(an&&an.comment?" · ":"")+"🌙 "+nc.txt+(j&&!JUSTIFY.has(feelOf(a.id))?" : séance lue avec indulgence.":"."):""),verdict:j?"just":an&&an.verdict,feel:feelLabel(a.id)}}).map(withClaude):((DATA&&DATA.sessions)||[]).slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,2);
-  const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${x.grade||(x.verdict==="just"?"Justifiée":x.verdict==="warn"?"Moyenne":x.verdict==="up"?"Excellente":"Bonne")}</i>`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc ${x.verdict||""}">${esc(x.comment)}</div>`:""}${repTable(x)}${x.id!=null?`<button class="feelb" data-act="feeledit" data-v="${x.id}">${x.feel?esc(x.feel):"＋ Ressenti"}</button>`:""}${x.id!=null&&x.out?`<button class="feelb" data-act="bikeask" data-v="${x.id}">🚲 ${x.bike?BIKES.find(b=>b[0]===x.bike)[1]:"Quel vélo ?"}</button>`:""}${x.id!=null&&x.sport==="nat"?`<button class="feelb" data-act="swimfix" data-v="${x.id}">🏊 ${SWIMFIX[x.id]?"Blocs corrigés ✓":"Corriger"}</button>`:""}</div>`).join("")}</div>`:"";
+  const lastH=lastS.length?`<div class="dc"><div class="dl">Dernières séances</div>${lastS.map(x=>`<div class="ls"><div class="lh"><span>${(typeof D_IC!=="undefined"&&D_IC[x.sport])||"•"} <b>${esc(x.title||"")}</b></span><span class="muted">${x.verdict?`${(()=>{const g=gradeOf(x);return g==="Incroyable"?`<i class="st inc" style="font-style:normal;margin-right:6px">✨ Incroyable</i>`:`<i class="st ${x.verdict}" style="font-style:normal;margin-right:6px">${g}</i>`})()}`:""}${fdate(x.date)}</span></div>${x.metrics?`<div class="muted" style="font-size:12px;margin-top:2px">${esc(x.metrics)}</div>`:""}${x.comment?`<div class="lc ${gradeOf(x)==="Incroyable"?"inc":x.verdict||""}">${esc(x.comment)}${gradeOf(x)==="Incroyable"?`<div style="margin-top:6px;font-weight:700">✨ Séance d'exception : tu as fait le travail prévu avec un cœur nettement plus bas que ce que tes séances précédentes prédisaient.</div>`:""}</div>`:""}${repTable(x)}${x.id!=null?`<button class="feelb" data-act="feeledit" data-v="${x.id}">${x.feel?esc(x.feel):"＋ Ressenti"}</button>`:""}${x.id!=null&&x.out?`<button class="feelb" data-act="bikeask" data-v="${x.id}">🚲 ${x.bike?BIKES.find(b=>b[0]===x.bike)[1]:"Quel vélo ?"}</button>`:""}${x.id!=null&&x.sport==="nat"?`<button class="feelb" data-act="swimfix" data-v="${x.id}">🏊 ${SWIMFIX[x.id]?"Blocs corrigés ✓":"Corriger"}</button>`:""}</div>`).join("")}</div>`:"";
   const lightH=vLight(true),hero=heroBanner(D,(lightH||msgs)?`<div class="hsep"></div>${lightH}${msgs}`:"");
   const mobW=mobilityWeek();
   const dow=new Date().getDay(),bil=(dow===0&&new Date().getHours()>=17)||dow===1?`<button class="dc" style="width:100%;text-align:left;display:flex;align-items:center;gap:12px" data-act="gobilan"><span style="font-size:22px">📊</span><span style="flex:1"><b>Bilan de la semaine disponible</b><br><span class="muted" style="font-size:12px">Volume, séances clés, fatigue et semaine suivante</span></span><span class="muted">›</span></button>`:"";
@@ -1178,7 +1182,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v1.81"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v1.82"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1873,7 +1877,7 @@ function recompute(){
   rows.push({i:"Fatigue accumulée",exp:"< 40",real:fnow+"/100",s:fnow<40?"ok":"warn",t:fnow<40?"Dans la cible":"À surveiller"});
   const vig=(LIVE.adjust||[]).map(a=>a.t).concat(highDays>4?["Fatigue élevée depuis "+highDays+" jours"]:[]);
   rows.push({i:"Points de vigilance",exp:"aucun",real:vig.length?vig.join(" ; "):"aucun",s:vig.length?"warn":"ok",t:vig.length?"À surveiller":"RAS"});
-  LIVE.vsPlan=rows;LIVE.appv=APPV;
+  LIVE.vsPlan=rows;LIVE.appv=APPV;LIVE.p140=p140;
   // preuves pour les pages détail (recalculées à chaque actualisation)
   const top=(a,f,n)=>a.slice().sort((x,y)=>f(y)-f(x)).slice(0,n),d14=dkey(new Date(Date.now()-14*864e5));
   const kmW=[3,2,1,0].map(i=>{const a=dkey(new Date(Date.now()-(i+1)*7*864e5)),b=dkey(new Date(Date.now()-i*7*864e5));return {d:a,km:runsAll.filter(r=>r.date>a&&r.date<=b).reduce((x,r)=>x+r.km,0)}});
@@ -2024,9 +2028,41 @@ function weekSessions(w){
 /* Analyses écrites par Claude (data.json → claude["AAAA-MM-JJ|sport"]) : elles remplacent le commentaire automatique,
    le ressenti « justifiée » reste prioritaire. */
 /* Tableau des blocs de travail (analyse de Claude) : [durée s, vitesse m/s ou W, FC moy., distance m] */
+/* ===== FC attendue par bloc =====
+   Modèle appris sur tes propres blocs (vélo ou course) : FC = a + b × intensité + c × rang du bloc dans la séance.
+   Intensité : puissance ÷ FTP (vélo), vitesse ÷ ta vitesse à 140 bpm (course). Rang : la FC monte d'un bloc à l'autre.
+   La séance évaluée est exclue de l'apprentissage, donc « attendue » = ce que tes autres séances prédisent. */
+function repPool(sport){const out={};
+  Object.values(ANA||{}).forEach(an=>{if(an&&an.sport===sport&&an.reps&&an.reps.length&&an.date)out[an.date]=an.reps});
+  const C=(DATA&&DATA.claude)||{};Object.keys(C).forEach(k=>{const [d,sp]=k.split("|");if(sp===sport&&C[k].reps&&C[k].reps.length&&!out[d])out[d]=C[k].reps});
+  return out}
+function repX(sport,r){if(sport==="velo")return r[1]/INP.ftp;if(sport==="course"){const v140=1000/((LIVE&&LIVE.p140)||330);return r[1]/v140}return null}
+function repRows(sport,reps){let k=0;return reps.filter(r=>r[2]>60&&r[1]>0).map(r=>{const z2=r[4]==="Z2";return {x:repX(sport,r),i:z2?k:k++,hr:r[2],z2}})}
+const HRM={};
+function hrModel(sport,exDate){const key=sport+"|"+exDate+"|"+(LIVE&&LIVE.ev)+"|"+INP.ftp;if(key in HRM)return HRM[key];
+  const pool=repPool(sport),pts=[];let ns=0;Object.keys(pool).forEach(d=>{if(d===exDate)return;const rr=repRows(sport,pool[d]);if(rr.length){ns++;rr.forEach(r=>pts.push(r))}});
+  let m=null;
+  if(ns>=3&&pts.length>=6){
+    // moindres carrés sur [1, x, rang]
+    const A=[[0,0,0],[0,0,0],[0,0,0]],B=[0,0,0];pts.forEach(p=>{const v=[1,p.x,p.i];for(let i=0;i<3;i++){B[i]+=v[i]*p.hr;for(let j=0;j<3;j++)A[i][j]+=v[i]*v[j]}});
+    const det=M=>M[0][0]*(M[1][1]*M[2][2]-M[1][2]*M[2][1])-M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0])+M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]);
+    const D=det(A),sol=[0,1,2].map(c=>det(A.map((row,i)=>row.map((v,j)=>j===c?B[i]:v)))/D);
+    let [a,b,c]=sol;const R=INP.fcmax-INP.fcrest;
+    // garde-fous physiologiques : sinon pente et dérive par défaut, seul le niveau est appris
+    if(!isFinite(b)||b<.35*R||b>1.1*R||!isFinite(c)||c<0||c>8){b=.75*R;c=3.5;a=pts.map(p=>p.hr-b*p.x-c*p.i).sort((u,v)=>u-v)[pts.length>>1]}
+    m={f:(x,i)=>a+b*x+c*i,n:ns}}
+  return HRM[key]=m}
+function hrExpect(x){if(!x||!x.reps||!["velo","course"].includes(x.sport))return null;const m=hrModel(x.sport,x.date);if(!m)return null;
+  return repRows(x.sport,x.reps).map(r=>({exp:m.f(r.x,r.i),d:r.hr-m.f(r.x,r.i),z2:r.z2}))}
+// « Incroyable » : séance déjà Excellente ET chaque bloc de travail ≥ 3 bpm sous l'attendu, moyenne ≥ 5 bpm sous l'attendu
+function isIncredible(x,grade){if(grade!=="Excellente")return false;const e=hrExpect(x);if(!e)return false;const w=e.filter(r=>!r.z2);if(!w.length)return false;
+  return w.every(r=>r.d<=-3)&&w.reduce((t,r)=>t+r.d,0)/w.length<=-5}
+function gradeOf(x){const g=x.grade||(x.verdict==="just"?"Justifiée":x.verdict==="warn"?"Moyenne":x.verdict==="up"?"Excellente":"Bonne");return isIncredible(x,g)?"Incroyable":g}
 function repTable(x){if(!x.reps||!x.reps.length)return"";const nat=x.sport==="nat",bike=x.sport==="velo",rc=!nat&&x.recs&&x.recs.length;
+  const E0=hrExpect(x),okRows=x.reps.filter(r=>r[2]>60&&r[1]>0),E=E0&&E0.length===okRows.length?E0:null;let ei=0;
+  const expCell=r=>{if(!E)return"";if(!(r[2]>60&&r[1]>0))return"<td></td>";const e=E[ei++],d=Math.round(e.d);return `<td>${Math.round(e.exp)} <span class="${d<=-3?"hrg":d>=3?"hrb":"muted"}">${d>0?"+":d<0?"−":"±"}${Math.abs(d)}</span></td>`};
   const pace=r=>nat?toMMSS(100/r[1])+"/100":bike?Math.round(r[1])+" W":paceKm(r[1]*3.6)+"/km";
-  return `<table class="rt"><tr><th></th><th>${nat?"Dist.":"Durée"}</th><th>${nat?"Allure":bike?"Puiss.":"Allure"}</th><th>FC moy.</th>${rc?"<th>Récup</th>":""}</tr>${(()=>{let n=0;return x.reps.map(r=>{const lab=r[4]||(nat?"Bloc "+(++n):"R"+(++n));return [r,lab,r[4]?null:n-1]})})().map(([r,lab,ri])=>`<tr><td>${lab}</td><td>${nat&&r[3]?r[3]+" m":toMMSS(r[0])}</td><td>${r[5]?"≈ ":""}${pace(r)}${r[5]?"*":""}</td><td>${Math.round(r[2])} bpm</td>${rc?`<td>${ri!=null&&x.recs[ri]?"−"+x.recs[ri][1]+" bpm/1'":""}</td>`:""}</tr>`).join("")}</table>`}
+  return `<table class="rt"><tr><th></th><th>${nat?"Dist.":"Durée"}</th><th>${nat?"Allure":bike?"Puiss.":"Allure"}</th><th>FC moy.</th>${E?"<th>FC att.</th>":""}${rc?"<th>Récup</th>":""}</tr>${(()=>{let n=0;return x.reps.map(r=>{const lab=r[4]||(nat?"Bloc "+(++n):"R"+(++n));return [r,lab,r[4]?null:n-1]})})().map(([r,lab,ri])=>`<tr><td>${lab}</td><td>${nat&&r[3]?r[3]+" m":toMMSS(r[0])}</td><td>${r[5]?"≈ ":""}${pace(r)}${r[5]?"*":""}</td><td>${Math.round(r[2])}${E?"":" bpm"}</td>${expCell(r)}${rc?`<td>${ri!=null&&x.recs[ri]?"−"+x.recs[ri][1]+" bpm/1'":""}</td>`:""}</tr>`).join("")}</table>${E?`<div class="muted" style="font-size:11.5px;margin-top:4px">FC att. = ce que tes autres séances prédisent pour cette ${bike?"puissance":"allure"} et ce rang de bloc · <span class="hrg">vert</span> = cœur plus économe que d'habitude</div>`:""}`}
 function claudeOf(date,sport){const c=DATA&&DATA.claude;return c?c[date+"|"+sport]||null:null}
 function withClaude(x){const c=claudeOf(x.date,x.sport);if(!c)return x;return Object.assign({},x,{comment:"🧠 "+c.comment,grade:(c.comment.match(/^(Excellente|Bonne|Moyenne|Nulle|À revoir)\b/)||[])[1]||(x.verdict==="just"?"Justifiée":null),verdict:x.verdict==="just"&&!/^(Excellente|Bonne)\b/.test(c.comment)?"just":(c.verdict||x.verdict),title:c.title||x.title},c.reps?{reps:c.reps,recs:c.recs||null,crep:1}:{})}
 function doneOn(date,sport){
