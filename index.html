@@ -1187,7 +1187,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v1.85"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v1.86"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1378,15 +1378,29 @@ function nightLine(t){
   return `<div class="hm"><i></i><div class="muted">Nuit pas encore reçue${last?" (dernière : "+fdate(last)+")":""}. Polar l'envoie à Intervals après ta synchro de la montre : réessaie ⟳ un peu plus tard.</div></div>`;
 }
 /* Qualité de la nuit = sommeil (score Polar, durée) ET statut SNA (HRV de la nuit vs ta base). Le moins bon des deux l'emporte. */
+// Statut SNA Polar (Nightly Recharge) tel qu'Intervals le transmet : 5 = bien au-dessus de l'habituel … 3 = habituel … 1 = bien en dessous
+const POLAR_ANS={5:[0,"bien au-dessus de l'habituel"],4:[0,"au-dessus de l'habituel"],3:[0,"habituel"],2:[1,"sous l'habituel"],1:[2,"bien sous l'habituel"]};
+function rhrBase(){try{const L=lsGet(LSK.raw,null),W=(L&&L.well)||[];const v=W.slice(-29,-1).map(x=>x.restingHR).filter(x=>x>30);return v.length>=7?v.reduce((a,b)=>a+b,0)/v.length:null}catch(e){return null}}
 function nightEval(w){
   const f=(LIVE||DATA||{}).fatigue||{},base=f.hrvBase,h=w.sleepSecs?w.sleepSecs/3600:null,sc=w.sleepScore||null;
   const sl=sc!=null?(sc>=75&&(h==null||h>=6.5)?0:sc>=60&&(h==null||h>=5.5)?1:2):h!=null?(h>=7?0:h>=6?1:2):null;
-  const r=w.hrv&&base?w.hrv/base:null,ans=r==null?null:r>=.93?0:r>=.87?1:r>=.75?2:3;
-  const ansTxt=r==null?"en attente":["normal","un peu bas","bas","très bas"][ans]+" ("+Math.round(w.hrv)+" ms, base "+Math.round(base)+")";
+  const r=w.hrv&&base?w.hrv/base:null;let own=r==null?null:r>=.93?0:r>=.87?1:r>=.75?2:3;
+  // FC de repos nettement au-dessus de ta base : le SNA est sollicité même si la HRV paraît normale
+  const rb=rhrBase(),drh=w.restingHR&&rb?w.restingHR-rb:null;if(own!=null&&drh!=null&&drh>=3)own=Math.min(3,own+1);
+  const P=POLAR_ANS[w.readiness],ans=P?Math.max(P[0],own==null?0:own):own;
+  const det=[];if(P)det.push("Polar : "+P[1]);if(w.hrv)det.push("HRV "+Math.round(w.hrv)+" ms"+(base?" (base "+Math.round(base)+")":""));if(drh!=null&&Math.abs(drh)>=2)det.push("FC repos "+(drh>0?"+":"−")+Math.abs(Math.round(drh))+" bpm vs habitude");
+  const ansTxt=ans==null?"en attente":["normal","un peu bas","bas","très bas"][ans]+" ("+det.join(", ")+")";
   const slTxt=sl==null?"—":["bon","moyen","mauvais"][sl];
   let title;
   if(ans==null)title=sl===0?"Sommeil bon · statut SNA pas encore reçu":sl===1?"Sommeil moyen · statut SNA pas encore reçu":"Sommeil mauvais · statut SNA pas encore reçu";
-  else{const worst=Math.max(sl||0,ans>=2?ans:ans);title=worst===0?"Bonne nuit, bien récupéré":(sl===0&&ans>=2)?"Bon sommeil mais SNA bas : récupération incomplète":(sl>=1&&ans<=1)?"Sommeil moyen, mais SNA correct":worst>=3||(sl===2&&ans>=2)?"Mauvaise récupération":"Récupération moyenne"}
+  else{const s0=sl||0;title=
+      s0===0&&ans===0?"Bonne nuit, bien récupéré":
+      s0===0&&ans===1?"Bon sommeil, SNA un peu bas : récupération presque complète":
+      s0===0?"Bon sommeil mais SNA bas : récupération incomplète":
+      s0===1&&ans===0?"Sommeil moyen, mais SNA normal":
+      s0===1&&ans===1?"Sommeil moyen et SNA un peu bas : récupération moyenne":
+      s0===1?"Sommeil moyen et SNA bas : récupération incomplète":
+      ans===0?"Mauvais sommeil, mais SNA normal":"Mauvaise récupération"}
   return {title,sl,ans,slTxt,ansTxt,r,h,sc};
 }
 function needNight(){const t=today(),w=nightWell(t);if(!w||nightGet()[t])return false;return !!w.hrv||new Date().getHours()>=10}
@@ -1747,6 +1761,8 @@ function recompute(){
     if(sl){parts.push(clamp((7.5*3600-sl)/(1.5*3600)*100,0,100));w.push(.25)}
     if(rhr){parts.push(clamp((rhr-INP.fcnight)/6*100,0,100));w.push(.2)}
     if(sc){parts.push(clamp((85-sc)/25*100,0,100));w.push(.15)}
+    const rd=ks.slice(-2).map(x=>well[x].readiness).filter(v=>v>=1&&v<=5);   // statut SNA Polar des 2 dernières nuits
+    if(rd.length){const m=rd.reduce((a,b)=>a+b,0)/rd.length;parts.push(clamp((3.2-m)/2*100,0,100));w.push(.3)}
     if(!w.length)return null;const ws=w.reduce((a,b)=>a+b,0);return parts.reduce((a,p,i)=>a+p*w[i],0)/ws;
   }
   // récup du socle (sommeil, HRV, FC nuit) tant qu'Intervals n'a pas de nuits
