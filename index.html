@@ -1187,7 +1187,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v1.86"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v1.89"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1255,20 +1255,50 @@ async function analyzeRecent(acts){
       continue}
     const plan=planTarget(ps);
     try{
-      const raw=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.id)+"/streams.json?types=time,watts,heartrate,velocity_smooth");
-      const st={};(Array.isArray(raw)?raw:Object.keys(raw).map(k=>({type:k,data:raw[k]}))).forEach(x=>st[x.type]=x.data);
+      const st=await actStreams(a,"time,watts,heartrate,velocity_smooth");
+      const estPart=a.sp==="velo"&&a.bike!=="look"?fillPowerDropouts(st,a.date):0;
+      // jonction entre deux parties : puissance des 30 s autour, pour qu'un bloc coupé en deux reste continu
+      if(st.__gap&&st.watts){const tt=st.time;st.__gap.forEach(g=>{const near=st.watts.filter((x,k)=>Math.abs(tt[k]-tt[g])<=45&&x>0&&!st.__gap.includes(k));st.watts[g]=near.length?Math.round(near.reduce((u,v)=>u+v,0)/near.length):0});delete st.__gap}
       if(!st.heartrate&&a.hrFrom){try{const r2=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.hrFrom)+"/streams.json?types=time,heartrate");const s2={};(Array.isArray(r2)?r2:Object.keys(r2).map(k=>({type:k,data:r2[k]}))).forEach(x=>s2[x.type]=x.data);
         if(s2.heartrate&&s2.time){const off=a.hrOffset||0,tt=st.time||[];let j=0;st.heartrate=tt.map(t=>{const target=t+off;while(j<s2.time.length-1&&s2.time[j+1]<=target)j++;return s2.heartrate[j]})}}catch(e){}}
       if(!st.heartrate)continue;
       // tours de la montre (Intervals) pour compléter la détection automatique des blocs
-      let laps=null;if(a.sp==="course"){try{const d=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.id)+"?intervals=true");const arr=(d&&(d.icu_intervals||d.laps))||[],tt=st.time||[];
+      let laps=null;if(a.sp==="course"&&!a.parts){try{const d=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.id)+"?intervals=true");const arr=(d&&(d.icu_intervals||d.laps))||[],tt=st.time||[];
         laps=arr.map(x=>{const s0=x.start_time!=null?x.start_time:(x.start_index!=null?tt[x.start_index]:null),s1=x.end_time!=null?x.end_time:(x.end_index!=null?tt[x.end_index]:null);return s0!=null&&s1!=null?[Math.round(s0),Math.round(s1)]:null}).filter(Boolean)}catch(e){}}
       const res=IronAnalyze.analyze(plan,{time:st.time,hr:st.heartrate,watts:a.sp==="velo"?st.watts:null,speed:a.sp==="course"?st.velocity_smooth:null,power:a.sp==="course"?st.watts:null,laps},{fcmax:INP.fcmax,fcrest:INP.fcrest});
-      ANA[a.id]={title:ps.title,comment:res.comment,verdict:res.verdict,reps:(res.z2?[[res.z2[0],Math.round(res.z2[1]*100)/100,Math.round(res.z2[2]),0,"Z2"]]:[]).concat(res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr),0,null,r.gps?1:0])),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV};
+      ANA[a.id]={title:ps.title,comment:res.comment+(estPart>.02?` · Puissance estimée par la FC sur ${Math.round(estPart*((a.elapsed_time||a.moving_time)/60))} min (capteur décroché).`:"")+(a.parts?` · Séance en ${a.parts.length} parties, analysée d'un seul tenant.`:""),verdict:res.verdict,est:estPart>.02?1:0,reps:(res.z2?[[res.z2[0],Math.round(res.z2[1]*100)/100,Math.round(res.z2[2]),0,"Z2"]]:[]).concat(res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr),0,null,r.gps?1:0])),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV};
     }catch(e){}
   }
   const keys=Object.keys(ANA).sort((x,y)=>(ANA[x].date<ANA[y].date?1:-1));keys.slice(80).forEach(k=>delete ANA[k]);lsSet("ironmax.ana",ANA);
 }
+// flux d'une séance, y compris fusionnée : parties mises bout à bout, pause entre elles ramenée à 30 s
+async function actStreams(a,types){
+  const one=async id=>{const raw=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(id)+"/streams.json?types="+types);const st={};(Array.isArray(raw)?raw:Object.keys(raw).map(k=>({type:k,data:raw[k]}))).forEach(x=>st[x.type]=x.data);return st};
+  if(!a.parts)return one(a.id);
+  const out={},t0=new Date(a.parts[0].start).getTime()/1000;let prevEnd=null;
+  for(const p of a.parts){const st=await one(p.id);let off=new Date(p.start).getTime()/1000-t0;
+    if(prevEnd!=null)off=Math.min(off,prevEnd+30);   // pause entre les parties ramenée à 30 s : un bloc coupé en deux reste un bloc
+    const tt=st.time||[],n=tt.length;if(!n)continue;
+    if(prevEnd!=null&&off>prevEnd+2){(out.__gap=out.__gap||[]).push(out.time.length,out.time.length+1);Object.keys(out).filter(k=>k!=="__gap").forEach(k=>{if(k==="time")out.time.push(prevEnd+1,off-1);else out[k].push(k==="watts"||k==="velocity_smooth"?0:out[k][out[k].length-1],k==="watts"||k==="velocity_smooth"?0:(st[k]||[])[0])})}
+    const base=out.time?out.time.length:0;   // longueur déjà assemblée avant cette partie
+    Object.keys(st).forEach(k=>{if(!out[k])out[k]=new Array(base).fill(k==="watts"||k==="velocity_smooth"?0:null);out[k]=out[k].concat(k==="time"?st.time.map(x=>x+off):st[k])});
+    Object.keys(out).forEach(k=>{if(!st[k]&&k!=="time"&&k!=="__gap")out[k]=out[k].concat(new Array(n).fill(k==="watts"||k==="velocity_smooth"?0:null))});
+    prevEnd=tt[n-1]+off}
+  return out}
+// capteur de puissance qui décroche en roulant (≥ 1 min à 0 W, en mouvement, FC d'effort) : puissance estimée à partir de la FC
+// avec ton modèle FC personnel (cf. hrModel), lissée sur 30 s. Retourne la part de temps estimée.
+function fillPowerDropouts(st,date){
+  const w=st.watts,hr=st.heartrate,v=st.velocity_smooth,t=st.time;if(!w||!hr||!t)return 0;
+  const m=hrModel("velo",date);const R=INP.fcmax-INP.fcrest;
+  const inv=h=>{if(m){let lo=.3,hi=1.3;for(let k=0;k<30;k++){const mid=(lo+hi)/2;if(m.f(mid,0)<h)lo=mid;else hi=mid}return lo*INP.ftp}return Math.max(0,(h-INP.fcrest-.35*R)/(.6*R))*INP.ftp};
+  let est=0,tot=0,i=0;const n=w.length;
+  while(i<n){if((w[i]||0)>0){i++;continue}let j=i;while(j<n&&!((w[j]||0)>0))j++;
+    const dur=(t[j-1]||0)-(t[i]||0),moving=v?v.slice(i,j).filter(x=>x>3).length/(j-i):1,hrm=hr.slice(i,j).filter(x=>x>60);
+    if(dur>=60&&moving>.6&&hrm.length&&hrm.reduce((a,b)=>a+b,0)/hrm.length>INP.fcrest+.45*R){
+      for(let k=i;k<j;k++){const h0=hr.slice(Math.max(i,k-15),Math.min(j,k+15)).filter(x=>x>60);if(!h0.length||(v&&v[k]<=3))continue;w[k]=Math.round(inv(h0.reduce((a,b)=>a+b,0)/h0.length));}
+      est+=dur}
+    i=j}
+  tot=(t[n-1]||0)-(t[0]||0);return tot?est/tot:0}
 async function apiGetAbs(url){const r=await fetch(url,{headers:{Authorization:"Basic "+btoa("API_KEY:"+CFG.key)}});if(!r.ok)throw new Error(r.status);return r.json()}
 /* ============ RESSENTI APRÈS SYNCHRO ============ */
 let SWIMFIX=lsGet("ironmax.swimfix",{});
@@ -1655,6 +1685,32 @@ function actLoad(a){
    On garde celle qui a la puissance (Zwift en priorité), et on lui prête la FC de l'autre si besoin.
    Une séance Polar seule (ex. vélo Technogym en salle) est gardée telle quelle. */
 const isZwift=a=>/zwift/i.test((a.source||"")+" "+(a.device_name||"")+" "+(a.name||""));
+/* Séance coupée en deux (montre arrêtée, capteur qui décroche…) : deux activités du même sport le même jour,
+   moins de 30 min d'écart, et une seule séance prévue pour ce sport ce jour-là → une seule séance pour Ironmax.
+   L'id fusionné garde la trace des parties (a.parts) pour récupérer leurs flux à l'analyse. */
+function mergeSplit(acts){
+  const t0=a=>new Date(a.start_date_local).getTime()/1000,t1=a=>t0(a)+(a.elapsed_time||a.moving_time||0);
+  const out=[],used=new Set(),byKey={};
+  acts.forEach(a=>{if(["velo","course"].includes(a.sp)){const k=a.date+"|"+a.sp;(byKey[k]=byKey[k]||[]).push(a)}});
+  Object.values(byKey).forEach(L=>{if(L.length<2)return;L.sort((x,y)=>t0(x)-t0(y));
+    let nPlan=1;try{if(PLAN){const w=PLAN.weeks.find(x=>x.start<=L[0].date&&addDays(x.start,7)>L[0].date);if(w)nPlan=weekSessions(w).filter(z=>z.date===L[0].date&&z.d===L[0].sp&&!z.p.cancel).length}}catch(e){}
+    if(nPlan>1)return;
+    let grp=[L[0]];const flush=()=>{if(grp.length>1){grp.forEach(x=>used.add(x.id));out.push(mergeActs(grp))}};
+    for(let i=1;i<L.length;i++){if(t0(L[i])-t1(grp[grp.length-1])<=1800)grp.push(L[i]);else{flush();grp=[L[i]]}}flush()});
+  return acts.filter(a=>!used.has(a.id)).concat(out)}
+function mergeActs(G){
+  const sum=f=>G.reduce((t,x)=>t+(x[f]||0),0),mt=sum("moving_time")||1,wavg=f=>{const v=G.filter(x=>x[f]);return v.length?v.reduce((t,x)=>t+x[f]*(x.moving_time||0),0)/v.reduce((t,x)=>t+(x.moving_time||0),0):null};
+  const a=Object.assign({},G[0]);
+  a.id="m:"+G.map(x=>x.id).join("+");a.parts=G.map(x=>({id:x.id,start:x.start_date_local,elapsed:x.elapsed_time||x.moving_time||0}));
+  a.name=G[0].name+" ("+G.length+" parties)";a.description=G.map(x=>x.description).filter(Boolean).join(" / ");
+  ["moving_time","distance","icu_training_load","total_elevation_gain"].forEach(f=>a[f]=sum(f));
+  const last=G[G.length-1];a.elapsed_time=Math.round((new Date(last.start_date_local)-new Date(G[0].start_date_local))/1000+(last.elapsed_time||last.moving_time||0));
+  a.average_heartrate=Math.round(wavg("average_heartrate")||0)||null;
+  // puissance : une partie où le capteur a décroché (moyenne < 55 % de la meilleure partie) est écartée des moyennes
+  ["average_watts","icu_average_watts","icu_weighted_avg_watts"].forEach(f=>{const mx=Math.max(...G.map(x=>x[f]||0)),ok=G.filter(x=>x[f]&&x[f]>=.55*mx);a[f]=ok.length?Math.round(ok.reduce((t,x)=>t+x[f]*(x.moving_time||0),0)/ok.reduce((t,x)=>t+(x.moving_time||0),0)):null});
+  a.max_heartrate=Math.max(...G.map(x=>x.max_heartrate||0))||null;a.decoupling=null;
+  if(G.every(x=>Array.isArray(x.icu_hr_zone_times))){const n=Math.max(...G.map(x=>x.icu_hr_zone_times.length));a.icu_hr_zone_times=Array.from({length:n},(_,i)=>G.reduce((t,x)=>t+(x.icu_hr_zone_times[i]||0),0))}
+  return a}
 function dedupe(acts){
   const t0=a=>new Date(a.start_date_local).getTime()/1000,t1=a=>t0(a)+(a.elapsed_time||a.moving_time||0);
   const bikes=acts.filter(a=>a.sp==="velo").sort((a,b)=>t0(a)-t0(b)),drop=new Set();
@@ -1739,7 +1795,7 @@ function recompute(){
   {const r0=lsGet(LSK.raw,null);if(r0)runCalibrate(withHist((r0.acts||[]).filter(a=>a&&a.start_date_local).map(a=>Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))))}
   const raw=lsGet(LSK.raw,null)||(DATA&&DATA.extra&&DATA.extra.length?{acts:[],well:[]}:null);if(!raw)return;
   const B=(DATA&&DATA.base)||null;
-  const acts=dedupe(withExtra(raw.acts||[]).filter(a=>a&&a.start_date_local).map(a=>fixAct(Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)})))).map(a=>Object.assign(a,{load:actLoad(a)}));
+  const acts=mergeSplit(dedupe(withExtra(raw.acts||[]).filter(a=>a&&a.start_date_local).map(a=>fixAct(Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))))).map(a=>Object.assign(a,{load:actLoad(a)}));
   const well={};(raw.well||[]).forEach(w=>{if(w&&w.id)well[w.id]=w});
   const today=dkey(new Date());
   // CTL/ATL quotidiens
@@ -2089,7 +2145,7 @@ function repTable(x){if(!x.reps||!x.reps.length)return"";const nat=x.sport==="na
   const E0=hrExpect(x),okRows=x.reps.filter(r=>r[2]>60&&r[1]>0),E=E0&&E0.length===okRows.length?E0:null;let ei=0;
   const expCell=r=>{if(!E)return"";if(!(r[2]>60&&r[1]>0))return"<td></td>";const e=E[ei++],d=Math.round(e.d);return `<td>${Math.round(e.exp)} <span class="${d<=-3?"hrg":d>=3?"hrb":"muted"}">${d>0?"+":d<0?"−":"±"}${Math.abs(d)}</span></td>`};
   const pace=r=>nat?toMMSS(100/r[1])+"/100":bike?Math.round(r[1])+" W":paceKm(r[1]*3.6)+"/km";
-  return `<table class="rt"><tr><th></th><th>${nat?"Dist.":"Durée"}</th><th>${nat?"Allure":bike?"Puiss.":"Allure"}</th><th>FC moy.</th>${E?"<th>FC att.</th>":""}${rc?"<th>Récup</th>":""}</tr>${(()=>{let n=0;return x.reps.map(r=>{const lab=r[4]||(nat?"Bloc "+(++n):"R"+(++n));return [r,lab,r[4]?null:n-1]})})().map(([r,lab,ri])=>`<tr><td>${lab}</td><td>${nat&&r[3]?r[3]+" m":toMMSS(r[0])}</td><td>${r[5]?"≈ ":""}${pace(r)}${r[5]?"*":""}</td><td>${Math.round(r[2])}${E?"":" bpm"}</td>${expCell(r)}${rc?`<td>${ri!=null&&x.recs[ri]?"−"+x.recs[ri][1]+" bpm/1'":""}</td>`:""}</tr>`).join("")}</table>${E?`<div class="muted" style="font-size:11.5px;margin-top:4px">FC att. = ce que tes autres séances prédisent pour cette ${bike?"puissance":"allure"} et ce rang de bloc · <span class="hrg">vert</span> = cœur plus économe que d'habitude</div>`:""}`}
+  return `<table class="rt"><tr><th></th><th>${nat?"Dist.":"Durée"}</th><th>${nat?"Allure":bike?"Puiss.":"Allure"}</th><th>FC moy.</th>${E?"<th>FC att.</th>":""}${rc?"<th>Récup</th>":""}</tr>${(()=>{let n=0;return x.reps.map(r=>{const lab=r[4]||(nat?"Bloc "+(++n):"R"+(++n));return [r,lab,r[4]?null:n-1]})})().map(([r,lab,ri])=>`<tr><td>${lab}</td><td>${nat&&r[3]?r[3]+" m":(r[0]>=3600?Math.floor(r[0]/3600)+"h"+pad(Math.round(r[0]%3600/60)):toMMSS(r[0]))}</td><td>${r[5]?"≈ ":""}${pace(r)}${r[5]?"*":""}</td><td>${Math.round(r[2])}${E?"":" bpm"}</td>${expCell(r)}${rc?`<td>${ri!=null&&x.recs[ri]?"−"+x.recs[ri][1]+" bpm/1'":""}</td>`:""}</tr>`).join("")}</table>${E?`<div class="muted" style="font-size:11.5px;margin-top:4px">FC att. = ce que tes autres séances prédisent pour cette ${bike?"puissance":"allure"} et ce rang de bloc · <span class="hrg">vert</span> = cœur plus économe que d'habitude</div>`:""}`}
 function claudeOf(date,sport){const c=DATA&&DATA.claude;return c?c[date+"|"+sport]||null:null}
 function withClaude(x){const c=claudeOf(x.date,x.sport);if(!c)return x;return Object.assign({},x,{comment:"🧠 "+c.comment,grade:(c.comment.match(/^(Excellente|Bonne|Moyenne|Nulle|À revoir)\b/)||[])[1]||(x.verdict==="just"?"Justifiée":null),verdict:x.verdict==="just"&&!/^(Excellente|Bonne)\b/.test(c.comment)?"just":(c.verdict||x.verdict),title:c.title||x.title},c.reps?{reps:c.reps,recs:c.recs||null,crep:1}:{})}
 function doneOn(date,sport){
