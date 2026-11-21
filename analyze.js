@@ -85,7 +85,9 @@
     }
     reps.forEach((s, i) => {
       const seg = val.slice(s[0], s[1]), h = hr.slice(s[0] + 60, s[1]).filter(x => x > 30);   // FC hors 1re minute (temps de réponse)
-      const avgV = mean(seg), third = Math.max(30, Math.floor((s[1] - s[0] - 60) / 3));
+      // vélo en extérieur : puissance normalisée (moyenne glissante 30 s à la puissance 4), qui compte l'effort réel malgré les descentes en roue libre
+      const np = a => { if (a.length < 60) return mean(a); const r = []; let acc = 0; for (let k = 0; k < a.length; k++) { acc += a[k]; if (k >= 30) acc -= a[k - 30]; if (k >= 29) r.push(Math.pow(acc / 30, 4)); } return Math.pow(mean(r), .25); };
+      const avgV = isBike && prof.outdoor ? np(seg) : mean(seg), third = Math.max(30, Math.floor((s[1] - s[0] - 60) / 3));
       const hStart = mean(hr.slice(s[0] + 60, s[0] + 60 + third).filter(x => x > 30)), hEnd = mean(hr.slice(s[1] - third, s[1]).filter(x => x > 30));
       const pw = st.power ? mean(st.power.slice(s[0], s[1]).filter(x => x > 0)) : null;
       res.reps.push({ i: i + 1, dur: s[1] - s[0], v: avgV, pct: avgV / plan.target * 100, hr: mean(h), hrEnd: hEnd, intra: hEnd - hStart, pw });

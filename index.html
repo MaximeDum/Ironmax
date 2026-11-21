@@ -1187,7 +1187,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v1.89"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v1.91"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1263,10 +1263,10 @@ async function analyzeRecent(acts){
         if(s2.heartrate&&s2.time){const off=a.hrOffset||0,tt=st.time||[];let j=0;st.heartrate=tt.map(t=>{const target=t+off;while(j<s2.time.length-1&&s2.time[j+1]<=target)j++;return s2.heartrate[j]})}}catch(e){}}
       if(!st.heartrate)continue;
       // tours de la montre (Intervals) pour compléter la détection automatique des blocs
-      let laps=null;if(a.sp==="course"&&!a.parts){try{const d=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.id)+"?intervals=true");const arr=(d&&(d.icu_intervals||d.laps))||[],tt=st.time||[];
-        laps=arr.map(x=>{const s0=x.start_time!=null?x.start_time:(x.start_index!=null?tt[x.start_index]:null),s1=x.end_time!=null?x.end_time:(x.end_index!=null?tt[x.end_index]:null);return s0!=null&&s1!=null?[Math.round(s0),Math.round(s1)]:null}).filter(Boolean)}catch(e){}}
-      const res=IronAnalyze.analyze(plan,{time:st.time,hr:st.heartrate,watts:a.sp==="velo"?st.watts:null,speed:a.sp==="course"?st.velocity_smooth:null,power:a.sp==="course"?st.watts:null,laps},{fcmax:INP.fcmax,fcrest:INP.fcrest});
-      ANA[a.id]={title:ps.title,comment:res.comment+(estPart>.02?` · Puissance estimée par la FC sur ${Math.round(estPart*((a.elapsed_time||a.moving_time)/60))} min (capteur décroché).`:"")+(a.parts?` · Séance en ${a.parts.length} parties, analysée d'un seul tenant.`:""),verdict:res.verdict,est:estPart>.02?1:0,reps:(res.z2?[[res.z2[0],Math.round(res.z2[1]*100)/100,Math.round(res.z2[2]),0,"Z2"]]:[]).concat(res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr),0,null,r.gps?1:0])),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV};
+      // tours de la montre (vélo et course), parties mises bout à bout ; un tour coupé par la jonction est recollé
+      let laps=null;try{laps=await actLaps(a,st)}catch(e){}
+      const res=IronAnalyze.analyze(plan,{time:st.time,hr:st.heartrate,watts:a.sp==="velo"?st.watts:null,speed:a.sp==="course"?st.velocity_smooth:null,power:a.sp==="course"?st.watts:null,laps},{fcmax:INP.fcmax,fcrest:INP.fcrest,outdoor:outdoorRide(a)});
+      ANA[a.id]={title:ps.title,comment:res.comment+(estPart>.02?` · Puissance estimée par la FC sur ${Math.round(estPart*((a.elapsed_time||a.moving_time)/60))} min (capteur décroché).`:"")+(a.parts?` · Séance en ${a.parts.length} parties, analysée d'un seul tenant.`:"")+(outdoorRide(a)&&res.reps.length?" · Blocs en puissance normalisée (sortie extérieure, roue libre comprise).":""),verdict:res.verdict,est:estPart>.02?1:0,reps:(res.z2?[[res.z2[0],Math.round(res.z2[1]*100)/100,Math.round(res.z2[2]),0,"Z2"]]:[]).concat(res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr),0,null,r.gps?1:0])),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV};
     }catch(e){}
   }
   const keys=Object.keys(ANA).sort((x,y)=>(ANA[x].date<ANA[y].date?1:-1));keys.slice(80).forEach(k=>delete ANA[k]);lsSet("ironmax.ana",ANA);
@@ -1274,17 +1274,27 @@ async function analyzeRecent(acts){
 // flux d'une séance, y compris fusionnée : parties mises bout à bout, pause entre elles ramenée à 30 s
 async function actStreams(a,types){
   const one=async id=>{const raw=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(id)+"/streams.json?types="+types);const st={};(Array.isArray(raw)?raw:Object.keys(raw).map(k=>({type:k,data:raw[k]}))).forEach(x=>st[x.type]=x.data);return st};
-  if(!a.parts)return one(a.id);
+  if(!a.parts){const st=await one(a.id);st.__parts=[{id:a.id,off:0,time:st.time||[]}];return st}
   const out={},t0=new Date(a.parts[0].start).getTime()/1000;let prevEnd=null;
   for(const p of a.parts){const st=await one(p.id);let off=new Date(p.start).getTime()/1000-t0;
     if(prevEnd!=null)off=Math.min(off,prevEnd+30);   // pause entre les parties ramenée à 30 s : un bloc coupé en deux reste un bloc
     const tt=st.time||[],n=tt.length;if(!n)continue;
-    if(prevEnd!=null&&off>prevEnd+2){(out.__gap=out.__gap||[]).push(out.time.length,out.time.length+1);Object.keys(out).filter(k=>k!=="__gap").forEach(k=>{if(k==="time")out.time.push(prevEnd+1,off-1);else out[k].push(k==="watts"||k==="velocity_smooth"?0:out[k][out[k].length-1],k==="watts"||k==="velocity_smooth"?0:(st[k]||[])[0])})}
+    if(prevEnd!=null&&off>prevEnd+2){(out.__gap=out.__gap||[]).push(out.time.length,out.time.length+1);Object.keys(out).filter(k=>!k.startsWith("__")).forEach(k=>{if(k==="time")out.time.push(prevEnd+1,off-1);else out[k].push(k==="watts"||k==="velocity_smooth"?0:out[k][out[k].length-1],k==="watts"||k==="velocity_smooth"?0:(st[k]||[])[0])})}
     const base=out.time?out.time.length:0;   // longueur déjà assemblée avant cette partie
     Object.keys(st).forEach(k=>{if(!out[k])out[k]=new Array(base).fill(k==="watts"||k==="velocity_smooth"?0:null);out[k]=out[k].concat(k==="time"?st.time.map(x=>x+off):st[k])});
-    Object.keys(out).forEach(k=>{if(!st[k]&&k!=="time"&&k!=="__gap")out[k]=out[k].concat(new Array(n).fill(k==="watts"||k==="velocity_smooth"?0:null))});
+    Object.keys(out).forEach(k=>{if(!st[k]&&k!=="time"&&!k.startsWith("__"))out[k]=out[k].concat(new Array(n).fill(k==="watts"||k==="velocity_smooth"?0:null))});
+    (out.__parts=out.__parts||[]).push({id:p.id,off,time:tt,end:tt[n-1]+off});
     prevEnd=tt[n-1]+off}
   return out}
+async function actLaps(a,st){
+  const P=st.__parts||[{id:a.id,off:0,time:st.time||[]}],all=[];
+  for(const p of P){const d=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(p.id)+"?intervals=true");const arr=(d&&(d.icu_intervals||d.laps))||[],tt=p.time||[];
+    arr.forEach(x=>{const s0=x.start_time!=null?x.start_time:(x.start_index!=null?tt[x.start_index]:null),s1=x.end_time!=null?x.end_time:(x.end_index!=null?tt[x.end_index]:null);if(s0!=null&&s1!=null)all.push([Math.round(s0+p.off),Math.round(s1+p.off),P.indexOf(p)])})}
+  all.sort((x,y)=>x[0]-y[0]);const out=[];
+  all.forEach(l=>{const q=out[out.length-1];
+    // dernier tour d'une partie + premier tour de la suivante, à moins de 60 s : même bloc
+    if(q&&l[2]!==q[2]&&l[0]-q[1]<=60&&P[q[2]]&&Math.abs((P[q[2]].end||0)-q[1])<=30)q[1]=l[1];else out.push(l.slice())});
+  return out.map(l=>[l[0],l[1]])}
 // capteur de puissance qui décroche en roulant (≥ 1 min à 0 W, en mouvement, FC d'effort) : puissance estimée à partir de la FC
 // avec ton modèle FC personnel (cf. hrModel), lissée sur 30 s. Retourne la part de temps estimée.
 function fillPowerDropouts(st,date){
@@ -1656,7 +1666,7 @@ async function refreshData(){
     const d=new Date();const old=new Date(d);old.setDate(old.getDate()-400);const ow=new Date(d);ow.setDate(ow.getDate()-370);
     const [acts,well]=await Promise.all([apiGet("/activities?oldest="+dkey(old)+"&newest="+dkey(d)+"&fields="+FIELDS),apiGet("/wellness?oldest="+dkey(ow)+"&newest="+dkey(d))]);
     lsSet(LSK.raw,{acts,well,at:Date.now()});recompute();
-    await analyzeRecent(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>fixAct(Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)})))));recompute();queueNewSessions((LIVE&&LIVE.acts)||[]);toast("Données actualisées");zwAutoPush().then(()=>{render();ghPush(false)});UI.nightAsked=0;if(FEELQ.length||needNight())setTimeout(nextFeel,300);
+    await analyzeRecent(mergeSplit(dedupe((acts||[]).filter(a=>a&&a.start_date_local).map(a=>fixAct(Object.assign({},a,{date:a.start_date_local.slice(0,10),sp:sportOfA(a)}))))));recompute();queueNewSessions((LIVE&&LIVE.acts)||[]);toast("Données actualisées");zwAutoPush().then(()=>{render();ghPush(false)});UI.nightAsked=0;if(FEELQ.length||needNight())setTimeout(nextFeel,300);
   }catch(e){REFRESH.err=(e&&e.message&&!/Failed to fetch|Load failed|NetworkError/.test(e.message))?e.message:"Connexion impossible (réseau ou accès refusé)"}
   REFRESH.busy=false;render();
 }
@@ -1710,6 +1720,8 @@ function mergeActs(G){
   ["average_watts","icu_average_watts","icu_weighted_avg_watts"].forEach(f=>{const mx=Math.max(...G.map(x=>x[f]||0)),ok=G.filter(x=>x[f]&&x[f]>=.55*mx);a[f]=ok.length?Math.round(ok.reduce((t,x)=>t+x[f]*(x.moving_time||0),0)/ok.reduce((t,x)=>t+(x.moving_time||0),0)):null});
   a.max_heartrate=Math.max(...G.map(x=>x.max_heartrate||0))||null;a.decoupling=null;
   if(G.every(x=>Array.isArray(x.icu_hr_zone_times))){const n=Math.max(...G.map(x=>x.icu_hr_zone_times.length));a.icu_hr_zone_times=Array.from({length:n},(_,i)=>G.reduce((t,x)=>t+(x.icu_hr_zone_times[i]||0),0))}
+  // vélo choisi pour la séance fusionnée (question « Quel vélo ? ») : sans capteur → puissance estimée sur l'ensemble
+  delete a.west;delete a.estW;delete a.noPM;withEstPower(a);
   return a}
 function dedupe(acts){
   const t0=a=>new Date(a.start_date_local).getTime()/1000,t1=a=>t0(a)+(a.elapsed_time||a.moving_time||0);
