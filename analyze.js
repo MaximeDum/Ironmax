@@ -87,7 +87,7 @@
       res.verdict = d <= 5 ? "ok" : "warn";
       const dTxt = `dérive cardiaque ${d.toFixed(1).replace(".", ",")} % (${d <= 3 ? "très stable" : d <= 5 ? "correcte" : "marquée : chaleur, hydratation ou fatigue"})`;
       if (tempo) {
-        res.reps = [[zi.length, res.sum.avgV, res.sum.avgHR, 0, "Z2"], [tempo.dur, tempo.v, tempo.hr, 0, "Tempo"]];
+        res.reps = [{ dur: zi.length, v: res.sum.avgV, hr: res.sum.avgHR, label: "Z2" }, { dur: tempo.dur, v: tempo.v, hr: tempo.hr, label: "Tempo" }];
         res.comment = `Z2 : ${fmtV(res.sum.avgV)} pour ${Math.round(res.sum.avgHR)} bpm · ${dTxt} · tempo final ${Math.round(tempo.dur / 60)}' à ${fmtV(tempo.v)}, ${Math.round(tempo.hr)} bpm.`;
       } else res.comment = `${fmtV(res.sum.avgV)} pour ${Math.round(res.sum.avgHR)} bpm de moyenne · ${dTxt}.`;
       return res;

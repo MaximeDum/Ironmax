@@ -1203,7 +1203,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v1.93"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v1.94"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1256,7 +1256,7 @@ function planTarget(s){
   if(bike||s.d==="course")return {sport:s.d,n:0,target:0};
   return null;
 }
-const AV=6; // version de l'analyse : une séance analysée avec une version plus ancienne est ré-analysée
+const AV=7; // version de l'analyse : une séance analysée avec une version plus ancienne est ré-analysée
 async function analyzeRecent(acts){
   const since=dkey(new Date(Date.now()-21*864e5));
   for(const a of acts){
@@ -1285,7 +1285,7 @@ async function analyzeRecent(acts){
       // dérive jugée avec le contexte : au lendemain d'une grosse séance (charge ≥ 120), jusqu'à 8 % est attendu
       if(res.sum&&res.sum.drift!=null&&!res.sum.n&&res.sum.drift>5&&res.sum.drift<=8){const prev=addDays(a.date,-1),ld=acts.filter(x=>x.date===prev).reduce((t,x)=>t+(x.icu_training_load||0),0);
         if(ld>=120){res.verdict="ok";res.comment=res.comment.replace("marquée : chaleur, hydratation ou fatigue","attendue au lendemain de ta grosse séance d'hier")}}
-      ANA[a.id]={title:ps.title,comment:res.comment+(estPart>.02?` · Puissance estimée par la FC sur ${Math.round(estPart*((a.elapsed_time||a.moving_time)/60))} min (capteur décroché).`:"")+(a.parts?` · Séance en ${a.parts.length} parties, analysée d'un seul tenant.`:"")+(outdoorRide(a)&&res.reps.length?" · Blocs en puissance normalisée (sortie extérieure, roue libre comprise).":""),verdict:res.verdict,est:estPart>.02?1:0,reps:(res.z2?[[res.z2[0],Math.round(res.z2[1]*100)/100,Math.round(res.z2[2]),0,"Z2"]]:[]).concat(res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr),0,null,r.gps?1:0])),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV};
+      ANA[a.id]={title:ps.title,comment:res.comment+(estPart>.02?` · Puissance estimée par la FC sur ${Math.round(estPart*((a.elapsed_time||a.moving_time)/60))} min (capteur décroché).`:"")+(a.parts?` · Séance en ${a.parts.length} parties, analysée d'un seul tenant.`:"")+(outdoorRide(a)&&res.reps.length?" · Blocs en puissance normalisée (sortie extérieure, roue libre comprise).":""),verdict:res.verdict,est:estPart>.02?1:0,reps:(res.z2?[[res.z2[0],Math.round(res.z2[1]*100)/100,Math.round(res.z2[2]),0,"Z2"]]:[]).concat(res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr),0,r.label||null,r.gps?1:0])),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV};
     }catch(e){}
   }
   const keys=Object.keys(ANA).sort((x,y)=>(ANA[x].date<ANA[y].date?1:-1));keys.slice(80).forEach(k=>delete ANA[k]);lsSet("ironmax.ana",ANA);
@@ -2172,7 +2172,7 @@ function hrExpect(x){if(!x||!x.reps||!["velo","course"].includes(x.sport))return
 function isIncredible(x,grade){if(grade!=="Excellente")return false;const e=hrExpect(x);if(!e)return false;const w=e.filter(r=>!r.z2);if(!w.length)return false;
   return w.every(r=>r.d<=-3)&&w.reduce((t,r)=>t+r.d,0)/w.length<=-5}
 function gradeOf(x){const g=x.grade||(x.verdict==="just"?"Justifiée":x.verdict==="warn"?"Moyenne":x.verdict==="up"?"Excellente":"Bonne");return isIncredible(x,g)?"Incroyable":g}
-function repTable(x){if(!x.reps||!x.reps.length)return"";const nat=x.sport==="nat",bike=x.sport==="velo",rc=!nat&&x.recs&&x.recs.length;
+function repTable(x){if(x.reps)x=Object.assign({},x,{reps:x.reps.filter(r=>r&&r[0]>0&&r[1]>0)});if(!x.reps||!x.reps.length)return"";const nat=x.sport==="nat",bike=x.sport==="velo",rc=!nat&&x.recs&&x.recs.length;
   const E0=hrExpect(x),okRows=x.reps.filter(r=>r[2]>60&&r[1]>0),E=E0&&E0.length===okRows.length?E0:null;let ei=0;
   const expCell=r=>{if(!E)return"";if(!(r[2]>60&&r[1]>0))return"<td></td>";const e=E[ei++],d=Math.round(e.d);return `<td>${Math.round(e.exp)} <span class="${d<=-3?"hrg":d>=3?"hrb":"muted"}">${d>0?"+":d<0?"−":"±"}${Math.abs(d)}</span></td>`};
   const pace=r=>nat?toMMSS(100/r[1])+"/100":bike?Math.round(r[1])+" W":paceKm(r[1]*3.6)+"/km";
