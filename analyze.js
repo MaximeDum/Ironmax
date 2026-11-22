@@ -63,12 +63,33 @@
     }
     // --- séance continue : dérive cardiaque (efficacité 1re moitié vs 2e moitié, hors 10 premières minutes)
     if (!plan.n) {
-      const a = 600, b = val.length; if (b - a < 1200) { res.comment = "Séance trop courte pour mesurer la dérive."; return res; }
+      const a = 600; let b = val.length; if (b - a < 1200) { res.comment = "Séance trop courte pour mesurer la dérive."; return res; }
+      // bloc plus soutenu en fin de séance (ex. « 1h Z2 + 20' tempo ») : repéré par la FC qui monte et reste haute
+      // jusqu'à la fin (pauses tolérées). Il est sorti du calcul de dérive et affiché à part.
+      const med = x => { const y = x.filter(v => v > 0).sort((p, q) => p - q); return y.length ? y[y.length >> 1] : 0; };
+      const h60 = []; for (let i = 0; i < hr.length; i++) { const w = hr.slice(Math.max(0, i - 60), i + 1).filter(x => x > 30); h60.push(w.length ? mean(w) : 0); }
+      const baseH = med(hr.slice(a, Math.floor(val.length * .55)));
+      let tStart = null, gap = 0;
+      for (let i = val.length - 1; i > a + 1200; i--) {
+        if (!(val[i] > 0.5)) { if (++gap > 300) break; continue; }
+        if (h60[i] >= baseH + 7) { tStart = i; gap = 0; } else if (++gap > 90) break;
+      }
+      const moveIdx = (x, y) => { const r = []; for (let i = x; i < y; i++) if (val[i] > .5) r.push(i); return r; };
+      let tempo = null;
+      // la FC suit l'allure avec 1 à 3 min de retard : on recule le début du tempo tant que l'allure y est déjà plus rapide
+      if (tStart != null) { const baseV = med(val.slice(a, Math.floor(val.length * .55))), mv = (x, y) => mean(val.slice(Math.max(0, x), y).filter(v => v > .5));
+        let s0 = tStart; while (s0 > tStart - 300 && mv(s0 - 60, s0) >= baseV * 1.04) s0 -= 10; tStart = s0; }
+      if (tStart != null) { const ix = moveIdx(tStart, val.length); if (ix.length >= 480) { tempo = { s: tStart, dur: ix.length, v: mean(ix.map(i => val[i])), hr: mean(ix.map(i => hr[i]).filter(h => h > 30)) }; b = tStart; } }
       const m = a + ((b - a) >> 1), ef = (x, y) => mean(val.slice(x, y).filter(v => v > 0)) / mean(hr.slice(x, y).filter(h => h > 30));
       const d = (ef(a, m) / ef(m, b) - 1) * 100;
-      res.sum = { drift: d, avgHR: mean(hr.filter(h => h > 30)), avgV: mean(val.filter(v => v > 0)) };
+      const zi = moveIdx(0, b);
+      res.sum = { drift: d, avgHR: mean(zi.map(i => hr[i]).filter(h => h > 30)), avgV: mean(zi.map(i => val[i])) };
       res.verdict = d <= 5 ? "ok" : "warn";
-      res.comment = `${fmtV(res.sum.avgV)} pour ${Math.round(res.sum.avgHR)} bpm de moyenne · dérive cardiaque ${d.toFixed(1).replace(".", ",")} % (${d <= 3 ? "très stable" : d <= 5 ? "correcte" : "marquée : chaleur, hydratation ou fatigue"}).`;
+      const dTxt = `dérive cardiaque ${d.toFixed(1).replace(".", ",")} % (${d <= 3 ? "très stable" : d <= 5 ? "correcte" : "marquée : chaleur, hydratation ou fatigue"})`;
+      if (tempo) {
+        res.reps = [[zi.length, res.sum.avgV, res.sum.avgHR, 0, "Z2"], [tempo.dur, tempo.v, tempo.hr, 0, "Tempo"]];
+        res.comment = `Z2 : ${fmtV(res.sum.avgV)} pour ${Math.round(res.sum.avgHR)} bpm · ${dTxt} · tempo final ${Math.round(tempo.dur / 60)}' à ${fmtV(tempo.v)}, ${Math.round(tempo.hr)} bpm.`;
+      } else res.comment = `${fmtV(res.sum.avgV)} pour ${Math.round(res.sum.avgHR)} bpm de moyenne · ${dTxt}.`;
       return res;
     }
     // --- séance fractionnée
