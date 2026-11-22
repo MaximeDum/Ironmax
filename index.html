@@ -366,6 +366,9 @@ Object.assign(P,{
  balanceB:x({h:[60,17],n:[60,26],p:[60,54],k1:[56,72],f1:[55,88],k2:[66,60],f2:[67,78],e1:[44,42],w1:[38,52],e2:[76,42],w2:[82,52]},FS),
  sidePlankA:{front:1,h:[27,54],n:[35,59],p:[62,74],e1:[37,80],w1:[28,88],e2:[46,64],w2:[56,70],k1:[82,82],f1:[100,86],k2:[83,83],f2:[101,88]},
  sidePlankB:{front:1,h:[27,46],n:[35,52],p:[62,64],e1:[37,80],w1:[28,88],e2:[44,40],w2:[50,26],k1:[82,77],f1:[100,86],k2:[86,70],f2:[104,74]},
+ legUpBent:x({k1:[50,64],f1:[66,62],e1:[38,74],w1:[49,66],k2:[70,86],f2:[91,87]},SUP),
+ hamStep:{h:[72,25],n:[64,31],s:[57,42],p:[50,53],e1:[67,43],w1:[75,54],e2:[65,44],w2:[73,55],k1:[67,56],f1:[84,60],k2:[50,71],f2:[50,88]},
+ sldl:{h:[82,40],n:[74,42],s:[64,46],p:[52,50],e1:[73,53],w1:[73,65],e2:[71,54],w2:[71,66],k1:[53,69],f1:[54,88],k2:[36,48],f2:[20,46]},
  tflStretch:x({h:[53,16],n:[55,25],p:[64,52],k1:[60,70],f1:[57,88],k2:[58,70],f2:[49,88],e1:[47,40],w1:[56,48],e2:[65,10],w2:[55,1]},FS)
 });
 /* Profondeur des poses dessinées de face (3e coordonnée, + = vers l'avant), pour en tirer un vrai profil */
@@ -431,6 +434,12 @@ const EX=[
  {id:"wallslide",n:"Glissés au mur",z:["epaules","thoracique","pectoraux"],t:"d",d:40,s:0,a:["wsW","wsY"],hl:["arm1","fore1","arm2","fore2"],c:["Dos, tête et bras contre le mur","Glisse des bras en W vers le Y","Côtes basses, lombaires au mur"]},
  {id:"triceps",n:"Triceps et dorsal au-dessus de la tête",z:["epaules","dorsaux"],t:"s",d:30,s:1,a:["triceps"],hl:["arm1","fore1"],c:["Main derrière la tête, coude vers le ciel","L'autre main tire doucement le coude","Grandis-toi, pas de cambrure"]},
  {id:"ecart",n:"Écart assis penché",z:["adducteurs","ischios"],t:"s",d:50,s:0,a:["seatedWideFold"],hl:["thigh1","thigh2"],c:["Assis jambes écartées, genoux vers le ciel","Penche-toi vers une jambe puis au centre","Dos long, bascule depuis les hanches"]},
+ {id:"hamstep",n:"Ischios jambe sur une marche",z:["ischios","mollets"],t:"s",d:40,s:1,a:["hamStep"],hl:["thigh1","shin1"],c:["Talon sur une marche ou une chaise, jambe tendue","Dos long, bascule le buste vers l'avant depuis la hanche","Pointe de pied vers toi pour accentuer, sans arrondir le dos"],l:["ischios","mollets"]},
+ {id:"floss",n:"Ischios fléchi-tendu allongé",z:["ischios"],t:"d",d:40,s:1,a:["legUpBent","legUp"],hl:["thigh1","shin1"],c:["Sur le dos, mains derrière la cuisse","Tends la jambe vers le plafond, puis replie","Mouvement lent, tu sens l'arrière de la cuisse s'ouvrir"]},
+ {id:"sldl",n:"Charnière sur une jambe",z:["ischios","fessiers","lombaires"],t:"d",d:40,s:1,a:["sldl","stand"],hl:["thigh2","shin2","torso"],c:["Debout sur une jambe, genou légèrement fléchi","Le buste descend pendant que la jambe arrière monte, dos plat","Bassin bien horizontal, remonte en serrant la fesse"]},
+ {id:"hipcars",n:"Cercles de hanche debout",z:["fessiers","flechisseurs","adducteurs"],t:"d",d:40,s:1,a:["frontRaiseKnee","balanceB","frontStand"],hl:["thigh2","shin2"],c:["Main en appui sur un mur","Monte le genou devant, ouvre-le sur le côté, ramène la jambe derrière","Grand cercle lent, le buste ne bouge pas"]},
+ {id:"essuie",n:"Essuie-glaces allongé",z:["fessiers","lombaires","adducteurs"],t:"d",d:40,s:0,a:["supine","twist"],hl:["thigh1","thigh2"],c:["Sur le dos, pieds écartés plus larges que le bassin","Laisse tomber les deux genoux d'un côté, puis de l'autre","Épaules au sol, respiration lente"],l:["lombaires","fessiers"]},
+ {id:"ecartdroit",n:"Écart assis dos droit",z:["adducteurs","ischios"],t:"s",d:50,s:0,a:["seatedWide"],hl:["thigh1","thigh2"],c:["Assis, jambes écartées sans forcer","Grandis-toi, bassin bascule vers l'avant","Garde le dos long plutôt que de chercher à descendre"]},
  {id:"fenterot",n:"Fente basse mains au sol",z:["flechisseurs","adducteurs"],t:"s",d:40,s:1,a:["lunge2"],hl:["thigh2"],c:["Genou arrière au sol, mains à l'intérieur du pied avant","Laisse descendre le bassin","Respire dans l'aine"]},
  {id:"abddebout",n:"Abduction de hanche debout",z:["fessiers"],k:1,t:"d",d:40,s:1,a:["abdA","abdB"],hl:["thigh2","shin2"],c:["Debout, mains sur les hanches, appui sur un mur si besoin","Monte la jambe sur le côté à 30-40° seulement, pointe de pied vers l'avant","Buste droit, 2 s en haut, redescends lentement"],l:["fessiers"]},
  {id:"marchelat",n:"Marche latérale en demi-squat",z:["fessiers","quadriceps"],k:1,t:"d",d:40,s:0,a:["bwA","bwB"],hl:["thigh1","thigh2"],c:["Demi-squat, élastique au-dessus des genoux si tu en as un","Petits pas de côté, 10 vers la droite puis 10 vers la gauche","Genoux poussés vers l'extérieur, alignés sur les pieds"],l:["fessiers","quadriceps"]},
@@ -603,6 +612,24 @@ const BACK={
  apres:{n:"Après la sortie",i:"🚴",d:"5 minutes juste après le vélo : rouvrir la hanche fermée par la position aéro et relâcher les lombaires.",list:["fentegenou","chatvache","pigeon","enfant"],next:"soir"},
  soir:{n:"Détente",i:"🌙",d:"Le soir ou le lendemain d'une sortie longue : bassin, lombaires et hanches, tout en douceur.",list:["bascule","genouxpoitrine","torsion","sphinx","fentegenou","pigeon","enfant"],next:"avant"},
  avant:{n:"Avant sortie longue",i:"⚡",d:"3-4 minutes pour mobiliser le dos et les hanches avant 3 h de selle.",list:["chatvache","genoupoitrine","goodmorning","fentehaute"],next:"apres"}};
+const HIP={
+ mobilite:{n:"Mobilité",i:"🔄",d:"Mouvements lents dans toutes les directions : la hanche retrouve son amplitude. Idéal en échauffement ou les jours sans séance.",list:["hipcars","nonante","hydrant","porte","cossack","essuie","ballat"],next:"souplesse"},
+ souplesse:{n:"Souplesse",i:"🌿",d:"Postures tenues pour ouvrir fessiers, fléchisseurs et adducteurs. Après l'effort ou le soir.",list:["pigeon","fig4","fentegenou","papillon","ecartdroit","tfl"],next:"avant"},
+ avant:{n:"Avant course ou vélo",i:"⚡",d:"5 minutes pour préparer les hanches avant une séance : amplitude sans fatigue.",list:["balav","ballat","hipcars","squatdyn","wgs"],next:"mobilite"}};
+function hipSession(){const k=HIP[UI.hip]||HIP.mobilite;const list=k.list.map(id=>EXM[id]).filter(e=>e&&!blocked(e));
+  return {key:"hanches:"+(UI.hip||"mobilite"),title:"Hanches · "+k.n,desc:k.d,list,removed:k.list.length-list.length,cat:"hanches",mode:"hanches"}}
+function vHanches(){
+  return `<div class="seg">${Object.entries(HIP).map(([k,v])=>`<button class="${(UI.hip||"mobilite")===k?"on acc":""}" data-act="hip" data-v="${k}">${v.i} ${v.n}</button>`).join("")}</div>
+  <div class="card" style="border:1px solid rgba(46,196,182,.3)"><h3>🦋 Hanches</h3><div class="muted" style="font-size:13.5px">Le vélo et la course travaillent la hanche dans un seul plan, toujours fléchie. Ces séances la font bouger dans toutes les directions : moins de tensions sur le dos et les genoux, une foulée plus ample.</div></div>`}
+// Entraînement général : dos, ischios, hanches en une séance, à faire 2-3 fois par semaine
+const ENT={
+ complet:{n:"Complet · 15'",i:"🧩",d:"Dos, ischios et hanches en une séance : on mobilise d'abord, puis on étire.",list:["chatvache","hipcars","essuie","sldl","floss","nonante","wgs","hamstep","pigeon","fentegenou","enfant"],next:"court"},
+ court:{n:"Express · 8'",i:"⏱️",d:"La version courte pour les jours chargés.",list:["chatvache","hipcars","floss","pigeon","fentegenou","enfant"],next:"complet"}};
+function entSession(){const k=ENT[UI.ent]||ENT.complet;const list=k.list.map(id=>EXM[id]).filter(e=>e&&!blocked(e));
+  return {key:"entretien:"+(UI.ent||"complet"),title:"Général · "+k.n,desc:k.d,list,removed:k.list.length-list.length,cat:"entretien",mode:"entretien"}}
+function vEntretien(){
+  return `<div class="seg">${Object.entries(ENT).map(([k,v])=>`<button class="${(UI.ent||"complet")===k?"on acc":""}" data-act="ent" data-v="${k}">${v.i} ${v.n}</button>`).join("")}</div>
+  <div class="card" style="border:1px solid rgba(46,196,182,.3)"><h3>🧩 Général</h3><div class="muted" style="font-size:13.5px">Ta séance d'entretien : dos, ischios et hanches, les trois zones que le vélo et la course raccourcissent. 2 à 3 fois par semaine, par exemple le soir des jours sans séance.</div></div>`}
 function backSession(){const k=BACK[UI.back]||BACK.apres;const list=k.list.map(id=>EXM[id]).filter(e=>e&&!blocked(e));
   return {key:"dos:"+(UI.back||"apres"),title:"Dos · "+k.n,desc:k.d,list,removed:k.list.length-list.length,cat:"dos",mode:"dos"}}
 function vDos(){
@@ -661,15 +688,17 @@ function sessionCard(se){
   return `<div class="card"><h3>${esc(se.title)}</h3><div class="muted">${esc(se.desc)}</div>
   <div class="tags">${zs.slice(0,6).map(z=>`<span class="tag">${Z[z]}</span>`).join("")}${se.removed?`<span class="tag pain">${se.removed} exercice${se.removed>1?"s":""} retiré${se.removed>1?"s":""} (douleur)</span>`:""}</div>
   ${done?'<div class="muted" style="font-size:12.5px;margin-top:8px">✓ Déjà faite aujourd\'hui. Tu peux la refaire ou en tirer une autre.</div>':""}
-  <div class="row" style="gap:8px;margin-top:10px"><button class="go" style="flex:2;margin:0" data-act="start"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Lancer · ${Math.round(totalSec(se.list)/60)} min</button>${se.cat!=="corps"&&se.cat!=="solo"&&se.cat!=="genou"&&se.cat!=="dos"?`<button class="go" style="flex:1;margin:0;background:var(--card2);color:var(--txt)" data-act="vary">🔀 Autre</button>`:""}</div>
+  <div class="row" style="gap:8px;margin-top:10px"><button class="go" style="flex:2;margin:0" data-act="start"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Lancer · ${Math.round(totalSec(se.list)/60)} min</button>${se.cat!=="corps"&&se.cat!=="solo"&&!["genou","dos","hanches","entretien"].includes(se.cat)?`<button class="go" style="flex:1;margin:0;background:var(--card2);color:var(--txt)" data-act="vary">🔀 Autre</button>`:""}</div>
   <div class="grid">${ex}</div></div>`;
 }
 function vSeances(){
   const cats=CATS.map(c=>`<button class="cat${UI.cat===c.id?" on":""}" data-act="cat" data-id="${c.id}"><svg viewBox="0 0 24 24">${IC[c.id]}</svg>${c.n}</button>`).join("");
-  if(UI.mode!=="genou"&&UI.mode!=="dos"&&!TYPES.some(t=>t[0]===UI.mode))UI.mode=UI.mode==="post"?"statique":"dynamique";
-  const types=`<div class="seg" style="display:grid;grid-template-columns:1fr 1fr;gap:4px">${TYPES.map(t=>`<button class="${UI.mode===t[0]?"on acc":""}" data-act="mode" data-v="${t[0]}">${t[1]}</button>`).join("")}<button class="${UI.mode==="genou"?"on acc":""}" data-act="mode" data-v="genou">🦵 Genou</button><button class="${UI.mode==="dos"?"on acc":""}" data-act="mode" data-v="dos">🧍 Dos</button></div>`;
+  if(!["genou","dos","hanches","entretien"].includes(UI.mode)&&!TYPES.some(t=>t[0]===UI.mode))UI.mode=UI.mode==="post"?"statique":"dynamique";
+  const types=`<div class="seg" style="display:grid;grid-template-columns:1fr 1fr;gap:4px">${TYPES.map(t=>`<button class="${UI.mode===t[0]?"on acc":""}" data-act="mode" data-v="${t[0]}">${t[1]}</button>`).join("")}<button class="${UI.mode==="entretien"?"on acc":""}" data-act="mode" data-v="entretien">🧩 Général</button><button class="${UI.mode==="hanches"?"on acc":""}" data-act="mode" data-v="hanches">🦋 Hanches</button><button class="${UI.mode==="dos"?"on acc":""}" data-act="mode" data-v="dos">🧍 Dos</button><button class="${UI.mode==="genou"?"on acc":""}" data-act="mode" data-v="genou">🦵 Genou</button></div>`;
   if(UI.mode==="genou"){UI.cur=kneeSession();return types+vGenou()+sessionCard(UI.cur)}
   if(UI.mode==="dos"){UI.cur=backSession();return types+vDos()+sessionCard(UI.cur)}
+  if(UI.mode==="hanches"){UI.cur=hipSession();return types+vHanches()+sessionCard(UI.cur)}
+  if(UI.mode==="entretien"){UI.cur=entSession();return types+vEntretien()+sessionCard(UI.cur)}
   UI.cur=catSession();
   const themes=`<div class="chips" style="margin:4px 0 10px">${Object.entries(THEMES).map(([k,t])=>`<button class="chip${UI.theme===k?" sel":""}" data-act="theme" data-v="${k}">${t.n}</button>`).join("")}</div>`;
   return `${types}${UI.mode==="souplesse"?themes:`<div class="cats">${cats}</div>`}
@@ -842,7 +871,7 @@ function finish(complete){
   if(done>=20){addSession({id:"s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now(),date:today(),key:se.key,title:se.title,cat:se.cat,mode:se.mode,zones:[...new Set(se.list.flatMap(e=>e.z))],exos:se.list.map(e=>e.id),n:se.list.length,done,planned:totalSec(se.list),complete:!!complete})}
   if(complete){beep(880,.15);setTimeout(()=>beep(1175,.3),180);say("Séance terminée. Bravo !")}
   $("#player").innerHTML=`<div class="ptop"><span></span><button class="x-btn" data-act="pclose">×</button></div><div class="pstage end"><div class="big">${complete?"Bravo":"Pause"}</div><div class="pname">${complete?"Séance terminée":"Séance interrompue"}</div><div class="pcue">${Math.round(done/60)} min de mobilité${done>=20?" · enregistrée dans ton suivi":""}</div>
-  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">${se.cat==="genou"?`<button class="go" style="margin:0" data-act="pchain">Enchaîner : Genou · ${KNEE[KNEE[UI.knee||"renfo"].next].n}</button>`:se.cat==="dos"?`<button class="go" style="margin:0" data-act="pchain">Enchaîner : Dos · ${BACK[BACK[UI.back||"apres"].next].n}</button>`:se.cat!=="corps"&&se.cat!=="solo"?'<button class="go" style="margin:0" data-act="pchain">🔀 Enchaîner une autre séance</button>':""}<button class="go" style="margin:0;background:var(--card2);color:var(--txt)" data-act="pother">Choisir une autre séance</button><button class="go" style="margin:0;background:transparent;color:var(--mut)" data-act="pclose">Fermer</button></div></div>`;
+  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">${se.cat==="genou"?`<button class="go" style="margin:0" data-act="pchain">Enchaîner : Genou · ${KNEE[KNEE[UI.knee||"renfo"].next].n}</button>`:se.cat==="dos"?`<button class="go" style="margin:0" data-act="pchain">Enchaîner : Dos · ${BACK[BACK[UI.back||"apres"].next].n}</button>`:se.cat==="hanches"?`<button class="go" style="margin:0" data-act="pchain">Enchaîner : Hanches · ${HIP[HIP[UI.hip||"mobilite"].next].n}</button>`:se.cat==="entretien"?`<button class="go" style="margin:0" data-act="pchain">Enchaîner : Général · ${ENT[ENT[UI.ent||"complet"].next].n}</button>`:se.cat!=="corps"&&se.cat!=="solo"?'<button class="go" style="margin:0" data-act="pchain">🔀 Enchaîner une autre séance</button>':""}<button class="go" style="margin:0;background:var(--card2);color:var(--txt)" data-act="pother">Choisir une autre séance</button><button class="go" style="margin:0;background:transparent;color:var(--mut)" data-act="pclose">Fermer</button></div></div>`;
 }
 function drawRing(){
   const st=PL.steps[PL.idx];const n=$("#pn");if(!n)return;
@@ -935,6 +964,8 @@ document.addEventListener("click",ev=>{
     case"theme":UI.theme=v;UI.vr=0;render();break;
     case"knee":UI.knee=v;render();break;
     case"back":UI.back=v;render();break;
+    case"hip":UI.hip=v;render();break;
+    case"ent":UI.ent=v;render();break;
     case"suivisub":UI.sub=v;render();window.scrollTo(0,0);break;
     case"vpdet":vpDetail(+v);break;
     case"sessdet":sessDetail(v);break;
@@ -968,7 +999,7 @@ document.addEventListener("click",ev=>{
     case"pprev":prev();break;
     case"pstop":finish(false);break;
     case"pclose":$("#player").classList.remove("show");PL=null;render();break;
-    case"pchain":{$("#player").classList.remove("show");PL=null;UI.tab="seances";if(UI.mode==="genou"){UI.knee=KNEE[UI.knee||"renfo"].next;render();startSession(kneeSession());break}if(UI.mode==="dos"){UI.back=BACK[UI.back||"apres"].next;render();startSession(backSession());break}UI.vr=(UI.vr||0)+1;render();startSession(catSession());break}
+    case"pchain":{$("#player").classList.remove("show");PL=null;UI.tab="seances";if(UI.mode==="genou"){UI.knee=KNEE[UI.knee||"renfo"].next;render();startSession(kneeSession());break}if(UI.mode==="dos"){UI.back=BACK[UI.back||"apres"].next;render();startSession(backSession());break}if(UI.mode==="hanches"){UI.hip=HIP[UI.hip||"mobilite"].next;render();startSession(hipSession());break}if(UI.mode==="entretien"){UI.ent=ENT[UI.ent||"complet"].next;render();startSession(entSession());break}UI.vr=(UI.vr||0)+1;render();startSession(catSession());break}
     case"pother":$("#player").classList.remove("show");PL=null;UI.tab="seances";render();window.scrollTo(0,0);break;
   }
 });
@@ -1266,7 +1297,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v1.99"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.00"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
