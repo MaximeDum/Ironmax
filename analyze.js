@@ -78,7 +78,7 @@
       let tempo = null;
       // la FC suit l'allure avec 1 à 3 min de retard : on recule le début du tempo tant que l'allure y est déjà plus rapide
       if (tStart != null) { const baseV = med(val.slice(a, Math.floor(val.length * .55))), mv = (x, y) => mean(val.slice(Math.max(0, x), y).filter(v => v > .5));
-        let s0 = tStart; while (s0 > tStart - 300 && mv(s0 - 60, s0) >= baseV * 1.04) s0 -= 10; tStart = s0; }
+        let s0 = tStart; while (s0 > tStart - 180 && mv(s0 - 60, s0) >= baseV * 1.06) s0 -= 10; tStart = s0; }
       if (tStart != null) { const ix = moveIdx(tStart, val.length); if (ix.length >= 480) { tempo = { s: tStart, dur: ix.length, v: mean(ix.map(i => val[i])), hr: mean(ix.map(i => hr[i]).filter(h => h > 30)) }; b = tStart; } }
       const m = a + ((b - a) >> 1), ef = (x, y) => mean(val.slice(x, y).filter(v => v > 0)) / mean(hr.slice(x, y).filter(h => h > 30));
       const d = (ef(a, m) / ef(m, b) - 1) * 100;
