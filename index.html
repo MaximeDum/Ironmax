@@ -1297,7 +1297,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.08"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.09"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -2050,7 +2050,18 @@ function recompute(){
   const p140=r140.length?wLevel(r140):((B&&B.p140)?B.p140.s:330);
   // Trajectoire attendue : le niveau qu'il faut avoir à chaque date pour être prêt le 27 juin (départ 28 sept., pic de volume fin mai)
   const T0=new Date("2026-09-28").getTime(),TR=new Date("2027-06-27").getTime(),TP=new Date("2027-05-30").getTime();
-  const expAt=ms=>{const uu=clamp((ms-T0)/(TR-T0),0,1),up=clamp((ms-T0)/(TP-T0),0,1);return {ftp:255+25*uu,longRide:3+2.5*up,p140:340-40*uu,longRun:14+16*up,km4w:25+20*up,ctl:58+(INP.ctlTarget-58)*up,swim:130-4*uu}};
+  // Volumes attendus = ceux du programme (sortie longue vélo / course sur 6 semaines, km de course sur 4 semaines), pas une droite :
+  // le plan monte le volume par paliers (court en base, long au printemps). Ligne droite seulement hors programme.
+  const PW={};const planWk=w=>{if(PW[w.n])return PW[w.n];let ss=[];try{ss=weekSessions(w)}catch(e){ss=w.s||[]}
+    return PW[w.n]=ss.filter(x=>!(x.p&&x.p.cancel)).map(x=>({t:new Date((x.date||w.start)+"T00:00:00").getTime(),d:x.d,k:x.k,id:x.id,min:x.min||0}))};
+  const planVol=(ms,pace)=>{if(!PLAN||!PLAN.weeks||ms>=TP)return null;const p0=new Date(PLAN.weeks[0].start+"T00:00:00").getTime();if(ms<p0+7*864e5)return null;
+    const all=PLAN.weeks.filter(w=>{const t=new Date(w.start+"T00:00:00").getTime();return t<=ms&&t+7*864e5>ms-42*864e5}).flatMap(planWk).filter(x=>x.t<=ms);
+    const in42=all.filter(x=>x.t>ms-42*864e5),in28=all.filter(x=>x.t>ms-28*864e5),runs=a=>a.filter(x=>x.d==="course");
+    const lr=Math.max(0,...runs(in42).map(x=>x.min)),rd=Math.max(0,...in42.filter(x=>x.d==="velo"&&["long","brick","sim"].includes(x.k)).map(x=>x.min));
+    const wks=Math.min(4,(ms-p0)/(7*864e5));
+    return {longRun:lr*60/pace,longRide:rd/60,km4w:runs(in28).reduce((t,x)=>t+x.min,0)*60/pace/Math.max(1,wks)}};
+  const expAt=ms=>{const uu=clamp((ms-T0)/(TR-T0),0,1),up=clamp((ms-T0)/(TP-T0),0,1);const e={ftp:255+25*uu,longRide:3+2.5*up,p140:340-40*uu,longRun:14+16*up,km4w:25+20*up,ctl:58+(INP.ctlTarget-58)*up,swim:130-4*uu};
+    const v=planVol(ms,e.p140*1.03);if(v){if(v.longRun>0)e.longRun=v.longRun;if(v.longRide>0)e.longRide=v.longRide;if(v.km4w>0)e.km4w=v.km4w}return e};
   const partsAt=m=>({velo:.7*lin(m.ftp,215,280)+.3*lin(m.longRide,2,5.5),course:.5*lin(-m.p140,-370,-300)+.25*lin(m.longRun,10,30)+.25*lin(m.km4w,15,45),nat:lin(-m.swim,-150,-126),end:lin(m.ctl,42,INP.ctlTarget)});
   const capAt=ms=>{const p=partsAt(expAt(ms));return (.35*p.velo+.3*p.course+.1*p.nat+.25*p.end)*100};
   const exp=expAt(tn),expP=partsAt(exp);
