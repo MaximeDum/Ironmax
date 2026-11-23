@@ -83,11 +83,9 @@ def _set(ss,i,**kw):
 LEMAN="Allure Ironman, FC ≤ 140 bpm, sans suivre un groupe trop rapide. Nutrition du jour J : 80-90 g de glucides/h, 500-750 ml/h. Enchaîne la course dès la descente du vélo."
 def ovr(n,ss):
     LOOK="Sur le Look, sans capteur : à la FC. "
-    if n==13:  # vacances à partir du jeu. 24 déc. : Look sans capteur, pas de salle
-        _set(ss,"mB",min=30,l="Gainage + mobilité à la maison",free=1,txt="Pas de salle : 20' de gainage (dead bug, bird dog, planche latérale, pont fessier) puis la séance Mobilité · Général express.")
-        _set(ss,"ef",min=60,l="Look : Z2 facile (veille de Noël)",z2=.62,look=1,txt=LOOK+"FC ≤ 135 bpm, cadence libre. Ou repos si la journée est chargée.")
-        _set(ss,"long",min=150,l="Look : sortie Z2 à la FC",z2=.66,look=1,txt=LOOK+"2h30 en Z2, FC 125-138 bpm, sans blocs. Ravito comme d'habitude.")
-        _set(ss,"lrun",min=80,l=None,v=.66)
+    if n==13:  # vacances dès le jeu. 24 déc. : charge normale, vélo sur le Look sans capteur → à la FC
+        _set(ss,"ef",min=75,l="Look : Z2 + tempo à la FC",z2=.64,look=1,txt=LOOK+"Z2 FC ≤ 135 bpm, avec 2 × 12' à FC 145-150 bpm (récup 5'). Si la veille de Noël est chargée : 1h Z2.")
+        _set(ss,"long",min=225,l="Look : sortie longue à la FC",z2=.66,look=1,txt=LOOK+"3h45 en Z2, FC 125-138 bpm, avec 2 × 20' à FC 145-150 bpm en 2e moitié (récup 10'). Ravito comme d'habitude.")
     if n==14:  # décharge des vacances : vrai reset, ~60 % du volume, presque tout facile
         _set(ss,"nat",min=40,l="Natation facile",var=3,m=2000,light=1)
         _set(ss,"thr",min=60,l="Look : Z2 facile",z2=.62,look=1,txt=LOOK+"1h FC ≤ 135 bpm.")
@@ -127,7 +125,7 @@ for i in range(33):
         elif not dl: ctr[ph]=j+1
         ss={"Base 2":base2,"Build":build,"Spécifique":spec}.get(ph,lambda j,dl,n:taper(j,n))(j,dl,n) if ph!="Affûtage" else taper(j,n)
         ss=ovr(n,ss)
-    note={7:"Décharge · test VMA",11:"Décharge · test FTP",12:"Si FTP < 265 W au test : VO2max le lundi",13:"Vacances dès jeudi : Look sans capteur, séances à la FC",14:"Décharge · reset des vacances (Look, course, natation)",21:"Décharge · retests FTP + VMA",32:"Semaine allégée · EVG",33:"Tour du Léman samedi",34:"Triathlon M dimanche (entraînement)",35:"Récup lundi-mardi après le M",39:"Semaine de course"}.get(n,"Décharge" if dl else "")
+    note={7:"Décharge · test VMA",11:"Décharge · test FTP",12:"Si FTP < 265 W au test : VO2max le lundi",13:"Vacances dès jeudi : charge normale, vélo sur le Look à la FC",14:"Décharge · reset des vacances (Look, course, natation)",21:"Décharge · retests FTP + VMA",32:"Semaine allégée · EVG",33:"Tour du Léman samedi",34:"Triathlon M dimanche (entraînement)",35:"Récup lundi-mardi après le M",39:"Semaine de course"}.get(n,"Décharge" if dl else "")
     test={11:"Test FTP 20'",21:"Retest FTP + VMA",39:"IRONMAN"}.get(n)
     sd=SD.get(n)
     if n==21: sd=base2_retest()
