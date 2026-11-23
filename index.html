@@ -1019,10 +1019,10 @@ const frn=v=>String(v).replace(".",",");
 const fdate=d=>new Date(d+"T00:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
 function rules(D){
   const m=[],f=D.fatigue;
-  if(f.v>=60)m.push(["alert","Fatigue très élevée : remplace la prochaine séance clé par de l'endurance Z1–Z2."]);
+  if(f.v>=75)m.push(["alert","Fatigue très élevée : remplace la prochaine séance clé par de l'endurance Z1–Z2."]);
   if(f.ansLow3)m.push(["alert","Récupération nerveuse basse 3 nuits : journée facile ou repos."]);
   const r=D.dup&&D.dup.ratioMedian;if(r&&(r<.85||r>1.15))m.push(["alert","Écart de puissance anormal entre Zwift et Polar : vérifie l'appairage du capteur."]);
-  if(f.v>=40&&f.v<60&&f.highDays>4)m.push(["warn","Fatigue élevée qui dure : allège la prochaine séance d'intensité."]);
+  if(f.v>=55&&f.v<75&&f.highDays>4)m.push(["warn","Fatigue élevée qui dure : allège la prochaine séance d'intensité."]);
   const w=D.week;if(w&&w.doneH!=null&&w.plannedH&&(w.elapsed||1)>=.3&&PLAN){
     // prévu à ce jour = séances dont le jour ou le créneau est passé (ou déjà faites)
     const t=today(),pw=PLAN.weeks.find(x=>x.start<=t&&addDays(x.start,7)>t);
@@ -1174,7 +1174,7 @@ function heroBanner(D,extra){
   if(mobT.length)lines.push(`Mobilité faite ${hrs>=17?"ce soir":"aujourd'hui"} ✓ (${hm(mobT.reduce((x,a)=>x+a.moving_time/60,0))})`);
   // actualité
   const f=D.fatigue.v;
-  if(f>=60)lines.push("Fatigue très élevée : écoute ton corps, on allège.");
+  if(f>=75)lines.push("Fatigue très élevée : écoute ton corps, on allège.");
   else if(f<20&&!todayDone&&todayS.some(s=>s.p.sets||s.p.test))lines.push("Tu es frais : feu vert pour la qualité.");
   const nt=D.physio&&D.physio.nextTest;if(nt){const n=daysTo(nt.d);if(n>0&&n<=14)lines.push(`${nt.n} dans ${n} jour${n>1?"s":""}.`)}
   try{const longS=todayS.find(s=>!todayDone&&nutriPlan(s,(PLAN.weeks.find(x=>x.start<=tk&&addDays(x.start,7)>tk)||{}).phase));if(longS){const np=nutriPlan(longS,(PLAN.weeks.find(x=>x.start<=tk&&addDays(x.start,7)>tk)||{}).phase);lines.push("Ravito : "+(np.sched&&np.sched.length?np.sched.map(([m,u])=>(m>=60?Math.floor(m/60)+"h"+pad(m%60):m+"'")+" "+u).join(", "):np.lines.join(", "))+".")}}catch(e){}
@@ -1194,7 +1194,7 @@ function dayLight(){
   let lvl=0;const why=[],ok=[];const up=(l,txt)=>{lvl=Math.max(lvl,l);why.push(txt)};
   // facteurs liés à la nuit : comptés à part, puis atténués si tu dis que ce n'est pas l'entraînement
   const nAns=(nightGet()[t]||{}).k,soft=nAns==="good"||nAns==="other";let nl=0;const nw=[];const upN=(l,txt)=>{nl=Math.max(nl,l);nw.push(txt)};
-  if(f.v>=60)up(2,`fatigue accumulée élevée (${f.v}/100)`);else if(f.v>=40)up(1,`fatigue accumulée modérée (${f.v}/100)`);else ok.push(`fatigue ${f.v}/100`);
+  if(f.v>=75)up(2,`fatigue accumulée très élevée (${f.v}/100)`);else if(f.v>=55)up(1,`fatigue accumulée élevée (${f.v}/100)`);else ok.push(f.v>=35?`fatigue ${f.v}/100 : normale en semaine de charge`:`fatigue ${f.v}/100`);
   const r=hrv&&base?hrv/base:null;
   if(r!=null){if(r<.75)upN(2,`HRV très basse (${hrv} ms, base ${base})`);else if(r<.87)upN(1,`HRV basse (${hrv} ms, base ${base})`);else ok.push(`HRV ${hrv} ms (base ${base})`)}
   if(sl){const h=sl/3600,txt=hm(sl/60);if(h<5)upN(2,`nuit très courte (${txt})`);else if(h<6.3)upN(1,`nuit courte (${txt})`);else ok.push(`sommeil ${txt}`)}
@@ -1264,7 +1264,7 @@ function vDash(){
   const top=`<div class="row" style="align-items:center;margin-bottom:4px"><button class="go" style="margin:0;flex:1;padding:10px;background:var(--card2);color:var(--txt);border:1px solid var(--line);font-size:15px;font-weight:700" data-act="refresh">${REFRESH.busy?"Actualisation…":"⟳ Actualiser"}</button></div>
   <div class="hint" style="text-align:center">${REFRESH.err?'<span style="color:var(--acc)">'+esc(REFRESH.err)+'</span>':LIVE?esc(LIVE.source):(CFG.key?"Touche Actualiser pour charger tes séances":"Données figées du 11 nov. · connecte Intervals.icu dans Réglages")}</div>`;
   const adj=(LIVE&&LIVE.adjust||[]).map(a=>`<div class="dc" style="border:1px solid var(--line)"><div class="dl" style="color:var(--txt)">↕ ${esc(a.t)}<small>${esc(a.x)}</small></div><div style="margin-top:8px;font-weight:600">${esc(a.p)}</div><div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="adjapply" data-v="${a.id}">Appliquer</button><button class="btn" style="flex:1" data-act="adjdismiss" data-v="${a.id}">Ignorer</button></div></div>`).join("");
-  const fz=f.v<20?"Faible":f.v<40?"Modérée":f.v<60?"Élevée":"Très élevée";
+  const fz=f.v<20?"Faible":f.v<35?"Modérée":f.v<55?"Normale en charge":f.v<75?"Élevée":"Très élevée";
   const msgs=(REFRESH.err?[["alert",REFRESH.err]]:[]).concat(CFG.key?[]:[["info","Connecte Intervals.icu dans Réglages pour charger tes séances."]]).concat(rules(D)).map(m=>`<div class="hm ${m[0]}"><i></i><div>${esc(m[1])}</div></div>`).join("");
   const bars=D.note.disc.map(d=>`<div class="bar"><div class="h"><span>${d.n}</span><b>${frn(d.v)}<small class="muted" style="font-size:12px">/20</small></b></div><div class="trk"><i style="width:${d.v*5}%;background:${DC[d.k]}"></i></div><div class="f">Plan ${frn(d.plan)} · efficacité ${frn(d.eff)} · trajectoire ${frn(d.traj)}<br>${esc(d.txt)}</div></div>`).join("");
   const pc=v=>v>=85?"#3DDC84":v>=65?"#A3D94B":v>=45?"#F5A524":v>=25?"#FF7A3D":"#E4002B";
@@ -1297,7 +1297,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.09"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.10"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1988,14 +1988,14 @@ function recompute(){
     if(S.rhr){p.push(clamp((S.rhr-INP.fcnight)/6*100,0,100));w.push(.2)}
     if(S.score){p.push(clamp((85-S.score)/25*100,0,100));w.push(.15)}
     const ws=w.reduce((a,b)=>a+b,0);return ws?p.reduce((a,x,i)=>a+x*w[i],0)/ws:null};
-  const NG=nightGet();const rawF=days.map(x=>{const lp=clamp((x.atl/Math.max(1,x.ctl)-.8)/.7*100,0,100);let rp=recovAt(x.d);if(rp==null)rp=recovBase();const na=(NG[x.d]||{}).k;if(rp!=null&&(na==="good"||na==="other"))rp*=.5;return rp==null?lp:.65*lp+.35*rp});
+  const NG=nightGet();const rawF=days.map(x=>{const lp=clamp((x.atl/Math.max(1,x.ctl)-1.15)/.55*100,0,100);let rp=recovAt(x.d);if(rp==null)rp=recovBase();const na=(NG[x.d]||{}).k;if(rp!=null&&(na==="good"||na==="other"))rp*=.5;return rp==null?lp:.65*lp+.35*rp});
   const snapF=(B&&DATA.fatigue&&DATA.fatigue.series)||[];
   // lissage sur 3 jours : les jours d'avant le premier calcul sont pris dans la série du socle
   const prevF=snapF.filter(p=>!B||p.d<=B.asof).map(p=>p.v);
   const rawAt=i=>i>=0?rawF[i]:(prevF.length?prevF[Math.max(0,prevF.length+i)]:rawF[0]);
   const fat=days.map((x,i)=>({d:x.d,v:Math.round((rawAt(i-2)+rawAt(i-1)+rawF[i])/3)}));
   const fser=snapF.filter(p=>!B||p.d<=B.asof).concat(fat).slice(-50);const fnow=fser.length?fser[fser.length-1].v:0;
-  let highDays=0;for(let i=fser.length-1;i>=0&&fser[i].v>=40;i--)highDays++;
+  let highDays=0;for(let i=fser.length-1;i>=0&&fser[i].v>=55;i--)highDays++;
   const lastW=wk.filter(k=>k<=today).slice(-7).map(k=>well[k]);
   const avgW0=f=>{const v=lastW.map(w=>w[f]).filter(v=>v);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
   const nightsN=lastW.filter(w=>w.sleepSecs).length,BS=B&&B.sleep,useBS=BS&&nightsN<3;
@@ -2129,7 +2129,7 @@ function recompute(){
   row("🏃 Allure marathon Ironman estimée",paceKm(3600/expRun)+"/km",paceKm(3600/runPace)+"/km",expRun/runPace,.98,1.02,"5:40/km (4h00)",sg(Math.round(expRun-runPace))+" s/km");
   row("💪 Charge de fond (CTL)",String(Math.round(exp.ctl)),String(Math.round(L.ctl)),L.ctl/exp.ctl,.95,1.05,String(INP.ctlTarget)+" fin mai",sg(Math.round(L.ctl-exp.ctl)));
   [["velo","🚴 Efficacité cardiaque"],["course","🏃 Efficacité cardiaque"],["nat","🏊 Efficacité cardiaque"]].forEach(([k,l])=>{const v=gains[k];if(v==null)return;const r=v/Math.max(.1,expEff[k]);row(l,"+"+fr(expEff[k].toFixed(1))+" %",(v>=0?"+":"")+fr(v.toFixed(1))+" %",r,.8,1.2,"",sg((v-expEff[k]).toFixed(1))+" pt")});
-  rows.push({i:"Fatigue accumulée",exp:"< 40",real:fnow+"/100",s:fnow<40?"ok":"warn",t:fnow<40?"Dans la cible":"À surveiller"});
+  rows.push({i:"Fatigue accumulée",exp:"< 55",real:fnow+"/100",s:fnow<55?"ok":"warn",t:fnow<55?"Dans la cible":"À surveiller"});
   const vig=(LIVE.adjust||[]).map(a=>a.t).concat(highDays>4?["Fatigue élevée depuis "+highDays+" jours"]:[]);
   rows.push({i:"Points de vigilance",exp:"aucun",real:vig.length?vig.join(" ; "):"aucun",s:vig.length?"warn":"ok",t:vig.length?"À surveiller":"RAS"});
   LIVE.vsPlan=rows;LIVE.appv=APPV;LIVE.p140=p140;
@@ -2582,7 +2582,7 @@ function vpDetail(idx){
       why.push(up?"Ton cœur travaille moins pour le même effort : l'endurance progresse.":warn?"L'efficacité stagne : souvent la fatigue, la chaleur, ou trop d'intensité par rapport à la Z2.":"La progression suit le programme.");
       todo.push(warn?"Mets l'accent sur la Z2 sous le plafond de FC, et vérifie ta récupération.":"Continue : la Z2 régulière fait le travail.");chart=anIn(k==="efv"?"ef":k==="efc"?"run":"swim");break}
     case"fat":{how="Indice de fatigue : 65 % charge récente et 35 % récupération (sommeil, variabilité cardiaque, FC au repos).";
-      why.push(c.highDays>0?`Fatigue au-dessus de 40 depuis ${c.highDays} jour${c.highDays>1?"s":""}.`:"La fatigue reste sous 40.");
+      why.push(c.highDays>0?`Fatigue au-dessus de 55 depuis ${c.highDays} jour${c.highDays>1?"s":""}.`:"La fatigue reste sous 55.");
       todo.push(warn?"Allège la prochaine séance dure (le feu du jour te le propose) et soigne le sommeil.":"RAS : tu encaisses bien la charge.");chart=anIn("recup");break}
     default:{how="Les signaux qu'Ironmax surveille : propositions d'ajustement en cours et fatigue qui dure.";
       why.push(r.real==="aucun"?"Aucun signal en ce moment.":esc(r.real));
