@@ -1297,7 +1297,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.03"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.05"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1736,7 +1736,7 @@ function zwTitle(s){const k=s.k,p=s.p,W=x=>Wt(x,k)+"W",WL=x=>Wt(x,"long")+"W",mi
   if(["long","brick","sim"].includes(k)){const b=String(p.blocks||"");return `${k==="brick"?"Enchaînement":"Sortie longue"} ${dur(min)}${b?" dont "+b.replace(/'/g,"'")+" @"+WL(p.w):""}`}
   return `Z2 ${dur(min)}`}
 function zwEvents(w){
-  const t=today(),list=weekSessions(w).filter(s=>s.d==="velo"&&!s.p.cancel&&s.date>=t&&(!["long","brick","sim"].includes(s.k)||s.indoor));
+  const t=today(),list=weekSessions(w).filter(s=>s.d==="velo"&&!s.p.cancel&&!s.p.look&&s.date>=t&&(!["long","brick","sim"].includes(s.k)||s.indoor));
   const byDay={};list.forEach(s=>{(byDay[s.date]=byDay[s.date]||[]).push(s)});
   return list.filter(s=>s.date>t||!splitToday(weekSessions(w).filter(x=>x.date===s.date&&!x.p.cancel),s.date).done.some(x=>x.uid===s.uid))
     .map(s=>({category:"WORKOUT",type:"Ride",indoor:true,start_date_local:s.date+"T"+(SLOT_H[s.slot]||"18:30")+":00",
@@ -2181,7 +2181,12 @@ const Wt=(pct,k)=>Math.round(pct*INP.ftp+(ADJ[BIKE_ADJ.includes(k)?"ss":k]||0)*(
 const Wr=(a,b,k)=>Wt(a,k)+"–"+Wt(b,k)+" W";
 const Pc=(v,k)=>paceKm((v+(k==="seuil"?(ADJ.seuil||0):0))*INP.vma)+"/km";
 const Pr=(a,b)=>paceKm(b*INP.vma)+"–"+paceKm(a*INP.vma)+"/km";
-function steps(k,p,min,phase){const r=p.txt&&k==="longrun"?[["Programme",p.txt]]:stepsBase(k,p,min,phase);if(p.txt&&k!=="longrun")r.push(["Consignes",p.txt]);
+function steps(k,p,min,phase){
+  if(p.free)return [["Programme",p.txt||""],["Durée",hm(min)]];
+  // séance sur le Look (sans capteur) : consignes à la FC, pas de puissances ; on garde le ravito des sorties longues
+  if(p.look){const base=stepsBase(k,p,min,phase),rav=base.filter((x,i)=>/^Ravito|^Quand/.test(x[0])||(x[0]===""&&i>0&&/^Ravito|^Quand|^$/.test(base[i-1][0])&&/g\/h|Eau|g de glucides/.test(x[1])));
+    return [["Vélo","Look, sans capteur de puissance"],["Durée",hm(min)],["Programme",p.txt||"Z2 à la FC (≤ 135 bpm)"]].concat(rav)}
+  const r=p.txt&&k==="longrun"?[["Programme",p.txt]]:stepsBase(k,p,min,phase);if(p.txt&&k!=="longrun")r.push(["Consignes",p.txt]);
   if(["vo2","ss","thr","ef","im","tempo","long","brick","sim"].includes(k)&&!p.cancel){try{const c=zwBuild({k,p,min}).caps;if(c.length)r.push(["FC max",c.map(x=>x[0]+" "+(x[1]==="libre"?"libre":x[1])).join(" · ")+(c.some(x=>x[1]!=="libre")?" bpm":"")])}catch(e){}}
   return r}
 // séance de natation : le bloc principal (le plus grand « N×D m », ou le bloc continu sans distance) est ajusté pour faire le total prévu

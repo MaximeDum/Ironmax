@@ -82,6 +82,22 @@ def _set(ss,i,**kw):
     return ss
 LEMAN="Allure Ironman, FC ≤ 140 bpm, sans suivre un groupe trop rapide. Nutrition du jour J : 80-90 g de glucides/h, 500-750 ml/h. Enchaîne la course dès la descente du vélo."
 def ovr(n,ss):
+    LOOK="Sur le Look, sans capteur : à la FC. "
+    if n==13:  # vacances à partir du jeu. 24 déc. : Look sans capteur, pas de salle
+        _set(ss,"mB",min=30,l="Gainage + mobilité à la maison",free=1,txt="Pas de salle : 20' de gainage (dead bug, bird dog, planche latérale, pont fessier) puis la séance Mobilité · Général express.")
+        _set(ss,"ef",min=60,l="Look : Z2 facile (veille de Noël)",z2=.62,look=1,txt=LOOK+"FC ≤ 135 bpm, cadence libre. Ou repos si la journée est chargée.")
+        _set(ss,"long",min=150,l="Look : sortie Z2 à la FC",z2=.66,look=1,txt=LOOK+"2h30 en Z2, FC 125-138 bpm, sans blocs. Ravito comme d'habitude.")
+        _set(ss,"lrun",min=80,l=None,v=.66)
+    if n==14:  # décharge des vacances : vrai reset, ~60 % du volume, presque tout facile
+        _set(ss,"nat",min=40,l="Natation facile",var=3,m=2000,light=1)
+        _set(ss,"thr",min=60,l="Look : Z2 facile",z2=.62,look=1,txt=LOOK+"1h FC ≤ 135 bpm.")
+        _set(ss,"mA",min=30,l="Gainage + mobilité à la maison",free=1,txt="20' de gainage + la séance Mobilité · Hanches ou Dos.")
+        _set(ss,"tempo",min=45,l="Look : balade très facile (ou repos)",z2=.58,look=1,txt=LOOK+"Tout en Z1, pour le plaisir. Repos complet si tu es fatigué.")
+        _set(ss,"seuil",min=45,l="Course : 40' facile + 6 lignes droites",free=1,txt="40' à FC ≤ 140 bpm, puis 6 × 20\" en accélération progressive, récup en marchant.")
+        _set(ss,"mB",min=25,l="Mobilité · Général",free=1,txt="La séance Mobilité · Général complète (15') + 10' de gainage.")
+        _set(ss,"ef",min=75,l="Look : Z2 avec 3×5' tempo à la FC",z2=.64,look=1,txt=LOOK+"Z2 à FC ≤ 135, avec 3 × 5' à FC 145-150 bpm (récup 5'). Juste pour garder le rythme.")
+        _set(ss,"long",min=120,l="Look : sortie Z2 2h à la FC",z2=.65,look=1,txt=LOOK+"FC 125-138 bpm, sans blocs.")
+        _set(ss,"lrun",min=60,l="Course 1h facile",v=.66)
     if n==33:  # sam. 15 mai : tour du Léman (180 km), la sortie clé, 6 semaines avant l'Ironman
         _set(ss,"long",min=400,l="Tour du Léman · 180 km",z2=.73,brick="30'",txt=LEMAN)
         _set(ss,"lrun",min=110,l=None,v=.66)
@@ -100,7 +116,7 @@ def phase(d):
     if d<=dt.date(2027,4,25): return "Build"
     if d<=dt.date(2027,6,6): return "Spécifique"
     return "Affûtage"
-DL={7,11,15,19,21,25,29,32}
+DL={7,11,14,18,21,25,29,32}   # décharge 14 = vacances de Noël (28 déc.–3 janv.)
 weeks=[];ctr={}
 for i in range(33):
     n=7+i;st=dt.date(2026,11,9)+dt.timedelta(weeks=i);ph=phase(st);dl=n in DL
@@ -111,10 +127,11 @@ for i in range(33):
         elif not dl: ctr[ph]=j+1
         ss={"Base 2":base2,"Build":build,"Spécifique":spec}.get(ph,lambda j,dl,n:taper(j,n))(j,dl,n) if ph!="Affûtage" else taper(j,n)
         ss=ovr(n,ss)
-    note={7:"Décharge · test VMA",11:"Décharge · test FTP",12:"Si FTP < 265 W au test : VO2max le lundi",21:"Décharge · retests FTP + VMA",32:"Semaine allégée · EVG",33:"Tour du Léman samedi",34:"Triathlon M dimanche (entraînement)",35:"Récup lundi-mardi après le M",39:"Semaine de course"}.get(n,"Décharge" if dl else "")
+    note={7:"Décharge · test VMA",11:"Décharge · test FTP",12:"Si FTP < 265 W au test : VO2max le lundi",13:"Vacances dès jeudi : Look sans capteur, séances à la FC",14:"Décharge · reset des vacances (Look, course, natation)",21:"Décharge · retests FTP + VMA",32:"Semaine allégée · EVG",33:"Tour du Léman samedi",34:"Triathlon M dimanche (entraînement)",35:"Récup lundi-mardi après le M",39:"Semaine de course"}.get(n,"Décharge" if dl else "")
     test={11:"Test FTP 20'",21:"Retest FTP + VMA",39:"IRONMAN"}.get(n)
     sd=SD.get(n)
     if n==21: sd=base2_retest()
+    if n==14: sd=[dict(x,p=dict(x['p'])) for x in ss]
     tpl={t[0]:t for t in TPL[ph]}
     want=set(tpl)-({"mA"} if n==39 else set())
     for lst,lab in ((ss,"s"),(sd,"sd")):
