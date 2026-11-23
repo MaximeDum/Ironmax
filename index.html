@@ -1297,7 +1297,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.00"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.02"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1350,12 +1350,12 @@ function planTarget(s){
   if(bike||s.d==="course")return {sport:s.d,n:0,target:0};
   return null;
 }
-const AV=8; // version de l'analyse : une séance analysée avec une version plus ancienne est ré-analysée
+const AV=9; // version de l'analyse : une séance analysée avec une version plus ancienne est ré-analysée
 async function analyzeRecent(acts){
   const since=dkey(new Date(Date.now()-21*864e5));
   for(const a of acts){
     const needV=false; // allure à 140 : calculée depuis les blocs (modèle FC personnel), plus besoin des flux
-    if(a.date<since||(!needV&&ANA[a.id]&&((ANA[a.id].sport==="nat"&&!(a.fixed&&ANA[a.id].sum&&ANA[a.id].sum.dist!==a.distance))||ANA[a.id].av===AV)))continue;
+    if(a.date<since||(!needV&&ANA[a.id]&&((ANA[a.id].sport==="nat"?(ANA[a.id].av===AV&&!(a.fixed&&ANA[a.id].sum&&ANA[a.id].sum.dist!==a.distance)):ANA[a.id].av===AV))))continue;
     if(a.sp==="nat"){const r=swimAna(a);if(r)ANA[a.id]=r;continue}
     if(!(a.sp==="velo"||a.sp==="course")||(a.moving_time||0)<1200)continue;
     const ps=plannedFor(a.date,a.sp,a);
@@ -1449,18 +1449,53 @@ function queueNewSessions(acts){
 /* ============ NATATION : ce qui a été fait vs ce que la montre a compté ============
    La montre rate des longueurs. Tu corriges la distance de chaque bloc (les temps viennent des tours de la montre),
    tu coches les blocs de travail : Ironmax recalcule distance, allures, charge et analyse. */
+/* Débrief natation complet, fait par Ironmax seul :
+   rôle de chaque tour (échauffement / bloc principal / retour au calme), conformité au programme (distance, contenu, intensité),
+   allure du bloc principal vs ton seuil et vs tes séances comparables, note. */
+function swimRoles(laps){
+  const L=laps.filter(l=>l.d>0&&l.t>0);if(!L.length)return [];
+  return L.map((l,i)=>{let role="main";if(L.length>=2&&i===0&&l.d<=500)role="echauf";else if(L.length>=3&&i===L.length-1&&l.d<=400)role="calme";else if(l.w===false)role="recup";return Object.assign({},l,{role})})}
+function swimMainOf(a){
+  const sf=SWIMFIX[a.id];let laps=sf&&sf.laps?swimRoles(sf.laps):null;
+  if(laps&&laps.length){const m=laps.filter(l=>l.role==="main");if(m.length){const d=m.reduce((t,l)=>t+l.d,0),t=m.reduce((u,l)=>u+l.t,0),hr=m.filter(l=>l.hr).reduce((u,l)=>u+l.hr*l.t,0)/Math.max(1,m.filter(l=>l.hr).reduce((u,l)=>u+l.t,0));return {d,t,p:t/(d/100),hr:hr||null,laps,src:"tours"}}}
+  if(!a.distance)return null;const t=swimTime(a);return {d:a.distance,t,p:t/(a.distance/100),hr:a.average_heartrate||null,laps:null,src:"séance"}}
+function swimKind(a){const ps=plannedFor(a.date,"nat",a);if(ps&&ps.p&&ps.p.var)return String(ps.p.var);
+  const t=((a.name||"")+" "+(a.description||"")).toLowerCase();
+  return /non stop|continu|z2 non|endurance/.test(t)?"3":/seuil|soutenu|×100|x100|sprint/.test(t)?"4":/×|x\d/.test(t)?"2":/éduc|educ|technique/.test(t)?"1":null}
 function swimAna(a){
-  const ps=plannedFor(a.date,"nat");const sf=SWIMFIX[a.id];
-  let out=null;
-  if(ps){const feel=ps.p.light?"facile":({"1":"facile","2":"modere","3":"facile","4":"soutenu"})[ps.p.var]||"modere";
-    const r=IronAnalyze.analyzeSwim({m:ps.p.m,feel},{distance:a.distance,moving_time:a.moving_time,hr:a.average_heartrate,description:a.description},{fcmax:INP.fcmax,fcrest:INP.fcrest});
-    out={title:ps.title,comment:r.comment,verdict:r.verdict,sum:r.sum,sport:"nat",date:a.date}}
-  else out=Object.assign(freeAnalysis(a)||{},{sport:"nat",date:a.date});
-  if(sf&&sf.laps){const w=sf.laps.filter(l=>l.w&&l.d>0&&l.t>0);
-    if(w.length){const p=w.map(l=>l.t/(l.d/100)),avg=w.reduce((t,l)=>t+l.t,0)/(w.reduce((t,l)=>t+l.d,0)/100);
-      out.reps=w.map(l=>[l.t,l.d/l.t,l.hr||0,l.d]);out.crep=1;
-      out.comment=`${({up:"Excellente",ok:"Bonne",warn:"Moyenne"})[out.verdict]||"Bonne"} · ${Math.round(a.distance)} m (montre : ${Math.round(sf.watch||a.watchDist||0)} m) · blocs à ${p.map(toMMSS).join(", ")}/100 m, moyenne ${toMMSS(avg)}.`+(out.verdict==="warn"&&out.comment?" "+out.comment.split(". ").slice(-1)[0]:"")}}
-  return out;
+  const ps=plannedFor(a.date,"nat",a),css=mmss(INP.css||"1:55"),R=INP.fcmax-INP.fcrest;
+  const kind=swimKind(a),feel=ps?(ps.p.light?"facile":({"1":"facile","2":"modere","3":"facile","4":"soutenu"})[ps.p.var]||"modere"):null;
+  const v=ps?((PLAN.swim||{})[ps.p.var]||null):null,parts=v&&ps.p.m?swimParts(v[1],ps.p.m):null,planMain=parts?parts.find(x=>x.main):null;
+  const M=swimMainOf(a);if(!M)return Object.assign(freeAnalysis(a)||{},{sport:"nat",date:a.date});
+  const tot=Math.round(a.distance||0),pctD=ps&&ps.p.m?tot/ps.p.m*100:100;
+  const zoneOf=hr=>!hr?null:(hr-INP.fcrest)/R<.55?"facile":(hr-INP.fcrest)/R<.68?"modéré":"soutenu",zone=zoneOf(M.hr);
+  // séances comparables : même séance du programme, sinon même type (continu, fractionné…)
+  const prev=withHist(LIVE&&LIVE.acts||[]).filter(x=>x.sp==="nat"&&!x.ow&&x.date<a.date&&x.id!==a.id&&x.distance>800).filter(x=>{const k=swimKind(x);return kind&&k===kind}).sort((x,y)=>x.date<y.date?1:-1).slice(0,3);
+  const pv=prev.map(x=>({x,m:swimMainOf(x)})).filter(o=>o.m&&o.m.p>80&&o.m.p<200);
+  const ref=pv.length?pv.reduce((t,o)=>t+o.m.p,0)/pv.length:null,refHr=pv.filter(o=>o.m.hr).length?pv.filter(o=>o.m.hr).reduce((t,o)=>t+o.m.hr,0)/pv.filter(o=>o.m.hr).length:null;
+  const dRef=ref?M.p-ref:null;
+  // note
+  const warn=[];
+  if(ps&&pctD<85)warn.push(`volume à ${Math.round(pctD)} % du prévu`);
+  if(feel==="facile"&&zone==="soutenu")warn.push("plus intense que prévu");
+  if(feel==="soutenu"&&(zone==="facile"||M.p>css+8))warn.push("moins soutenu que prévu");
+  const onTarget=feel==="soutenu"?M.p<=css+2:feel==="modere"?M.p<=css+4:true;
+  const progress=dRef!=null&&dRef<=-3&&(!refHr||!M.hr||M.hr<=refHr+3);
+  const verdict=warn.length?"warn":(pctD>=95||!ps)&&(progress||(feel!=="facile"&&onTarget&&M.p<=css))?"up":"ok";
+  const G={up:"Excellente",ok:"Bonne",warn:"Moyenne"}[verdict];
+  // commentaire
+  const lab={echauf:"échauffement",main:"bloc principal",calme:"retour au calme",recup:"récup"};
+  const bits=[`${G} · ${tot.toLocaleString("fr-FR")} m${ps&&ps.p.m?` pour ${Number(ps.p.m).toLocaleString("fr-FR")} prévus`:""}`];
+  if(M.laps){const mains=M.laps.filter(l=>l.role==="main");bits.push(`bloc principal ${mains.length>1?mains.length+" × "+Math.round(M.d/mains.length)+" m":M.d.toLocaleString("fr-FR")+" m"+(mains.length===1?" d'une traite":"")} à ${toMMSS(M.p)}/100 m${M.hr?`, FC ${Math.round(M.hr)} (${zone})`:""}`);
+    if(mains.length>1){const ps2=mains.map(l=>l.t/(l.d/100));bits.push(`blocs ${ps2.map(toMMSS).join(", ")}${ps2[ps2.length-1]<ps2[0]-1?" (en accélérant)":ps2[ps2.length-1]>ps2[0]+2?" (en ralentissant)":" (réguliers)"}`)}}
+  else bits.push(`${toMMSS(M.p)}/100 m sur la séance${M.hr?`, FC ${Math.round(M.hr)} (${zone})`:""}`);
+  if(planMain)bits.push(`prévu : ${planMain.t.replace(/,$/,"")}`);
+  bits.push(`seuil ${toMMSS(css)} : ${M.p<=css?"tu es au seuil ou mieux":`${Math.round(M.p-css)} s/100 m au-dessus, ${feel==="facile"?"normal pour une séance facile":feel==="soutenu"?"à rapprocher du seuil":"cohérent pour du modéré"}`}`);
+  const cmpWhole=pv.some(o=>o.m.src==="séance")&&M.src==="tours";
+  if(dRef!=null)bits.push(`vs ${pv.length>1?"tes "+pv.length+" dernières séances du même type":"ta séance du "+fdate(pv[0].x.date).replace(/\.$/,"")} : ${dRef<0?"−":"+"}${Math.abs(Math.round(dRef))} s/100 m${refHr&&M.hr?`, FC ${M.hr-refHr>=0?"+":"−"}${Math.abs(Math.round(M.hr-refHr))}`:""}${dRef<=-3?" : progrès":dRef>=4?" : plus lent (fatigue ? allure volontairement facile ?)":" : stable"}${cmpWhole?" (mesurées sur la séance entière)":""}`);
+  const concl=warn.length?`À surveiller : ${warn.join(", ")}.`:verdict==="up"?(progress?"Plus rapide que d'habitude pour le même effort.":"Bloc principal tenu au seuil."):`Conforme à la séance ${feel==="facile"?"facile":feel==="soutenu"?"soutenue":"modérée"} prévue.`;
+  const reps=M.laps?M.laps.filter(l=>l.role!=="recup").map(l=>[l.t,l.d/l.t,l.hr||0,l.d,l.role==="main"?(M.laps.filter(q=>q.role==="main").length>1?"Bloc":"Bloc principal"):lab[l.role].replace(/^./,c=>c.toUpperCase())]):null;
+  return {av:AV,title:ps?ps.title:"Natation",comment:bits.join(" · ")+". "+concl+(M.hr?" (FC au poignet dans l'eau : repère approximatif.)":""),verdict,sum:{dist:tot,sec100:M.p,pctD,zone,ref,dRef},sport:"nat",date:a.date,reps,crep:M.laps?1:0};
 }
 async function swimLaps(a){
   try{const d=await apiGetAbs("https://intervals.icu/api/v1/activity/"+encodeURIComponent(a.id)+"?intervals=true");
@@ -2610,7 +2645,9 @@ async function sessDetail(id){
         `<div class="dc"><div class="dl">Fréquence cardiaque<small>bpm</small></div>${lineSvg([hrS],{})}</div>`+
         (main?`<div class="dc"><div class="dl">${a.sp==="velo"?"Puissance":"Allure"}<small>${a.sp==="velo"?"W, lissée 30 s":"min/km, lissée 30 s"}${alt?" · relief en gris":""}</small></div>${lineSvg(alt?[alt,main]:[main],{axis:alt?1:0})}</div>`:alt?`<div class="dc"><div class="dl">Relief</div>${lineSvg([alt],{})}</div>`:"")}
     else body=`<div class="dc"><div class="muted" style="font-size:13px">Chargement du tracé et des courbes…</div></div>`;
-    el.innerHTML=head+body+deb+cmp};
+    let swim="";if(a.sp==="nat"){const sf=SWIMFIX[a.id],L=sf&&sf.laps?swimRoles(sf.laps):null,lab={echauf:"Échauffement",main:"Bloc",calme:"Retour au calme",recup:"Récup"};
+      swim=`<div class="dc"><div class="dl">Tours${L?"<small>corrigés par toi</small>":"<small>pas encore corrigés</small>"}</div>${L?`<table class="rt"><tr><th></th><th>Distance</th><th>Temps</th><th>/100 m</th><th>FC</th></tr>${L.map(l=>`<tr><td>${lab[l.role]}</td><td>${l.d} m</td><td>${toMMSS(l.t)}</td><td><b>${toMMSS(l.t/(l.d/100))}</b></td><td>${l.hr||"—"}</td></tr>`).join("")}</table>`:`<div class="muted" style="font-size:13px">La montre se trompe souvent en piscine : corrige les tours pour un débrief juste.</div>`}<button class="btn" style="margin-top:8px" data-act="swimfix" data-v="${a.id}">🏊 ${L?"Modifier":"Corriger"} les tours</button></div>`}
+    el.innerHTML=head+(a.sp==="nat"?swim:body)+deb+cmp};
   paint(SESS_ST[id]);el.classList.add("show");el.scrollTop=0;document.body.style.overflow="hidden";
   if(!SESS_ST[id]&&CFG.key&&!/^s|^x/.test(String(a.id))){try{SESS_ST[id]=await actStreams(a,"time,heartrate,watts,velocity_smooth,altitude,latlng")}catch(e){SESS_ST[id]={err:"Courbes indisponibles (hors ligne ou Intervals.icu injoignable)."}}
     if(el.classList.contains("show"))paint(SESS_ST[id])}
