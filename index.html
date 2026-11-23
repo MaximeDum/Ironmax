@@ -1297,7 +1297,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.06"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.07"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -2315,6 +2315,14 @@ function hrExpect(x){if(!x||!x.reps||!["velo","course"].includes(x.sport))return
 // « Incroyable » : séance déjà Excellente ET chaque bloc de travail ≥ 3 bpm sous l'attendu, moyenne ≥ 5 bpm sous l'attendu
 function isIncredible(x,grade){if(grade!=="Excellente")return false;const e=hrExpect(x);if(!e)return false;const w=e.filter(r=>!r.z2);if(!w.length)return false;
   return w.every(r=>r.d<=-3)&&w.reduce((t,r)=>t+r.d,0)/w.length<=-5}
+/* Dérive « marquée » jugée contre la FC attendue : sur 4 blocs ou plus, la FC monte naturellement d'un bloc à l'autre.
+   Si chaque bloc reste sous (ou à) la FC que ton modèle prévoit, ce n'est pas un signal d'alerte. */
+function hrAdjust(x){if(!x||x.verdict!=="warn"||!x.comment||x.grade)return x;
+  const m=/À surveiller : ([^.]*)\./.exec(x.comment);if(!m||m[1].trim()!=="dérive cardiaque marquée")return x;
+  const e=hrExpect(x);if(!e)return x;const w=e.filter(r=>!r.z2);if(!w.length||w.some(r=>r.d>2))return x;
+  const avg=w.reduce((t,r)=>t+r.d,0)/w.length,top=avg<=-3&&w.every(r=>r.d<=0.5);
+  const c=x.comment.replace("dérive marquée","montée normale d'un bloc à l'autre").replace(m[0],top?`FC sous la FC attendue à chaque bloc (${String(Math.round(avg)).replace("-","−")} bpm en moyenne) : la dérive est celle prévue par ton modèle, pas de la fatigue. Très bonne séance.`:`FC dans la FC attendue à chaque bloc : la dérive est normale sur cette durée. Séance maîtrisée.`);
+  return Object.assign({},x,{comment:c,verdict:top?"up":"ok"})}
 function gradeOf(x){const g=x.grade||(x.verdict==="just"?"Justifiée":x.verdict==="warn"?"Moyenne":x.verdict==="up"?"Excellente":"Bonne");return isIncredible(x,g)?"Incroyable":g}
 function repTable(x){if(x.reps)x=Object.assign({},x,{reps:x.reps.filter(r=>r&&r[0]>0&&r[1]>0)});if(!x.reps||!x.reps.length)return"";const nat=x.sport==="nat",bike=x.sport==="velo",rc=!nat&&x.recs&&x.recs.length;
   const E0=hrExpect(x),okRows=x.reps.filter(r=>r[2]>60&&r[1]>0),E=E0&&E0.length===okRows.length?E0:null;let ei=0;
@@ -2327,7 +2335,7 @@ function doneOn(date,sport){
   const out=[];
   ((DATA&&DATA.sessions)||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push(s)});
   if(!out.length&&DATA&&DATA.base&&date<=DATA.base.asof)(DATA.base.done||[]).forEach(s=>{if(s.date===date&&s.sport===sport)out.push({date,sport,title:s.title,comment:""})});
-  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{if(claudeOf(date,sport)){const fl=feelLabel(a.id);out.push(withClaude({date,sport,title:a.name,metrics:autoComment(a),comment:"",verdict:JUSTIFY.has(feelOf(a.id))?"just":null,feel:fl}));return}const an=ANA[a.id],fl=feelLabel(a.id);out.push({date,sport,title:a.name,metrics:autoComment(a),comment:(an?an.comment:(a.note||""))+(fl?" · Ressenti : "+fl:""),verdict:JUSTIFY.has(feelOf(a.id))?"ok":an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs,crep:an&&an.crep})});
+  if(!out.length&&LIVE&&LIVE.acts)LIVE.acts.filter(a=>a.date===date&&a.sp===sport).forEach(a=>{if(claudeOf(date,sport)){const fl=feelLabel(a.id);out.push(withClaude({date,sport,title:a.name,metrics:autoComment(a),comment:"",verdict:JUSTIFY.has(feelOf(a.id))?"just":null,feel:fl}));return}const an=ANA[a.id],fl=feelLabel(a.id);out.push(hrAdjust({date,sport,title:a.name,metrics:autoComment(a),comment:(an?an.comment:(a.note||""))+(fl?" · Ressenti : "+fl:""),verdict:JUSTIFY.has(feelOf(a.id))?"ok":an&&an.verdict,reps:an&&an.reps,recs:an&&an.recs,crep:an&&an.crep}))});
   return out;
 }
 /* Allure natation fiable : blocs corrigés (toi) > blocs de l'analyse de Claude > séance entière (pauses comprises, donc trop lente) */
@@ -2682,7 +2690,7 @@ function debriefHtml(a,x,ps,an,sim){
 
 async function sessDetail(id){
   const a=(LIVE&&LIVE.acts||[]).find(x=>x.id===id);if(!a)return;
-  const an=ANA[a.id],x=withClaude({id:a.id,date:a.date,sport:a.sp,out:outdoorRide(a),bike:BIKE[a.id]||null,reps:an&&an.reps,recs:an&&an.recs,crep:an&&an.crep,title:a.name,comment:an?an.comment:"",verdict:isJustified(a)?"just":an&&an.verdict,feel:feelLabel(a.id)});
+  const an=ANA[a.id],x=hrAdjust(withClaude({id:a.id,date:a.date,sport:a.sp,out:outdoorRide(a),bike:BIKE[a.id]||null,reps:an&&an.reps,recs:an&&an.recs,crep:an&&an.crep,title:a.name,comment:an?an.comment:"",verdict:isJustified(a)?"just":an&&an.verdict,feel:feelLabel(a.id)}));
   const g=x.verdict?gradeOf(x):null,ps=plannedFor(a.date,a.sp,a);
   const st=(k,v)=>v?`<div><small>${k}</small><b>${v}</b></div>`:"";
   const stats=`<div class="vg" style="grid-template-columns:repeat(3,1fr);margin-top:10px">${st("Durée",hm((a.moving_time||0)/60))}${st("Distance",a.distance?(a.sp==="nat"?Math.round(a.distance)+" m":frn((a.distance/1000).toFixed(1))+" km"):"")}${st(a.sp==="velo"?"Puissance (NP)":"Allure",intensTxt(a))}${st("FC moy. / max",a.average_heartrate?Math.round(a.average_heartrate)+" / "+(a.max_heartrate||"—"):"")}${st("Dénivelé",a.total_elevation_gain?Math.round(a.total_elevation_gain)+" m":"")}${st("Charge",a.icu_training_load?Math.round(a.icu_training_load):"")}</div>`;
