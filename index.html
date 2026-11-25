@@ -668,7 +668,7 @@ function genSession(){
 function render(){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===UI.tab));
   const app=$("#app");
-  const head=`<header class="top"><div><div class="brand">Ironmax<i>.</i></div><div class="sub">${UI.tab==="dash"||UI.tab==="programme"?"Cap sur l'Ironman · J-"+daysTo("2027-06-27"):"Mobilité pour triathlète"}</div></div>${CFG.key?`<button class="sync on" data-act="refresh" aria-label="Actualiser"><span style="font-size:14px;line-height:1${REFRESH.busy?";display:inline-block;animation:spin 1s linear infinite":""}">⟳</span>${REFRESH.busy?"Actualisation…":(()=>{const r=lsGet(LSK.raw,null);if(!r||!r.at)return "Actualiser";const d=new Date(r.at),td=dkey(d)===today();return (td?"":d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+" ")+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})})()}</button>`:`<div class="sync"><b></b>Local</div>`}</header>`;
+  const head=`<header class="top"><div><div class="brand">Ironmax<i>.</i></div><div class="sub">${UI.tab==="dash"||UI.tab==="programme"?"Cap sur l'Ironman · J-"+daysTo("2027-06-27"):"Mobilité pour triathlète"}</div></div>${CFG.key?`<button class="sync on" data-act="refresh" aria-label="Actualiser"><span style="font-size:14px;line-height:1${REFRESH.busy?";display:inline-block;animation:spin 1s linear infinite":""}">⟳</span>${REFRESH.busy?"Actualisation…":(()=>{const r=lsGet(LSK.raw,null);if(!r||!r.at)return "Actualiser";const d=new Date(r.at),td=dkey(d)===today();return (td?"":d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+" ")+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})})()}</button>`:`<div class="sync"><b></b>Local</div>`}${(()=>{const n=(LIVE&&LIVE.adjust||[]).length;return n?`<button class="sync" data-act="notif" aria-label="Propositions" style="margin-left:6px;position:relative;border-color:var(--acc)">🔔<b style="position:absolute;top:-5px;right:-5px;background:var(--acc);color:#fff;border-radius:9px;font-size:10px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px">${n}</b></button>`:""})()}</header>${UI.notif&&(LIVE&&LIVE.adjust||[]).length?`<div style="padding:0 14px">${adjCards()}</div>`:""}`;
   let body="";
   if(UI.tab==="dash")body=vDash();
   else if(UI.tab==="programme")body=vProgramme();
@@ -909,6 +909,7 @@ document.addEventListener("click",ev=>{
   switch(a){
     case"cat":UI.cat=b.dataset.id;UI.vr=0;render();break;
     case"refresh":refreshData();break;
+    case"notif":UI.notif=!UI.notif;render();break;
     case"bw":UI.bw=v;render();break;
     case"gobilan":UI.tab="suivi";UI.bw=new Date().getDay()===1?"prev":"cur";render();window.scrollTo(0,0);break;
     case"rdy":RDY[v]=!RDY[v];if(!RDY[v])delete RDY[v];lsSet("ironmax.ready",RDY);render();break;
@@ -1263,7 +1264,7 @@ function vDash(){
   const D=LIVE||DATA,f=D.fatigue,C=D.cap,P=D.physio;
   const top=`<div class="row" style="align-items:center;margin-bottom:4px"><button class="go" style="margin:0;flex:1;padding:10px;background:var(--card2);color:var(--txt);border:1px solid var(--line);font-size:15px;font-weight:700" data-act="refresh">${REFRESH.busy?"Actualisation…":"⟳ Actualiser"}</button></div>
   <div class="hint" style="text-align:center">${REFRESH.err?'<span style="color:var(--acc)">'+esc(REFRESH.err)+'</span>':LIVE?esc(LIVE.source):(CFG.key?"Touche Actualiser pour charger tes séances":"Données figées du 11 nov. · connecte Intervals.icu dans Réglages")}</div>`;
-  const adj=(LIVE&&LIVE.adjust||[]).map(a=>`<div class="dc" style="border:1px solid var(--line)"><div class="dl" style="color:var(--txt)">↕ ${esc(a.t)}<small>${esc(a.x)}</small></div><div style="margin-top:8px;font-weight:600">${esc(a.p)}</div><div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="adjapply" data-v="${a.id}">Appliquer</button><button class="btn" style="flex:1" data-act="adjdismiss" data-v="${a.id}">Ignorer</button></div></div>`).join("");
+  const adj="";
   const fz=f.v<20?"Faible":f.v<35?"Modérée":f.v<55?"Normale en charge":f.v<75?"Élevée":"Très élevée";
   const msgs=(REFRESH.err?[["alert",REFRESH.err]]:[]).concat(CFG.key?[]:[["info","Connecte Intervals.icu dans Réglages pour charger tes séances."]]).concat(rules(D)).map(m=>`<div class="hm ${m[0]}"><i></i><div>${esc(m[1])}</div></div>`).join("");
   const bars=D.note.disc.map(d=>`<div class="bar"><div class="h"><span>${d.n}</span><b>${frn(d.v)}<small class="muted" style="font-size:12px">/20</small></b></div><div class="trk"><i style="width:${d.v*5}%;background:${DC[d.k]}"></i></div><div class="f">Plan ${frn(d.plan)} · efficacité ${frn(d.eff)} · trajectoire ${frn(d.traj)}<br>${esc(d.txt)}</div></div>`).join("");
@@ -1297,7 +1298,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.11"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.12"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -2158,13 +2159,15 @@ function adjustments(acts,eftp){
   if(q.length>=2){const easy=q.filter(a=>hrPct(a)<=.6&&(a.decoupling==null||a.decoupling<=3)).length,hard=q.filter(a=>hrPct(a)>=.78||(a.decoupling!=null&&a.decoupling>=8)).length;
     if(easy>=2)out.push({id:"ss+",k:"ss",d:+5,u:"W",t:"Sweet spot / tempo trop faciles",x:`${easy} séances sur ${q.length} à FC basse (< ${Math.round(INP.fcrest+.6*R)} bpm) sans dérive`,p:"+5 W sur sweet spot, tempo et endurance de force"});
     else if(hard>=2)out.push({id:"ss-",k:"ss",d:-5,u:"W",t:"Sweet spot / tempo trop durs",x:`${hard} séances sur ${q.length} à FC haute ou dérive ≥ 8 %`,p:"−5 W sur sweet spot, tempo et endurance de force"})}
-  const z=recent.filter(a=>a.sp==="velo"&&W(a)&&W(a)/INP.ftp<.75&&a.moving_time>=3600&&a.decoupling!=null).slice(0,3);
-  if(z.length>=2){if(z.filter(a=>a.decoupling<3).length>=2)out.push({id:"z2+",k:"long",d:+5,u:"W",t:"Endurance vélo très stable",x:"Dérive cardiaque < 3 % sur les dernières sorties longues",p:"+5 W sur les blocs de sortie longue"});
+  const z=recent.filter(a=>a.sp==="velo"&&W(a)&&W(a)/INP.ftp<.75&&a.moving_time>=7200&&a.decoupling!=null).slice(0,3);
+  if(z.length>=2){if(z.length>=3&&z.filter(a=>a.decoupling<3).length>=3)out.push({id:"z2+",k:"long",d:+5,u:"W",t:"Endurance vélo très stable",x:"Dérive cardiaque < 3 % sur tes 3 dernières sorties de 2 h et plus",p:"+5 W sur les blocs de sortie longue"});
     else if(z.filter(a=>a.decoupling>8).length>=2)out.push({id:"z2-",k:"long",d:-5,u:"W",t:"Dérive cardiaque en endurance",x:"Dérive > 8 % sur 2 sorties : chaleur, hydratation ou fatigue",p:"−5 W sur les blocs de sortie longue"})}
-  const r=recent.filter(a=>a.sp==="course"&&((ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length)||(a.distance>3000&&(a.distance/a.moving_time*3.6)>=.76*INP.vma))).slice(0,3).map(anaHR);
-  if(r.length>=2){const easy=r.filter(a=>hrPct(a)<=.74).length,hard=r.filter(a=>hrPct(a)>=.87).length;
-    if(easy>=2)out.push({id:"seuil+",k:"seuil",d:+.01,u:"%VMA",t:"Allures seuil faciles",x:`FC moyenne ≤ ${Math.round(INP.fcrest+.74*R)} bpm sur ${easy} séances`,p:"Seuil +1 % de VMA (≈ −4 s/km)"});
-    else if(hard>=2)out.push({id:"seuil-",k:"seuil",d:-.01,u:"%VMA",t:"Allures seuil dures",x:`FC moyenne ≥ ${Math.round(INP.fcrest+.87*R)} bpm sur ${hard} séances`,p:"Seuil −1 % de VMA (≈ +4 s/km)"})}
+  // Seuil course — règle de Maxime : on monte l'allure quand les 2 dernières séances de seuil sont validées
+  // (tous les blocs complets à l'allure cible, FC cohérente : pas de dérive marquée, pas au-dessus de la FC attendue).
+  const sq=acts.filter(a=>a.sp==="course"&&ANA[a.id]&&ANA[a.id].reps&&ANA[a.id].reps.length>=2&&/seuil/i.test(ANA[a.id].title||"")&&!isJustified(a)).sort((a,b)=>a.date<b.date?1:-1).slice(0,2);
+  const okS=a=>{const an=ANA[a.id],S=an.sum||{};if(!(S.n>=S.N&&!S.shortReps&&S.pct>=97&&(S.drift==null||S.drift<=5)))return false;
+    let e=null;try{e=hrExpect({date:a.date,sport:"course",reps:an.reps})}catch(x){}if(e){const w=e.filter(q=>!q.z2);if(w.length&&w.reduce((t,q)=>t+q.d,0)/w.length>2)return false}return true};
+  if(sq.length===2&&sq.every(okS))out.push({id:"seuil+",k:"seuil",d:+.01,u:"%VMA",t:"Seuil course validé 2 fois de suite",x:`Tous les blocs à l'allure, FC cohérente (${sq.map(a=>fdate(a.date)).reverse().join(" et ")})`,p:"Allure seuil −4 s/km environ (+1 % de VMA)"});
   if(eftp&&eftp>=INP.ftp*1.03)out.push({id:"ftp",k:"ftp",d:Math.round(eftp),u:"FTP",t:"FTP estimée en hausse",x:`eFTP Intervals.icu à ${Math.round(eftp)} W sur 30 jours (FTP actuelle ${INP.ftp} W)`,p:`Passer la FTP à ${Math.round(eftp)} W (ou attendre le prochain test)`});
   const dis=lsGet(LSK.adj+".dismiss",{});
   return out.filter(o=>!dis[o.id+":"+dkey(new Date()).slice(0,7)]);
@@ -2175,6 +2178,7 @@ function applyAdj(id){
   else{const key=o.k==="ss"?["ss","tempo","ef"]:[o.k];key.forEach(k=>ADJ[k]=+((ADJ[k]||0)+o.d).toFixed(3));lsSet(LSK.adj,ADJ)}
   dismissAdj(id);toast("Ajustement appliqué au programme");
 }
+function adjCards(){return (LIVE&&LIVE.adjust||[]).map(a=>`<div class="dc" style="border:1px solid var(--acc);margin-top:8px"><div class="dl" style="color:var(--txt)">↕ ${esc(a.t)}<small>${esc(a.x)}</small></div><div style="margin-top:8px;font-weight:600">${esc(a.p)}</div><div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="adjapply" data-v="${a.id}">Appliquer</button><button class="btn" style="flex:1" data-act="adjdismiss" data-v="${a.id}">Ignorer</button></div></div>`).join("")}
 function dismissAdj(id){const dis=lsGet(LSK.adj+".dismiss",{});dis[id+":"+dkey(new Date()).slice(0,7)]=1;lsSet(LSK.adj+".dismiss",dis);if(LIVE){LIVE.adjust=LIVE.adjust.filter(a=>a.id!==id);lsSet(LSK.live,LIVE)}render()}
 function setInput(k,v,why){const old=INP[k];if(String(old)===String(v))return;INP[k]=v;lsSet(LSK.inp,INP);INH.unshift({d:today(),k,old,v,why:why||"saisie"});INH=INH.slice(0,40);lsSet(LSK.inp+".hist",INH);if(lsGet(LSK.raw,null))recompute()}
 
