@@ -104,6 +104,15 @@
         .forEach(l => { if (reps.length < plan.n && !reps.some(r => ov(r, l) > (l[1] - l[0]) * 0.3)) { reps.push([l[0], l[1]]); } });
       reps.sort((x, y) => x[0] - y[0]);
     }
+    // tours de la montre qui correspondent au format prévu : ils priment sur un bloc détecté plus court (allure qui chute
+    // dans un virage, à un feu…) — le tour appuyé par l'athlète dit où le bloc commence et finit vraiment
+    if (st.laps && st.laps.length && reps.length) {
+      const ov = (x, y) => Math.max(0, Math.min(x[1], y[1]) - Math.max(x[0], y[0]));
+      const okL = st.laps.filter(l => { const d = l[1] - l[0]; return d >= plan.repSec * 0.7 && d <= plan.repSec * 1.3; });
+      reps = reps.map(r => { const l = okL.find(q => ov(q, r) >= (r[1] - r[0]) * 0.6 && q[1] - q[0] > r[1] - r[0] + 15);
+        if (!l) return r; const vr = mean(val.slice(r[0], r[1])), vl = mean(val.slice(l[0], l[1]));
+        return vl >= vr * 0.9 ? [l[0], l[1]] : r; });
+    }
     reps.forEach((s, i) => {
       const seg = val.slice(s[0], s[1]), h = hr.slice(s[0] + 60, s[1]).filter(x => x > 30);   // FC hors 1re minute (temps de réponse)
       // vélo en extérieur : puissance normalisée (moyenne glissante 30 s à la puissance 4), qui compte l'effort réel malgré les descentes en roue libre
@@ -140,7 +149,14 @@
     const bits = [], warn = [];
     if (!n) { res.verdict = "warn"; res.comment = "Aucune répétition détectée à l'intensité prévue : séance faite plus facile, ou capteur absent."; return res; }
     if (n < plan.n) warn.push(`${n}/${plan.n} répétitions`);
-    if (shortReps) warn.push(`${shortReps} répétition${shortReps > 1 ? "s" : ""} écourtée${shortReps > 1 ? "s" : ""}`);
+    // un seul bloc un peu court (≥ 75 %) avec ≥ 90 % du travail prévu fait : noté, mais pas pénalisé
+    const workPct = res.reps.reduce((t, x) => t + Math.min(x.dur, plan.repSec), 0) / (plan.n * plan.repSec) * 100, sr = res.reps.filter(x => x.dur < plan.repSec * 0.9);
+    const note = [];
+    if (shortReps === 1 && sr[0].dur >= plan.repSec * 0.75 && workPct >= 90) note.push(`bloc ${sr[0].i} : ${fmtT(sr[0].dur)} au lieu de ${fmtT(plan.repSec)} (${Math.round(workPct)} % du travail fait)`);
+    else if (shortReps) warn.push(`${shortReps} répétition${shortReps > 1 ? "s" : ""} écourtée${shortReps > 1 ? "s" : ""}`);
+    // dernier bloc qui ralentit nettement par rapport aux autres
+    if (n >= 3) { const prev = mean(res.reps.slice(0, -1).map(x => x.v)), f = (1 - last.v / prev) * 100;
+      if (f >= 4) warn.push(`dernier bloc nettement plus lent (${fmtV(last.v)})`); else if (f >= 2) note.push(`dernier bloc un peu plus lent (${fmtV(last.v)} contre ${fmtV(prev)})`); }
     const cible = pct >= 97 && pct <= 103 ? "cible tenue" : pct > 103 ? `+${Math.round(pct - 100)} % au-dessus de la cible` : `${Math.round(100 - pct)} % sous la cible`;
     if (pct < 97) warn.push("intensité sous la cible");
     bits.push(`${n}/${plan.n} × ${fmtT(plan.repSec)} à ${fmtV(mean(res.reps.map(x => x.v)))} (${cible})`);
@@ -155,11 +171,12 @@
       if (hard && drop < 20) warn.push("récupération cardiaque lente");
       res.sum.hard = hard;
     }
-    const margin = pct > 103 || (drift < 2 && (!res.sum.hard || drop >= 30));
+    const margin = !note.length && (pct > 103 || (drift < 2 && (!res.sum.hard || drop >= 30)));
     // exécution parfaite : toutes les répétitions, cible tenue à ±3 %, FC qui monte peu d'un bloc à l'autre, récup correcte
-    const perfect = n >= plan.n && pct >= 97 && pct <= 103 && drift <= 5 && (!res.recs.length || drop >= 18);
+    const perfect = !note.length && n >= plan.n && pct >= 97 && pct <= 103 && drift <= 5 && (!res.recs.length || drop >= 18);
     res.verdict = warn.length ? "warn" : (margin || perfect) ? "up" : "ok";
     const concl = warn.length ? `À surveiller : ${warn.join(", ")}.` : margin ? "Séance maîtrisée avec de la marge : la cible pourra monter si ça se confirme." : perfect ? "Séance exécutée parfaitement : cible tenue, FC sous contrôle." : "Séance maîtrisée.";
+    if (note.length) bits.push(note.join(" · "));
     res.comment = bits.join(" · ") + ". " + concl + (res.gps ? " ⚠ " + res.gps.join(" ; ") + "." : "");
     return res;
   }
