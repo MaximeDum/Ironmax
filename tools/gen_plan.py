@@ -11,7 +11,16 @@ TPL={
 "Spécifique":[("nat","nat","nat","Natation",0,"matin"),("ss","ss","velo","Sweet spot (rappel)",0,"soir"),("mA","muscuA","muscu","Muscu A (entretien)",1,"matin"),("im","im","velo","Allure Ironman",1,"soir"),("seuil","seuil","course","Seuil course",2,"soir"),("mB","muscuB","muscu","Muscu B (entretien)",3,"matin"),("ow","ow","nat","Eau libre / combinaison",3,"midi"),("z2run","z2run","course","Footing Z2",4,"soir"),("long","sim","velo","Simulation de course",5,"matin"),("lrun","longrun","course","Sortie longue course",6,"matin")],
 "Affûtage":[("nat","nat","nat","Natation",0,"matin"),("mA","muscuA","muscu","Muscu légère",1,"matin"),("im","im","velo","Rappels allure IM",1,"soir"),("mp","marathon","course","Rappels allure marathon",2,"soir"),("ow","ow","nat","Eau libre",3,"midi"),("long","long","velo","Sortie vélo",5,"matin"),("lrun","longrun","course","Footing",6,"matin")],
 }
-def S(id,min,l=None,**p): return dict(id=id,min=min,l=l,p=p)
+import re as _re
+SVON=[False]
+def SV(sets):
+    # allure seuil tirée du seuil réel (≈ 0,81 VMA) ; blocs courts un peu plus vite. La progression vient de la règle
+    # « 2 séances validées → −4 s/km » et du retest VMA, pas du programme.
+    m=_re.search(r"(\d+)\s*['’]",str(sets).split("×")[-1]);r=int(m.group(1)) if m else 12
+    return .83 if r<=8 else .82 if r<=12 else .81
+def S(id,min,l=None,**p):
+    if SVON[0] and id=="seuil" and p.get("sets") and "v" in p: p["v"]=SV(p["sets"])
+    return dict(id=id,min=min,l=l,p=p)
 VO2=lambda sets:{"cond":"ftpTestBelow","k":"vo2","l":"VO2max (FTP < 265 W au test)","p":{"sets":sets,"w":1.12,"rec":"4'"}}
 NAT=lambda var,m,light=0: S("nat",{1:40,2:50,3:50,4:45}[var] if not light else 35,None,var=var,m=m,light=light)
 W={}
@@ -24,6 +33,7 @@ W[10]=[NAT(4,2800),S("ss",90,None,sets="3×20'",w=pw(235),rec="5'"),S("mA",60),S
 SD[11]=[NAT(1,1800,1),S("ss",60,None,sets="2×15'",w=pw(232),rec="5'"),S("mA",45,"Muscu A légère",light=1),S("tempo",60,"Z2 facile",w=pw(165)),S("seuil",45,None,sets="2×8'",v=.80,rec="2'"),S("mB",45,"Muscu B légère",light=1),S("ef",50,None,sets="2×12'",w=pw(205),rec="4'"),S("long",70,"Test FTP 20' (sam. 12 déc.)",test="FTP"),S("lrun",60,"Footing 1h",v=.64)]
 W[7]=[x if x["id"]!="seuil" else S("seuil",35,"Test VMA 6'",test="VMA") for x in W[8]]
 W[11]=[x if x["id"]!="long" else S("long",70,"Test FTP 20' (sam. 12 déc.)",test="FTP") for x in W[10]]
+SVON[0]=True
 # --- Base 2 : monter la FTP (seuil varié), tempo et endurance de force en progression ---
 B2=[ # thr(sets,w,rec,vo2) tempo ef(sets,w) long(min,blocks,w) seuil(sets,v,rec) lrun(min,blk) nat
  dict(thr=("2×15'",.95,"5'","4×4'"),tempo="15'",ef=("3×15'",.81),long=(210,"2×30'",.82),seuil=("2×15'",.84,"3'"),lrun=(90,"15' tempo en fin de sortie"),nat=(1,2600)),
@@ -43,37 +53,37 @@ def base2(j,dl,n):
     return [NAT(*c["nat"]),S("thr",75 if t[1]<1 else 70,None,sets=t[0],w=t[1],rec=t[2],alt=VO2(t[3])),S("mA",60),S("tempo",75,None,tempo=c["tempo"],w=.82),S("seuil",60,None,sets=c["seuil"][0],v=c["seuil"][1],rec=c["seuil"][2]),S("mB",60),S("ef",75,None,sets=c["ef"][0],w=c["ef"][1],rec="4'",rpm="65–70"),S("long",c["long"][0],None,z2=.70,blocks=c["long"][1],w=c["long"][2]),S("lrun",c["lrun"][0],None,v=.66,blk=c["lrun"][1])]
 # --- Build : sweet spot en 2 vagues, allure IM qui s'allonge, enchaînements ---
 BU=[ # ss(sets,w,ou) im(sets,w,min) long(min,blocks,brick) seuil(sets,v) mp(sets,min) lrun(min,blk) nat,nat2
- dict(ss=("3×20'",.90,None),im=("2×30'",.78,105),long=(270,"2×45'","20'"),seuil=("3×10'",.86),mp=("3×10'",50),lrun=(105,"20' tempo en fin de sortie"),nat=(2,2800),nat2=(3,3000)),
- dict(ss=("3×25'",.90,None),im=("2×35'",.78,110),long=(285,"2×50'","25'"),seuil=("4×8'",.88),mp=("3×12'",55),lrun=(110,"3×8' allure marathon"),nat=(4,2800),nat2=(3,3000)),
- dict(ss=("2×40'",.88,None),im=("2×40'",.78,120),long=(300,"2×60'","30'"),seuil=("3×12'",.86),mp=("3×15'",60),lrun=(120,"3×10' allure marathon"),nat=(1,2800),nat2=(3,3200)),
- dict(ss=("4×15' en sur-sous (3' / 2')",None,(.95,.85)),im=("2×45'",.80,120),long=(300,"2×60'","30'"),seuil=("5×6'",.89),mp=("3×15'",60),lrun=(120,"25' tempo en fin de sortie"),nat=(2,3000),nat2=(3,3200)),
- dict(ss=("3×20'",.93,None),im=("3×30'",.80,125),long=(315,"2×70'","35'"),seuil=("3×12'",.87),mp=("2×25'",65),lrun=(125,"3×15' allure marathon"),nat=(4,3000),nat2=(3,3400)),
- dict(ss=("2×30'",.93,None),im=("2×50'",.80,130),long=(330,"2×75'","40'"),seuil=("3×15'",.86),mp=("2×30'",70),lrun=(135,"2×20' allure marathon"),nat=(2,3000),nat2=(3,3500)),
- dict(ss=("3×15'",.93,None),im=("2×40'",.80,115),long=(300,"2×60'","30'"),seuil=("4×8'",.88),mp=("3×15'",60),lrun=(120,"20' tempo en fin de sortie"),nat=(1,2800),nat2=(3,3200)),
+ dict(ss=("3×20'",.90,None),im=("2×30'",.75,105),long=(270,"2×45'","20'"),seuil=("3×10'",.86),mp=("3×10'",50),lrun=(105,"20' tempo en fin de sortie"),nat=(2,2800),nat2=(3,3000)),
+ dict(ss=("3×25'",.90,None),im=("2×35'",.75,110),long=(285,"2×50'","25'"),seuil=("4×8'",.88),mp=("3×12'",55),lrun=(110,"3×8' allure marathon"),nat=(4,2800),nat2=(3,3000)),
+ dict(ss=("2×40'",.88,None),im=("2×40'",.75,120),long=(300,"2×60'","30'"),seuil=("3×12'",.86),mp=("3×15'",60),lrun=(120,"3×10' allure marathon"),nat=(1,2800),nat2=(3,3200)),
+ dict(ss=("4×15' en sur-sous (3' / 2')",None,(.95,.85)),im=("2×45'",.75,120),long=(300,"2×60'","30'"),seuil=("5×6'",.89),mp=("3×15'",60),lrun=(120,"25' tempo en fin de sortie"),nat=(2,3000),nat2=(3,3200)),
+ dict(ss=("3×20'",.93,None),im=("3×30'",.75,125),long=(315,"2×70'","35'"),seuil=("3×12'",.87),mp=("2×25'",65),lrun=(125,"3×15' allure marathon"),nat=(4,3000),nat2=(3,3400)),
+ dict(ss=("2×30'",.93,None),im=("2×50'",.75,130),long=(330,"2×75'","40'"),seuil=("3×15'",.86),mp=("2×30'",70),lrun=(135,"2×20' allure marathon"),nat=(2,3000),nat2=(3,3500)),
+ dict(ss=("3×15'",.93,None),im=("2×40'",.75,115),long=(300,"2×60'","30'"),seuil=("4×8'",.88),mp=("3×15'",60),lrun=(120,"20' tempo en fin de sortie"),nat=(1,2800),nat2=(3,3200)),
 ]
 def build(j,dl,n):
     if dl: return build(min(j,6),False,n)
     if False: return [NAT(1,2200,1),S("ss",60,None,sets="2×15'",w=.88,rec="5'"),S("mA",40,"Muscu A légère",light=1),S("im",60,None,sets="2×15'",w=.78,rec="5'"),S("seuil",45,None,sets="2×8'",v=.86,rec="2'"),S("long",180,None,z2=.70),S("lrun",70,None,v=.66)]
     c=BU[j];ss=c["ss"]
     ssd=S("ss",90,None,sets=ss[0],w=ss[1],rec="5'") if not ss[2] else S("ss",90,None,sets=ss[0],ou=list(ss[2]),rec="5'")
-    return [NAT(*c["nat"]),ssd,S("mA",45),S("im",c["im"][2],None,sets=c["im"][0],w=c["im"][1],rec="5'"),S("seuil",60,None,sets=c["seuil"][0],v=c["seuil"][1],rec="2'"),S("mB",45),NAT(*c["nat2"]) | {"id":"nat2"},S("mp",c["mp"][1],None,sets=c["mp"][0],v=.66,rec="3'"),S("long",c["long"][0],None,z2=.72,blocks=c["long"][1],w=.78,brick=c["long"][2]),S("lrun",c["lrun"][0],None,v=.66,blk=c["lrun"][1])]
+    return [NAT(*c["nat"]),ssd,S("mA",45),S("im",c["im"][2],None,sets=c["im"][0],w=c["im"][1],rec="5'"),S("seuil",60,None,sets=c["seuil"][0],v=c["seuil"][1],rec="2'"),S("mB",45),NAT(*c["nat2"]) | {"id":"nat2"},S("mp",50,"Footing Z2 + lignes droites",easy=1),S("long",c["long"][0],None,z2=.70,blocks=c["long"][1],w=.75,brick=c["long"][2]),S("lrun",c["lrun"][0],None,v=.66,blk=c["lrun"][1])]
 # --- Spécifique : simulations, sweet spot en rappel décroissant ---
 SP=[ # ss(sets) im(sets,w,min) sim(min,blocks,brick) seuil lrun(min,blk) ow
- dict(ss="3×15'",im=("2×45'",.80,120),sim=(360,"4h30 allure IM","45'"),seuil="2×12'",lrun=(150,"60' allure IM"),ow=3000),
+ dict(ss="3×15'",im=("2×45'",.75,120),sim=(360,"4h allure IM","40'"),seuil="2×12'",lrun=(100,"20' allure IM"),ow=3000),
  None, # EVG
- dict(ss="2×15'",im=("2×40'",.80,110),sim=(390,"5h allure IM","60'"),seuil="3×8'",lrun=(160,"75' allure IM"),ow=3500),
- dict(ss="2×15'",im=("3×25'",.80,110),sim=(375,"4h45 allure IM","50'"),seuil="2×12'",lrun=(150,"60' allure IM"),ow=3800),
- dict(ss="2×12'",im=("2×30'",.80,95),sim=(330,"4h allure IM","40'"),seuil="2×10'",lrun=(135,"45' allure IM"),ow=3800),
- dict(ss="2×10'",im=("2×20'",.80,80),sim=(240,"3h allure IM","30'"),seuil="2×8'",lrun=(110,"30' allure IM"),ow=3000),
+ dict(ss="2×15'",im=("2×40'",.75,110),sim=(390,"5h allure IM","60'"),seuil="3×8'",lrun=(160,"75' allure IM"),ow=3500),
+ dict(ss="2×15'",im=("3×25'",.75,110),sim=(375,"4h45 allure IM","50'"),seuil="2×12'",lrun=(150,"60' allure IM"),ow=3800),
+ dict(ss="2×12'",im=("2×30'",.75,95),sim=(330,"3h30 allure IM","40'"),seuil="2×10'",lrun=(100,"20' allure IM"),ow=3800),
+ dict(ss="2×10'",im=("2×20'",.75,80),sim=(240,"2h30 allure IM","30'"),seuil="2×8'",lrun=(90,"20' allure IM"),ow=3000),
 ]
 def spec(j,dl,n):
     if dl: return spec(0,False,n)
     if False: return [NAT(1,2200,1),S("ss",60,None,sets="2×12'",w=.88,rec="5'"),S("im",75,None,sets="2×20'",w=.78,rec="5'"),S("seuil",45,None,sets="2×8'",v=.86,rec="2'"),S("long",150,None,z2=.70),S("lrun",75,None,v=.66)]
     c=SP[j]
-    return [NAT(4,3000),S("ss",70,None,sets=c["ss"],w=.91,rec="5'"),S("mA",45),S("im",c["im"][2],None,sets=c["im"][0],w=c["im"][1],rec="5'"),S("seuil",55,None,sets=c["seuil"],v=.86,rec="2'30"),S("mB",45),S("ow",60,None,m=c["ow"]),S("z2run",45,None,v=.66),S("long",c["sim"][0],"Simulation : vélo + course",z2=.72,blocks=c["sim"][1],w=.77,brick=c["sim"][2]),S("lrun",c["lrun"][0],None,v=.66,blk=c["lrun"][1])]
+    return [NAT(4,3000),S("ss",70,None,sets=c["ss"],w=.91,rec="5'"),S("mA",45),S("im",c["im"][2],None,sets=c["im"][0],w=c["im"][1],rec="5'"),S("seuil",55,None,sets=c["seuil"],v=.86,rec="2'30"),S("mB",45),S("ow",60,None,m=c["ow"]),S("z2run",45,None,v=.66),S("long",c["sim"][0],"Simulation : vélo + course",z2=.70,blocks=c["sim"][1],w=.75,brick=c["sim"][2]),S("lrun",c["lrun"][0],None,v=.66,blk=c["lrun"][1])]
 def taper(j,n):
-    if n==39: return [NAT(1,1500,1),S("im",50,None,sets="3×5'",w=.80,rec="3'"),S("mp",30,None,sets="3×4'",v=.66,rec="2'"),S("ow",25,"Eau libre · reconnaissance",m=1000),S("long",45,"Vélo 45' + check matériel",z2=.65),S("lrun",0,"IRONMAN · dim. 27 juin",race=1)]
-    return [NAT(4,2500),S("im",[80,60][j],None,sets=["3×10'","3×8'"][j],w=.80,rec="4'"),S("mA",[40,30][j],"Muscu légère",light=1),S("mp",[50,40][j],None,sets=["3×8'","2×8'"][j],v=.66,rec="2'"),S("ow",45,None,m=[2500,2000][j]),S("long",[180,120][j],None,z2=.70,blocks=["3×15'","2×15'"][j],w=.78),S("lrun",[75,60][j],None,v=.66,blk=["15' allure marathon","10' allure marathon"][j])]
+    if n==39: return [NAT(1,1500,1),S("im",50,None,sets="3×5'",w=.75,rec="3'"),S("mp",30,None,sets="3×4'",v=.66,rec="2'"),S("ow",25,"Eau libre · reconnaissance",m=1000),S("long",45,"Vélo 45' + check matériel",z2=.65),S("lrun",0,"IRONMAN · dim. 27 juin",race=1)]
+    return [NAT(4,2500),S("im",[95,60][j],None,sets=["3×15'","3×8'"][j],w=.75,rec="4'"),S("mA",[40,30][j],"Muscu légère",light=1),S("mp",[50,40][j],None,sets=["3×8'","2×8'"][j],v=.66,rec="2'"),S("ow",45,None,m=[2500,2000][j]),S("long",[240,135][j],None,z2=.70,blocks=["3×20'","2×15'"][j],w=.75,brick=["15'",None][j]),S("lrun",[90,60][j],None,v=.66,blk=["20' allure marathon","10' allure marathon"][j])]
 
 # --- Saison 2027 : tour du Léman (180 km) et triathlon M du 23 mai (course-entraînement) ---
 def _set(ss,i,**kw):
@@ -98,9 +108,9 @@ def ovr(n,ss):
         _set(ss,"lrun",min=60,l="Course 1h facile",v=.66)
     if n==33:  # sam. 15 mai : tour du Léman (180 km), la sortie clé, 6 semaines avant l'Ironman
         _set(ss,"long",min=400,l="Tour du Léman · 180 km",z2=.73,brick="30'",txt=LEMAN)
-        _set(ss,"lrun",min=110,l=None,v=.66)
+        _set(ss,"lrun",min=75,l="Footing facile (lendemain du Léman)",v=.66)
     if n==34:  # semaine du M : charge réduite en fin de semaine
-        _set(ss,"im",min=90,l=None,sets="2×20'",w=.80,rec="5'")
+        _set(ss,"im",min=90,l=None,sets="2×20'",w=.75,rec="5'")
         _set(ss,"seuil",min=45,l=None,sets="2×8'",v=.86,rec="2'")
         _set(ss,"long",min=60,l="Vélo 1h + activation (veille du M)",z2=.65,txt="Z2 facile avec 3×1' à allure de course M. Vérifie le vélo et prépare ton sac.")
         _set(ss,"lrun",min=150,l="Triathlon M · course-entraînement (dim. 23 mai)",txt="1,5 km · 40 km · 10 km. Natation régulière, vélo ≈ 85 % FTP (FC ≤ 160 bpm), course un peu plus vite que l'allure Ironman ; lâche-toi sur les 5 derniers km si les jambes répondent. En option : 1h de vélo Z2 après l'arrivée.")

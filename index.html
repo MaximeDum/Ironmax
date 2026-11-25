@@ -1298,7 +1298,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.12"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.13"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -2169,17 +2169,23 @@ function adjustments(acts,eftp){
     let e=null;try{e=hrExpect({date:a.date,sport:"course",reps:an.reps})}catch(x){}if(e){const w=e.filter(q=>!q.z2);if(w.length&&w.reduce((t,q)=>t+q.d,0)/w.length>2)return false}return true};
   if(sq.length===2&&sq.every(okS))out.push({id:"seuil+",k:"seuil",d:+.01,u:"%VMA",t:"Seuil course validé 2 fois de suite",x:`Tous les blocs à l'allure, FC cohérente (${sq.map(a=>fdate(a.date)).reverse().join(" et ")})`,p:"Allure seuil −4 s/km environ (+1 % de VMA)"});
   if(eftp&&eftp>=INP.ftp*1.03)out.push({id:"ftp",k:"ftp",d:Math.round(eftp),u:"FTP",t:"FTP estimée en hausse",x:`eFTP Intervals.icu à ${Math.round(eftp)} W sur 30 jours (FTP actuelle ${INP.ftp} W)`,p:`Passer la FTP à ${Math.round(eftp)} W (ou attendre le prochain test)`});
+  // rappels datés (options laissées à Maxime) : « C'est noté » les retire, « Plus tard » les repousse d'une semaine
+  const REM=[{id:"rem-run",from:"2027-01-04",t:"Rappel : ajouter un footing Z2",x:"Le build (22 févr.) passe à 4 courses par semaine. Un 3e footing facile dès maintenant rend la marche moins haute pour les tendons et le genou.",p:"Ajoute 40–45' à FC ≤ 140 bpm, le mardi ou le vendredi"},
+    {id:"rem-swim",from:"2027-01-18",t:"Rappel : 2e séance de natation",x:"Une seule natation par semaine jusqu'au build : une 2e séance courte aide à préparer les 3,8 km.",p:"Ajoute 30–40' facile (technique ou continu) dans la semaine"}];
+  const rs=lsGet(LSK.adj+".rem",{}),td=dkey(new Date());
+  REM.forEach(r=>{if(td>=r.from&&!(rs[r.id]&&(rs[r.id]===1||rs[r.id]>td)))out.push(Object.assign({rem:1},r))});
   const dis=lsGet(LSK.adj+".dismiss",{});
-  return out.filter(o=>!dis[o.id+":"+dkey(new Date()).slice(0,7)]);
+  return out.filter(o=>o.rem||!dis[o.id+":"+dkey(new Date()).slice(0,7)]);
 }
 function applyAdj(id){
   const o=(LIVE&&LIVE.adjust||[]).find(a=>a.id===id);if(!o)return;
+  if(o.rem){const rs=lsGet(LSK.adj+".rem",{});rs[id]=1;lsSet(LSK.adj+".rem",rs);LIVE.adjust=LIVE.adjust.filter(a=>a.id!==id);lsSet(LSK.live,LIVE);render();return}
   if(o.k==="ftp"){setInput("ftp",o.d,"eFTP Intervals.icu")}
   else{const key=o.k==="ss"?["ss","tempo","ef"]:[o.k];key.forEach(k=>ADJ[k]=+((ADJ[k]||0)+o.d).toFixed(3));lsSet(LSK.adj,ADJ)}
   dismissAdj(id);toast("Ajustement appliqué au programme");
 }
-function adjCards(){return (LIVE&&LIVE.adjust||[]).map(a=>`<div class="dc" style="border:1px solid var(--acc);margin-top:8px"><div class="dl" style="color:var(--txt)">↕ ${esc(a.t)}<small>${esc(a.x)}</small></div><div style="margin-top:8px;font-weight:600">${esc(a.p)}</div><div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="adjapply" data-v="${a.id}">Appliquer</button><button class="btn" style="flex:1" data-act="adjdismiss" data-v="${a.id}">Ignorer</button></div></div>`).join("")}
-function dismissAdj(id){const dis=lsGet(LSK.adj+".dismiss",{});dis[id+":"+dkey(new Date()).slice(0,7)]=1;lsSet(LSK.adj+".dismiss",dis);if(LIVE){LIVE.adjust=LIVE.adjust.filter(a=>a.id!==id);lsSet(LSK.live,LIVE)}render()}
+function adjCards(){return (LIVE&&LIVE.adjust||[]).map(a=>`<div class="dc" style="border:1px solid var(--acc);margin-top:8px"><div class="dl" style="color:var(--txt)">↕ ${esc(a.t)}<small>${esc(a.x)}</small></div><div style="margin-top:8px;font-weight:600">${esc(a.p)}</div><div class="row" style="margin-top:10px"><button class="btn" style="flex:1;background:var(--acc);color:#fff" data-act="adjapply" data-v="${a.id}">${a.rem?"C'est noté":"Appliquer"}</button><button class="btn" style="flex:1" data-act="adjdismiss" data-v="${a.id}">${a.rem?"Plus tard":"Ignorer"}</button></div></div>`).join("")}
+function dismissAdj(id){const o=(LIVE&&LIVE.adjust||[]).find(a=>a.id===id);if(o&&o.rem){const rs=lsGet(LSK.adj+".rem",{});rs[id]=dkey(new Date(Date.now()+7*864e5));lsSet(LSK.adj+".rem",rs);LIVE.adjust=LIVE.adjust.filter(a=>a.id!==id);lsSet(LSK.live,LIVE);render();return}const dis=lsGet(LSK.adj+".dismiss",{});dis[id+":"+dkey(new Date()).slice(0,7)]=1;lsSet(LSK.adj+".dismiss",dis);if(LIVE){LIVE.adjust=LIVE.adjust.filter(a=>a.id!==id);lsSet(LSK.live,LIVE)}render()}
 function setInput(k,v,why){const old=INP[k];if(String(old)===String(v))return;INP[k]=v;lsSet(LSK.inp,INP);INH.unshift({d:today(),k,old,v,why:why||"saisie"});INH=INH.slice(0,40);lsSet(LSK.inp+".hist",INH);if(lsGet(LSK.raw,null))recompute()}
 
 /* ============ PROGRAMME ============ */
@@ -2196,6 +2202,9 @@ const Wt=(pct,k)=>Math.round(pct*INP.ftp+(ADJ[BIKE_ADJ.includes(k)?"ss":k]||0)*(
 const Wr=(a,b,k)=>Wt(a,k)+"–"+Wt(b,k)+" W";
 const Pc=(v,k)=>paceKm((v+(k==="seuil"?(ADJ.seuil||0):0))*INP.vma)+"/km";
 const Pr=(a,b)=>paceKm(b*INP.vma)+"–"+paceKm(a*INP.vma)+"/km";
+const PmV=h=>{const p140=(typeof LIVE!=="undefined"&&LIVE&&LIVE.p140)||null;if(!p140)return null;return 1000/p140+(h-140)/((RUNM&&RUNM.b)||40)};
+const Pm=()=>{const a=PmV(138),b=PmV(145);return "FC 138–145 bpm"+(a&&b?" (≈ "+paceKm(b*3.6)+"–"+paceKm(a*3.6)+"/km)":"")};
+const blkMin=t=>{t=String(t||"");let m=t.match(/(\d+)\s*[×x]\s*(\d+)\s*'/);if(m)return +m[1]*+m[2]+(+m[1]-1)*2;m=t.match(/(\d+)h(\d+)?/);if(m)return +m[1]*60+(+m[2]||0);m=t.match(/(\d+)\s*'/);return m?+m[1]:0};
 function steps(k,p,min,phase){
   if(p.free)return [["Programme",p.txt||""],["Durée",hm(min)]];
   // séance sur le Look (sans capteur) : consignes à la FC, pas de puissances ; on garde le ravito des sorties longues
@@ -2219,6 +2228,7 @@ function stepsBase(k,p,min,phase){
   switch(k){
     case"vo2":return [["Échauffement","10' progressif"],["Corps de séance",p.sets+" à "+Wt(p.w,"vo2")+" W · récup "+p.rec+" à "+Wt(.5,"vo2")+" W"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]];
     case"ss":case"thr":case"ef":case"im":
+      if(p.test==="FTP")return stepsBase("test",p,min);
       if(p.ou)return [["Échauffement","10' progressif"],["Corps de séance",p.sets+" en alternant "+(p.oud||[3,2])[0]+"' à "+Wt(p.ou[0],k)+" W et "+(p.oud||[3,2])[1]+"' à "+Wt(p.ou[1],k)+" W"+(p.rpm?" · "+p.rpm+" rpm":"")+" · récup "+p.rec+" Z1"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]];
       if(!p.sets)return [["Endurance",hm(min)+" à "+Wr(.62,.70,"tempo")]];
       return [["Échauffement","10' progressif"],["Corps de séance",p.sets+" à "+Wt(p.w,k)+" W"+(p.rpm?" · "+p.rpm+" rpm":"")+" · récup "+p.rec+" à "+Wt(.55,k)+" W"],["Fin de séance","5' Z2 + 5' souple (récup du dernier bloc comprise)"]];
@@ -2228,14 +2238,14 @@ function stepsBase(k,p,min,phase){
       if(p.test==="FTP")return stepsBase("test",p,min);
       const a=[["Endurance Z2",hm(min)+" à "+Wr(p.z2-.03,p.z2+.03,"long")]];
       if(p.blocks)a.push([k==="sim"?"Allure course":"Blocs",p.blocks+" à "+Wt(p.w,"long")+" W"+(p.w2?" puis "+Wt(p.w2,"long")+" W":"")]);
-      if(p.brick)a.push(["Enchaînement course",p.brick+" à "+Pc(.66)+" dès la descente du vélo"]);
+      if(p.brick)a.push(["Enchaînement course",p.brick+" à allure marathon : "+Pm()+", dès la descente du vélo"]);
       a.push(["Règle","Montées plafonnées à 225 W et 165 bpm"]);return a.concat(nut);}
     case"seuil":
       if(p.test==="VMA")return [["Échauffement","20' Z1–Z2 + 3 accélérations"],["Test","6' à fond, note la distance"],["Retour au calme","10' trot"]];
       return [["Échauffement","15' Z1–Z2 + 4 lignes droites"],["Corps de séance",p.sets+" à "+Pc(p.v,"seuil")+" · récup "+p.rec+" trot"],["Retour au calme","10' Z1"],["Plafond","FC moyenne par bloc ≤ 170 bpm"]];
-    case"marathon":return [["Échauffement","15' Z2"],["Allure marathon",p.sets+" à "+Pc(p.v)+" · récup "+p.rec],["Retour au calme","10' Z1"]];
-    case"longrun":if(p.race)return [["Course","3,8 km · 180 km · 42,2 km"],["Allures visées","Vélo ≈ "+Wt(.77,"long")+" W · marathon ≈ "+Pc(.66)]];
-      {const npr=nutriPlan({d:"course",min},phase);const bm=p.blk?(parseInt(String(p.blk))||15):0,prog=/progress/i.test(p.blk||"");return [["Endurance",hm(min-bm)+" à "+Pr(.62,.68)+" · FC ≤ 140 bpm"]].concat(p.blk?[["Bloc final",p.blk+(prog?" : de "+Pc(.66)+" jusqu'à "+Pc(.72):" à "+Pc(/tempo/.test(p.blk)?.72:.66))]]:[]).concat(nut);}
+    case"marathon":if(p.easy)return [["Footing Z2",(min-5)+"' à "+Pr(.62,.68)+" · FC ≤ 140 bpm"],["Lignes droites","6 × 20\" en accélération progressive, récup en marchant"]];return [["Échauffement","15' Z2"],["Allure marathon",p.sets+" à "+Pm()+" · récup "+p.rec],["Retour au calme","10' Z1"]];
+    case"longrun":if(p.race)return [["Course","3,8 km · 180 km · 42,2 km"],["Allures visées","Vélo ≈ "+Wt(.75,"long")+" W · marathon à "+Pm()]];
+      {const npr=nutriPlan({d:"course",min},phase);const bm=p.blk?(blkMin(p.blk)||15):0,prog=/progress/i.test(p.blk||""),mpB=/allure (IM|marathon)/i.test(p.blk||"");return [["Endurance",hm(Math.max(20,min-bm))+" à "+Pr(.62,.68)+" · FC ≤ 140 bpm"]].concat(p.blk?[["Bloc final",p.blk+(prog?" : de "+Pc(.66)+" jusqu'à "+Pc(.72):mpB?" : "+Pm():" à "+Pc(/tempo/.test(p.blk)?.72:.66))]]:[]).concat(nut);}
     case"z2run":return [["Footing Z2",hm(min)+" à "+Pr(.62,.68)+" · FC ≤ 140 bpm"]];
     case"nat":{const v=(PLAN.swim||{})[p.var]||["Natation",""];if(p.light)return [["Séance",v[0]+" en version courte, tout au ressenti facile"],["Total",(p.m||"").toLocaleString("fr-FR")+" m"]];
       return [["Séance",v[0]]].concat(swimParts(v[1],p.m).map((x,i,A)=>[i===0?"Échauffement":i===A.length-1?"Retour au calme":x.main?"Bloc principal":"",x.t])).concat([["Total",(p.m||"").toLocaleString("fr-FR")+" m"],["Repère","4/10 facile · 6/10 modéré · 7–8/10 soutenu"]]);}
@@ -2254,6 +2264,7 @@ function mainTarget(k,p){
   if(["ss","thr","ef","im","vo2"].includes(k)&&p.w)return Wt(p.w,k)+" W";
   if(k==="tempo")return Wt(p.w,"tempo")+" W";
   if(["long","brick","sim"].includes(k))return p.w?Wt(p.w,"long")+" W":Wr(p.z2-.03,p.z2+.03,"long");
+  if(k==="marathon")return p.easy?"Z2 + lignes droites":"FC 138–145";
   if(["seuil","marathon"].includes(k)&&p.v)return Pc(p.v,k);
   if(["longrun","z2run"].includes(k))return Pr(.62,.68).split("–")[1]?paceKm(.65*INP.vma)+"/km":"";
   if(k==="nat")return (p.m||"").toLocaleString("fr-FR")+" m · "+(((PLAN.swim||{})[p.var]||[""])[0]).toLowerCase();
@@ -2294,7 +2305,7 @@ function weekSessions(w){
   const dateOf=day=>{const d=new Date(w.start+"T00:00:00");d.setDate(d.getDate()+day);return dkey(d)};
   const dl=isDL(w),src=dl?(w.sd||w.s):w.s,auto=dl&&!w.sd;
   const lt=ed.light||[],sh=ed.short||[],ind=ed.indoor||{};
-  const base=src.filter(s0=>!rm.includes(s0.id)).map(s00=>{let s0=auto?deloadify(s00,(tpl[s00.id]||{}).k):s00;if(lt.includes(s00.id))s0=Object.assign(deloadify(s0,(tpl[s00.id]||{}).k),{lt:1});else if(sh.includes(s00.id))s0=shortenify(s0);s0=Object.assign({},s0,{indoor:!!ind[s00.id]});const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];let pl=place(b.n,t);if(mv[s.id])pl=mv[s.id];return Object.assign({},s,{uid:s.id,k:s.kk||t.k,d:t.d,title:s.l||(t.l+(s.dl&&/muscu/.test(t.k)?" (légère)":"")),day:pl.day,slot:pl.slot,date:dateOf(pl.day),moved:!!mv[s.id]})});
+  const base=src.filter(s0=>!rm.includes(s0.id)).map(s00=>{let s0=auto?deloadify(s00,(tpl[s00.id]||{}).k):s00;if(lt.includes(s00.id))s0=Object.assign(deloadify(s0,(tpl[s00.id]||{}).k),{lt:1});else if(sh.includes(s00.id))s0=shortenify(s0);s0=Object.assign({},s0,{indoor:!!ind[s00.id]});const s=(s0.p.alt&&vo2On)?Object.assign({},s0,{l:s0.p.alt.l,p:s0.p.alt.p,kk:s0.p.alt.k}):s0;const t=tpl[s.id];let pl=place(b.n,t);if(mv[s.id])pl=mv[s.id];return Object.assign({},s,{uid:s.id,k:s.kk||t.k,d:t.d,title:s.l||(s.dl&&/muscu/.test(t.k)?t.l.replace(/\s*\(.*\)$/,"")+" (légère)":t.l),day:pl.day,slot:pl.slot,date:dateOf(pl.day),moved:!!mv[s.id]})});
   const add=(ed.added||[]).map(a=>Object.assign({},a,{date:dateOf(a.day),added:true}));
   return base.concat(add).sort((a,c)=>a.day-c.day||SLOTS.indexOf(a.slot)-SLOTS.indexOf(c.slot));
 }
