@@ -1298,7 +1298,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.14"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.15"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -2337,13 +2337,19 @@ function hrModel(sport,exDate){const key=sport+"|"+exDate+"|"+(LIVE&&LIVE.ev)+"|
     m={f:(x,i)=>a+b*x+c*i,n:ns}}
   return HRM[key]=m}
 function hrExpect(x){if(!x||!x.reps||!["velo","course"].includes(x.sport))return null;const m=hrModel(x.sport,x.date);if(!m)return null;
-  return repRows(x.sport,x.reps).map(r=>({exp:m.f(r.x,r.i),d:r.hr-m.f(r.x,r.i),z2:r.z2}))}
+  // pédalage en force (65–70 rpm) : à puissance égale la FC tourne ~6 bpm plus bas qu'à cadence normale → attendu abaissé d'autant
+  const lowC=x.sport==="velo"&&/endurance de force|\b6[0-9]\s*[-–]\s*[67][0-9]\s*rpm/i.test((x.title||"")+" "+(x.name||""))?6:0;
+  return repRows(x.sport,x.reps).map(r=>{const ex=m.f(r.x,r.i)-(r.z2?0:lowC);return {exp:ex,d:r.hr-ex,z2:r.z2}})}
 // « Incroyable » : séance déjà Excellente ET chaque bloc de travail ≥ 3 bpm sous l'attendu, moyenne ≥ 5 bpm sous l'attendu
 function isIncredible(x,grade){if(grade!=="Excellente")return false;const e=hrExpect(x);if(!e)return false;const w=e.filter(r=>!r.z2);if(!w.length)return false;
   return w.every(r=>r.d<=-3)&&w.reduce((t,r)=>t+r.d,0)/w.length<=-5}
 /* Dérive « marquée » jugée contre la FC attendue : sur 4 blocs ou plus, la FC monte naturellement d'un bloc à l'autre.
    Si chaque bloc reste sous (ou à) la FC que ton modèle prévoit, ce n'est pas un signal d'alerte. */
-function hrAdjust(x){if(!x||x.verdict!=="warn"||!x.comment||x.grade)return x;
+function hrAdjust(x){
+  if(x&&x.verdict==="ok"&&x.comment&&!x.grade&&/dérive modérée/.test(x.comment)){const e=hrExpect(x),w=e&&e.filter(r=>!r.z2);
+    if(w&&w.length>=2&&w.every(r=>r.d<=-3)){const avg=w.reduce((t,r)=>t+r.d,0)/w.length;
+      return Object.assign({},x,{verdict:"up",comment:x.comment.replace("dérive modérée","dérive faible").replace(/Séance maîtrisée\.?$/,`Chaque bloc sous la FC attendue (${String(Math.round(avg)).replace("-","−")} bpm en moyenne) : très bonne séance.`)})}}
+  if(!x||x.verdict!=="warn"||!x.comment||x.grade)return x;
   const m=/À surveiller : ([^.]*)\./.exec(x.comment);if(!m||m[1].trim()!=="dérive cardiaque marquée")return x;
   const e=hrExpect(x);if(!e)return x;const w=e.filter(r=>!r.z2);if(!w.length||w.some(r=>r.d>2))return x;
   const avg=w.reduce((t,r)=>t+r.d,0)/w.length,top=avg<=-3&&w.every(r=>r.d<=0.5);
