@@ -1299,7 +1299,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.19"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.20"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -2335,11 +2335,13 @@ function repPool(sport){const out={};
   const C=(DATA&&DATA.claude)||{};Object.keys(C).forEach(k=>{const [d,sp]=k.split("|");if(sp===sport&&C[k].reps&&C[k].reps.length&&!out[d])out[d]=C[k].reps});
   return out}
 function repX(sport,r){if(sport==="velo")return r[1]/INP.ftp;if(sport==="course"){const v140=1000/((LIVE&&LIVE.p140)||330);return r[1]/v140}return null}
-function repRows(sport,reps){let k=0;return reps.filter(r=>r[2]>60&&r[1]>0).map(r=>{const z2=r[4]==="Z2";return {x:repX(sport,r),i:z2?k:k++,hr:r[2],z2}})}
+// durée du bloc : la FC moyenne d'un bloc long est plus haute (elle monte pendant tout le bloc) → ~0,2 bpm par minute au-delà de 15'
+const DURC=d=>d?0.2*(Math.max(5,Math.min(60,d/60))-15):0;
+function repRows(sport,reps){let k=0;return reps.filter(r=>r[2]>60&&r[1]>0).map(r=>{const z2=r[4]==="Z2";return {x:repX(sport,r),i:z2?k:k++,hr:r[2],z2,dur:r[0]}})}
 const HRM={};
 function hrModel(sport,exDate){const key=sport+"|"+exDate+"|"+(LIVE&&LIVE.ev)+"|"+INP.ftp;if(key in HRM)return HRM[key];
   const pool=repPool(sport),pts=[];let ns=0;Object.keys(pool).forEach(d=>{if(d>=exDate)return;   // FC attendue = ce que tes séances PASSÉES prédisaient : une note ne change plus après coup
-    const rr=repRows(sport,pool[d]);if(rr.length){ns++;rr.forEach(r=>pts.push(r))}});
+    const rr=repRows(sport,pool[d]);if(rr.length){ns++;rr.forEach(r=>pts.push(Object.assign({},r,{hr:r.hr-(r.z2?0:DURC(r.dur))})))}});
   let m=null;
   if(ns>=3&&pts.length>=6){
     // moindres carrés sur [1, x, rang]
@@ -2354,7 +2356,9 @@ function hrModel(sport,exDate){const key=sport+"|"+exDate+"|"+(LIVE&&LIVE.ev)+"|
 function hrExpect(x){if(!x||!x.reps||!["velo","course"].includes(x.sport))return null;const m=hrModel(x.sport,x.date);if(!m)return null;
   // pédalage en force (65–70 rpm) : à puissance égale la FC tourne ~6 bpm plus bas qu'à cadence normale → attendu abaissé d'autant
   const lowC=x.sport==="velo"&&/endurance de force|\b6[0-9]\s*[-–]\s*[67][0-9]\s*rpm/i.test((x.title||"")+" "+(x.name||""))?6:0;
-  return repRows(x.sport,x.reps).map(r=>{const ex=m.f(r.x,r.i)-(r.z2?0:lowC);return {exp:ex,d:r.hr-ex,z2:r.z2}})}
+  // blocs insérés dans une sortie longue (≥ 45' de Z2 dans la séance) : le cœur part d'une base déjà montée → +3 bpm
+  const rr=repRows(x.sport,x.reps),longCtx=rr.some(r=>r.z2&&r.dur>=2700)?3:0;
+  return rr.map(r=>{const ex=m.f(r.x,r.i)-(r.z2?0:lowC)+(r.z2?0:DURC(r.dur))+longCtx;return {exp:ex,d:r.hr-ex,z2:r.z2}})}
 // « Incroyable » : séance déjà Excellente ET chaque bloc de travail ≥ 3 bpm sous l'attendu, moyenne ≥ 5 bpm sous l'attendu
 function isIncredible(x,grade){if(grade!=="Excellente")return false;const e=hrExpect(x);if(!e)return false;const w=e.filter(r=>!r.z2);if(!w.length)return false;
   return w.every(r=>r.d<=-3)&&w.reduce((t,r)=>t+r.d,0)/w.length<=-5}
