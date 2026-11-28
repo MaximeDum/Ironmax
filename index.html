@@ -1299,7 +1299,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.18"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.19"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1720,7 +1720,10 @@ function zwBuild(s){
     else if(bt){const m=zMin(bt);if(m)blocks=[[m,PL(p.w),p.w]]}
     const lay=longLayout(bike,blocks.map(b=>b[0]),bt);
     if(lay.lead>=5)blk(`Endurance Z2\n- ${lay.lead}m ${lo}-${hi}%`,lay.lead,"Z2",135);
-    blocks.forEach((b,i)=>{blk(`Bloc ${i+1}\n- ${b[0]}m ${b[1]}%`,b[0],"blocs",zwCapOf(Wt(b[2],"long")/INP.ftp));const g=i<blocks.length-1?lay.gaps[i]:lay.tail;if(g>=5)blk(`Z2\n- ${g}m ${lo}-${hi}%`,g,"Z2",135)});
+    blocks.forEach((b,i)=>{blk(`Bloc ${i+1}\n- ${b[0]}m ${b[1]}%`,b[0],"blocs",zwCapOf(Wt(b[2],"long")/INP.ftp));let g=i<blocks.length-1?lay.gaps[i]:lay.tail;
+      // 3' en Z1 après un bloc ≥ 15' : la FC redescend avant de relancer en Z2
+      if(b[0]>=15&&g>=8){blk(`Récup Z1\n- 3m ${P(.55)}%`,3,"récup",130);g-=3}
+      if(g>=5)blk(`Z2\n- ${g}m ${lo}-${hi}%`,g,"Z2",135)});
     cool();
     if(p.brick)out.push(`Enchaînement : ${p.brick} de course dès la descente du vélo (FC max 145 bpm)`);
     return done();
@@ -2248,7 +2251,7 @@ function stepsBase(k,p,min,phase){
       const bl=st?Array(st.n).fill(st.d):two?[+two[1],+two[2]]:bt&&zMin(bt)?[zMin(bt)]:[],lay=longLayout(bike,bl,bt);
       const a=[["Endurance Z2",hm(bike-bl.reduce((x,y)=>x+y,0))+" au total à "+Wr(p.z2-.03,p.z2+.03,"long")]];
       if(p.blocks){let t=10+lay.lead;const at=bl.map((d,i)=>{const r=t;t+=d+(i<bl.length-1?lay.gaps[i]:0);return hm(r)});
-        a.push([k==="sim"?"Allure course":"Blocs",p.blocks+" à "+Wt(p.w,"long")+" W"+(p.w2?" puis "+Wt(p.w2,"long")+" W":"")+(bl.length?" · départ"+(bl.length>1?"s":"")+" à "+at.join(", "):"")])}
+        a.push([k==="sim"?"Allure course":"Blocs",p.blocks+" à "+Wt(p.w,"long")+" W"+(p.w2?" puis "+Wt(p.w2,"long")+" W":"")+(bl.length?" · départ"+(bl.length>1?"s":"")+" à "+at.join(", "):"")+(bl.some(d=>d>=15)?" · 3' en Z1 ("+Wt(.55,"long")+" W) après chaque bloc":"")])}
       if(p.brick)a.push(["Enchaînement course",p.brick+" à allure marathon : "+Pm()+", dès la descente du vélo"]);
       a.push(["Règle","Montées plafonnées à 225 W et 165 bpm"]);return a.concat(nut);}
     case"seuil":
