@@ -1299,7 +1299,7 @@ const lsGet=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||"null");retu
 // toute modification (séance déplacée, ressenti, réglage…) part sur GitHub 20 s plus tard, pour que Claude voie la même chose
 var GHT=null;function schedGh(){clearTimeout(GHT);GHT=setTimeout(()=>{try{ghPush(false)}catch(e){}},20000)}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(!/^ironmax\.(gh|raw|live|seen)$/.test(k))schedGh()};
-const APPV="v2.20"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
+const APPV="v2.21"; // une nouvelle version recalcule tout au démarrage (les écrans détail ne lisent jamais un ancien calcul)
 const DEF_INP={ftp:255,vma:16.4,fcmax:198,fcrest:45,fcnight:45,css:"1:55",weight:84,best5k:"23:21",ctlTarget:90};
 let CFG=lsGet(LSK.cfg,{athlete:"",key:""});
 let INP=Object.assign({},DEF_INP,lsGet(LSK.inp,{}));
@@ -1352,7 +1352,21 @@ function planTarget(s){
   if(bike||s.d==="course")return {sport:s.d,n:0,target:0};
   return null;
 }
-const AV=10; // version de l'analyse : une séance analysée avec une version plus ancienne est ré-analysée
+const AV=11; // version de l'analyse : une séance analysée avec une version plus ancienne est ré-analysée
+/* Dérive de la Z2 après les blocs (sorties longues) : FC en Z2 avant le 1er bloc vs après le dernier, à puissance comparable */
+function z2DriftOf(st,ftp){const w=st.watts,h=st.heartrate;if(!w||!h||!ftp)return null;const n=Math.min(w.length,h.length);if(n<3600)return null;
+  const sm=k=>{const o=new Array(n);let acc=0;for(let i=0;i<n;i++){acc+=(w[i]||0);if(i>=k)acc-=(w[i-k]||0);o[i]=acc/Math.min(i+1,k)}return o},w30=sm(30),w60=sm(60);
+  const runs=[];let s0=-1;for(let i=0;i<=n;i++){const on=i<n&&w60[i]>=.85*ftp;if(on&&s0<0)s0=i;if(!on&&s0>=0){if(i-s0>=600)runs.push([s0,i]);s0=-1}}
+  if(!runs.length)return null;
+  const pick=(a,b)=>{let sh=0,sw=0,c=0;for(let i=Math.max(0,a);i<Math.min(n,b);i++){if(w30[i]>=.6*ftp&&w30[i]<=.76*ftp&&h[i]>60){sh+=h[i];sw+=w30[i];c++}}return c>=480?{hr:sh/c,w:sw/c,n:c}:null};
+  const pre=pick(900,runs[0][0]-60),post=pick(runs[runs.length-1][1]+240,n-600);if(!pre||!post)return null;
+  return {pre:Math.round(pre.hr),post:Math.round(post.hr),wpre:Math.round(pre.w),wpost:Math.round(post.w),d:Math.round(post.hr-pre.hr)}}
+function z2DriftHtml(a,an){if(a.sp!=="velo"||!an||!an.z2d)return"";const z=an.z2d,out=outdoorRide(a);
+  const hist=Object.keys(ANA).map(k=>ANA[k]).filter(v=>v&&v.z2d&&v.sport==="velo").sort((p,q)=>p.date<q.date?-1:1).slice(-6);
+  const col=z.d<=5?"#3DDC84":z.d<=10?"#F5A524":"#E4002B";
+  return `<div class="dl" style="margin-top:10px">Dérive de la Z2 après les blocs<small>objectif : &lt; +10 fin janvier, &lt; +5 au printemps</small></div>
+   <div style="font-size:13.5px;margin-top:4px">Avant le 1er bloc <b>${z.pre} bpm</b> à ${z.wpre} W → après le dernier <b>${z.post} bpm</b> à ${z.wpost} W : <b style="color:${col}">${z.d>=0?"+":"−"}${Math.abs(z.d)} bpm</b>${out?" <span class=\"muted\">(extérieur : indicatif, terrain et vent brouillent la mesure)</span>":""}</div>
+   ${hist.length>1?`<div class="muted" style="font-size:12px;margin-top:4px">Historique : ${hist.map(v=>fdate(v.date).replace(/\.$/,"")+" "+(v.z2d.d>=0?"+":"−")+Math.abs(v.z2d.d)).join(" · ")}</div>`:""}`}
 async function analyzeRecent(acts){
   const since=dkey(new Date(Date.now()-21*864e5));
   for(const a of acts){
@@ -1381,7 +1395,7 @@ async function analyzeRecent(acts){
       // dérive jugée avec le contexte : au lendemain d'une grosse séance (charge ≥ 120), jusqu'à 8 % est attendu
       if(res.sum&&res.sum.drift!=null&&!res.sum.n&&res.sum.drift>5&&res.sum.drift<=8){const prev=addDays(a.date,-1),ld=acts.filter(x=>x.date===prev).reduce((t,x)=>t+(x.icu_training_load||0),0);
         if(ld>=120){res.verdict="ok";res.comment=res.comment.replace("marquée : chaleur, hydratation ou fatigue","attendue au lendemain de ta grosse séance d'hier")}}
-      ANA[a.id]={title:ps.title,comment:res.comment+(estPart>.02?` · Puissance estimée par la FC sur ${Math.round(estPart*((a.elapsed_time||a.moving_time)/60))} min (capteur décroché).`:"")+(a.parts?` · Séance en ${a.parts.length} parties, analysée d'un seul tenant.`:"")+(outdoorRide(a)&&res.reps.length?" · Blocs en puissance normalisée (sortie extérieure, roue libre comprise).":""),verdict:res.verdict,est:estPart>.02?1:0,reps:(res.z2?[[res.z2[0],Math.round(res.z2[1]*100)/100,Math.round(res.z2[2]),0,"Z2"]]:[]).concat(res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr),0,r.label||null,r.gps?1:0])),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV};
+      ANA[a.id]={title:ps.title,comment:res.comment+(estPart>.02?` · Puissance estimée par la FC sur ${Math.round(estPart*((a.elapsed_time||a.moving_time)/60))} min (capteur décroché).`:"")+(a.parts?` · Séance en ${a.parts.length} parties, analysée d'un seul tenant.`:"")+(outdoorRide(a)&&res.reps.length?" · Blocs en puissance normalisée (sortie extérieure, roue libre comprise).":""),verdict:res.verdict,est:estPart>.02?1:0,reps:(res.z2?[[res.z2[0],Math.round(res.z2[1]*100)/100,Math.round(res.z2[2]),0,"Z2"]]:[]).concat(res.reps.map(r=>[r.dur,Math.round(r.v*100)/100,Math.round(r.hr),0,r.label||null,r.gps?1:0])),recs:res.recs.map(r=>[r.dur,Math.round(r.drop60)]),sum:res.sum,sport:a.sp,date:a.date,av:AV,z2d:(a.sp==="velo"&&["long","brick","sim"].includes(ps.k))?(()=>{try{return z2DriftOf({watts:st.watts,heartrate:st.heartrate},INP.ftp)}catch(e){return null}})():null};
     }catch(e){}
   }
   const keys=Object.keys(ANA).sort((x,y)=>(ANA[x].date<ANA[y].date?1:-1));keys.slice(80).forEach(k=>delete ANA[k]);lsSet("ironmax.ana",ANA);
@@ -2809,7 +2823,7 @@ function debriefHtml(a,x,ps,an,sim){
   let plan="";if(ps){try{const st=steps(ps.k,ps.p,ps.min,ps.phase||"").filter(r=>r&&r[1]);plan=`<div class="dl" style="margin-top:4px">Prévu au programme<small>${esc(ps.title)} · ${hm(ps.min||0)}</small></div><div style="font-size:12.5px;line-height:1.45;margin-top:4px">${st.slice(0,6).map(r=>`<div><b>${esc(r[0]||"")}</b>${r[0]?" : ":""}${esc(r[1])}</div>`).join("")}</div>`}catch(e){}}
   const pts=(good.length||bad.length)?`<div class="dl" style="margin-top:10px">Points clés</div><div style="font-size:13.5px;line-height:1.5;margin-top:4px">${good.map(t=>`<div>✅ ${esc(t)}</div>`).join("")}${bad.map(t=>`<div>⚠️ ${esc(t)}</div>`).join("")}</div>`:"";
   const zb=a.sp!=="nat"&&Array.isArray(a.icu_hr_zone_times)?`<div class="dl" style="margin-top:10px">Temps par zone de FC</div>${zonesBar(a)}`:"";
-  return `<div class="dc"><div class="dl">Analyse</div>${pts}${blocksSvg(x,a,tgt&&tgt.target)}${zb}${plan}</div>`}
+  return `<div class="dc"><div class="dl">Analyse</div>${pts}${blocksSvg(x,a,tgt&&tgt.target)}${z2DriftHtml(a,an)}${zb}${plan}</div>`}
 
 async function sessDetail(id){
   const a=(LIVE&&LIVE.acts||[]).find(x=>x.id===id);if(!a)return;
